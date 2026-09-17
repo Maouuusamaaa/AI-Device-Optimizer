@@ -7,6 +7,6 @@ data class DeviceSnapshot(
     val model: String,
     val totalRamMb: Long,
     val availableRamMb: Long,
-    val batteryPercent: Int,
+    val batteryPercent: Int?,
     val isCharging: Boolean
 )

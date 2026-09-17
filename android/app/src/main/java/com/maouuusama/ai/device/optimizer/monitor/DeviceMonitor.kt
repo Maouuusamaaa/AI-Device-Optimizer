@@ -2,26 +2,25 @@ package com.maouuusama.ai.device.optimizer.monitor
 
 import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 
 class DeviceMonitor(private val context: Context) {
-
     fun collectSnapshot(): DeviceSnapshot {
         val activityManager =
             context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-
         val memoryInfo = ActivityManager.MemoryInfo()
         activityManager.getMemoryInfo(memoryInfo)
 
-        val batteryManager =
-            context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-
-        val batteryPercent = batteryManager
-            .getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-            .coerceIn(0, 100)
-
-        val status = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS)
+        val battery = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val batteryPercent = battery?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            ?.takeIf { it in 0..100 }
+        val status = battery?.getIntExtra(
+            BatteryManager.EXTRA_STATUS,
+            BatteryManager.BATTERY_STATUS_UNKNOWN
+        ) ?: BatteryManager.BATTERY_STATUS_UNKNOWN
 
         return DeviceSnapshot(
             timestampMs = System.currentTimeMillis(),

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Device Optimizer Benchmark Result",
+  "type": "object",
+  "required": ["schemaVersion", "timestampMs", "workload", "samples"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "timestampMs": { "type": "integer" },
+    "workload": { "type": "string" },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestampMs", "availableRamMb", "batteryPercent", "collectionDurationMs"],
+        "properties": {
+          "timestampMs": { "type": "integer" },
+          "availableRamMb": { "type": "integer", "minimum": 0 },
+          "batteryPercent": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+          "collectionDurationMs": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}
