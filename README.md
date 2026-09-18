@@ -94,7 +94,9 @@ Current baseline runner:
 
 The dry-run Action Engine and connected optimization pipeline described by the target architecture are not present in this checkout and remain future work.
 
-Next milestone: run the physical baseline, retain the result, then add independent startup/performance measurements before enabling privileged mutation.
+Primary mobile development path: use Termux + Shizuku/Rish for independent device measurements while away from a PC. The PC + ADB script remains an optional fallback for desktop sessions.
+
+Next milestone: run the physical baseline from Termux, retain the result, then add independent startup/performance measurements before enabling privileged mutation.
 
 ## Research Direction
 
