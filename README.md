@@ -19,11 +19,8 @@ Monitor → Local Policy → Action Engine → Benchmark → Cloud API → Cloud
 ## Architecture
 
 - `android/app/` — Android application
-- `android/monitor/` — device telemetry and state collection
-- `android/optimizer/` — local policy evaluation
-- `android/actions/` — controlled device actions
-- `android/shizuku/` — privileged operations where supported
-- `android/database/` — local telemetry and policy storage
+- `android/app/src/main/` — current Android monitor and local policy implementation
+- `android/app/src/test/` — JVM unit tests for the current read-only foundation
 - `cloud/api/` — cloud service interface
 - `cloud/optimizer/` — server-side policy reasoning
 - `cloud/models/` — model adapters and inference logic
@@ -81,12 +78,14 @@ Completed:
 - read-only Android Monitor layer
 - repeatable monitor benchmark foundation
 - Local Policy Engine
-- dry-run Action Engine
-- connected read-only optimization pipeline
-- Android unit-test suite
-- GitHub Actions build/test workflow
+- Android unit tests for the current monitor and policy foundation
+- GitHub Actions build/test workflow configuration
 
-Next milestone: install the CI-built debug APK on a physical Android device and compare telemetry with independent measurements before adding privileged mutation.
+Build verification is locally confirmed with the Gradle Wrapper, JDK 17, Android SDK 36, and 9 passing unit tests. A successful post-fix GitHub Actions run has not yet been observed.
+
+The dry-run Action Engine and connected optimization pipeline described by the target architecture are not present in this checkout and remain future work.
+
+Next milestone: verify the workflow on GitHub, then install the debug APK on a physical Android device and compare telemetry with independent measurements before adding privileged mutation.
 
 ## Research Direction
 

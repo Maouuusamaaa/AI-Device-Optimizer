@@ -31,13 +31,13 @@ jobs:
         uses: gradle/actions/setup-gradle@017a9effdb900e5b5b2fddfb590a105619dca3c3
 
       - name: Verify Gradle
-        run: gradle --version
+        run: ./gradlew --version
 
       - name: Run unit tests
-        run: gradle testDebug
+        run: ./gradlew testDebug
 
       - name: Build debug APK
-        run: gradle assembleDebug
+        run: ./gradlew assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

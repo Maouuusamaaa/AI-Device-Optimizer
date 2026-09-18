@@ -1,6 +1,6 @@
 # Android Build and CI
 
-The Android module uses Android Gradle Plugin 9.4.0, Kotlin 2.3.21, compileSdk 36, and requires Gradle 9.6.0 or newer within the AGP 9.4 compatibility range.
+The Android module uses Android Gradle Plugin 9.4.0 with AGP's built-in Kotlin support, compileSdk 36, and Gradle 9.7.1 through the checked-in wrapper.
 
 ## Local build
 
@@ -8,10 +8,10 @@ From the repository root:
 
 1. Change into `android/`.
 2. Use a JDK 17 installation.
-3. Run `gradle testDebug`.
-4. Run `gradle assembleDebug`.
+3. Run `./gradlew testDebug`.
+4. Run `./gradlew assembleDebug`.
 
-The repository currently uses the Gradle executable provided by the development environment and GitHub Actions rather than committing a Gradle Wrapper binary.
+The wrapper distribution is the official Gradle 9.7.1 binary distribution. Its wrapper JAR and distribution URL are committed so local and CI builds use the same Gradle version.
 
 ## CI
 
