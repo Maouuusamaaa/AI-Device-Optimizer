@@ -116,7 +116,6 @@ def evaluate(baseline: dict, candidate: dict, min_runs: int = 3) -> dict:
         directions = [
             pair["metrics"][name]["direction"]
             for pair in pairs
-            if pair["metrics"][name]["direction"] != "unchanged"
         ]
         summary[name] = {
             "averageDelta": statistics.mean(deltas) if deltas else None,
