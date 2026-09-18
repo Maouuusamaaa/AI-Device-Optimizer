@@ -12,16 +12,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import glob
 import json
 import re
 import statistics
 from pathlib import Path
-
-
-def newest(pattern: str) -> str | None:
-    matches = sorted(glob.glob(pattern))
-    return matches[-1] if matches else None
 
 
 def parse_rish(path: Path) -> dict:
@@ -39,11 +33,17 @@ def parse_rish(path: Path) -> dict:
     pss = one(r"^\s*TOTAL\s+(\d+)\s+",)
     rss = one(r"TOTAL RSS:\s*(\d+)")
     swap = one(r"TOTAL SWAP PSS:\s*(\d+)")
-    manufacturer = one(r"^([^\n]+)\n([^\n]+)\n(\d+)\s*$")
+    device_lines = text.splitlines()
+    device_section = text.split("[device]", 1)[1].split("[battery]", 1)[0] if "[device]" in text else ""
+    device_values = [line.strip() for line in device_section.splitlines() if line.strip()]
 
     return {
         "source": str(path),
-        "manufacturer": manufacturer if isinstance(manufacturer, str) else one(r"^([^\n]+)$"),
+        "device": {
+            "manufacturer": device_values[0] if len(device_values) > 0 else None,
+            "model": device_values[1] if len(device_values) > 1 else None,
+            "androidApi": int(device_values[2]) if len(device_values) > 2 and device_values[2].isdigit() else None,
+        },
         "batteryPercent": int(level) if level else None,
         "temperatureC": int(temp_raw) / 10 if temp_raw else None,
         "startupMs": {
