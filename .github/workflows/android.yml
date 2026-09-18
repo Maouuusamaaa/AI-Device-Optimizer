@@ -39,6 +39,12 @@ jobs:
       - name: Run benchmark analyzer tests
         run: python3 ../scripts/test-benchmark-analyzer.py
 
+      - name: Validate benchmark evaluator
+        run: python3 -m py_compile ../benchmarks/evaluator.py
+
+      - name: Run benchmark evaluator tests
+        run: python3 ../scripts/test-benchmark-evaluator.py
+
       - name: Verify Gradle
         run: ./gradlew --version
 
