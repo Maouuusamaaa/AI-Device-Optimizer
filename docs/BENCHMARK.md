@@ -19,11 +19,13 @@ The benchmark writes a JSON result using benchmarks/schema.json.
 
 1. Install the CI-built debug APK on the physical device.
 2. Open AI Device Optimizer.
-3. Do not grant Shizuku or other privileged permissions.
-4. Start Run 60s read-only baseline.
-5. Leave the device in the current state for the full measurement.
-6. Record the displayed summary and retain the generated JSON file.
+3. Run the app's 60-second read-only baseline and retain its JSON result.
+4. From Termux, use `bash scripts/rish-baseline.sh` from the repository to collect an independent external baseline through Shizuku/Rish.
+5. Do not enable optimization mutation; the external runner only reads telemetry and measures app startup/memory.
+6. Record both outputs and compare them later in the benchmark analyzer.
 7. Repeat under documented workloads later: idle, normal application use, sustained workload, and gaming.
+
+The Termux/Shizuku runner is now the primary mobile-side external benchmark path. The `scripts/adb-baseline.sh` runner is retained as an optional PC-side equivalent for sessions where a desktop is available.
 
 The benchmark is evidence collection only. It does not kill applications, change settings, modify CPU/GPU configuration, alter network behavior, or execute optimization actions.
 
