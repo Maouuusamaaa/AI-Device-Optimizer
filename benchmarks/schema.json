@@ -7,15 +7,38 @@
     "schemaVersion": { "type": "integer", "const": 1 },
     "timestampMs": { "type": "integer" },
     "workload": { "type": "string" },
+    "device": {
+      "type": "object",
+      "required": ["androidApi", "manufacturer", "model"],
+      "properties": {
+        "androidApi": { "type": "integer", "minimum": 1 },
+        "manufacturer": { "type": "string" },
+        "model": { "type": "string" }
+      }
+    },
     "samples": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["timestampMs", "availableRamMb", "batteryPercent", "collectionDurationMs"],
+        "required": [
+          "timestampMs",
+          "availableRamMb",
+          "batteryPercent",
+          "collectionDurationMs"
+        ],
         "properties": {
           "timestampMs": { "type": "integer" },
           "availableRamMb": { "type": "integer", "minimum": 0 },
-          "batteryPercent": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+          "totalRamMb": { "type": "integer", "minimum": 0 },
+          "batteryPercent": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "isCharging": { "type": "boolean" },
+          "temperatureC": { "type": ["number", "null"] },
+          "storageAvailableMb": { "type": "integer", "minimum": 0 },
+          "processCpuTimeMs": { "type": "integer", "minimum": 0 },
           "collectionDurationMs": { "type": "integer", "minimum": 0 }
         }
       }
