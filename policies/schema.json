@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Device Optimizer Dry-Run Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "scenario",
+    "condition",
+    "evidence",
+    "proposal",
+    "expectedOutcome",
+    "rollback"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "id": { "type": "string", "minLength": 1 },
+    "scenario": { "type": "string", "enum": ["idle", "normal_use", "sustained_workload", "gaming"] },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "operator", "value"],
+      "properties": {
+        "metric": { "type": "string", "minLength": 1 },
+        "operator": { "type": "string", "enum": ["lt", "lte", "gt", "gte", "eq"] },
+        "value": { "type": "number" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimumRuns", "minimumConsistency", "metrics"],
+      "properties": {
+        "minimumRuns": { "type": "integer", "minimum": 3 },
+        "minimumConsistency": { "type": "number", "minimum": 0, "maximum": 1 },
+        "metrics": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actionId", "mode"],
+      "properties": {
+        "actionId": { "type": "string", "minLength": 1 },
+        "mode": { "const": "dry_run" }
+      }
+    },
+    "expectedOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metrics"],
+      "properties": {
+        "metrics": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "type": "number" }
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "strategy"],
+      "properties": {
+        "required": { "type": "boolean", "const": true },
+        "strategy": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
