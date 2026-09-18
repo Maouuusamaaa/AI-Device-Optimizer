@@ -33,6 +33,9 @@ jobs:
       - name: Validate Termux/Rish benchmark script
         run: bash -n ../scripts/rish-baseline.sh
 
+      - name: Validate benchmark analyzer
+        run: python3 -m py_compile ../scripts/benchmark-analyzer.py
+
       - name: Verify Gradle
         run: ./gradlew --version
 
