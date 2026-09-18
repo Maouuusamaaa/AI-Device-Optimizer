@@ -18,18 +18,18 @@ Monitor → Local Policy → Action Engine → Benchmark → Cloud API → Cloud
 
 ## Architecture
 
-- `android/app/` — Android application
-- `android/app/src/main/` — current Android monitor and local policy implementation
-- `android/app/src/test/` — JVM unit tests for the current read-only foundation
-- `cloud/api/` — cloud service interface
-- `cloud/optimizer/` — server-side policy reasoning
-- `cloud/models/` — model adapters and inference logic
-- `cloud/database/` — historical telemetry and policy data
-- `policies/` — versioned optimization policies
-- `tests/` — unit, integration, and safety tests
-- `benchmarks/` — reproducible before/after measurements
-- `docs/` — architecture, permissions, safety, and development documentation
-- `scripts/` — development and benchmarking utilities
+- android/app/ — Android application
+- android/app/src/main/ — current Android monitor and local benchmark implementation
+- android/app/src/test/ — JVM unit tests for the current read-only foundation
+- cloud/api/ — cloud service interface
+- cloud/optimizer/ — server-side policy reasoning
+- cloud/models/ — model adapters and inference logic
+- cloud/database/ — historical telemetry and policy data
+- policies/ — versioned optimization policies
+- tests/ — unit, integration, and safety tests
+- benchmarks/ — reproducible before/after measurements
+- docs/ — architecture, permissions, safety, and development documentation
+- scripts/ — development and benchmarking utilities
 
 ## Design Principles
 
@@ -71,21 +71,30 @@ The optimizer should fail safely when device state, permissions, or expected out
 
 ## Development Status
 
-Current milestone: CI/build verification.
+Current milestone: physical-device baseline benchmark.
 
 Completed:
 
 - read-only Android Monitor layer
 - repeatable monitor benchmark foundation
+- read-only physical baseline runner
 - Local Policy Engine
 - Android unit tests for the current monitor and policy foundation
 - GitHub Actions build/test workflow configuration
+- successful post-fix GitHub Actions build/test verification
+- debug APK installed and running on a physical Android API 33 device
 
-Build verification is locally confirmed with the Gradle Wrapper, JDK 17, Android SDK 36, and 9 passing unit tests. A successful post-fix GitHub Actions run has not yet been observed.
+Current baseline runner:
+
+- 30 telemetry samples
+- 2-second sampling interval
+- roughly 60 seconds per run
+- JSON result saved under the app external-files benchmark directory
+- no Shizuku or privileged mutation
 
 The dry-run Action Engine and connected optimization pipeline described by the target architecture are not present in this checkout and remain future work.
 
-Next milestone: verify the workflow on GitHub, then install the debug APK on a physical Android device and compare telemetry with independent measurements before adding privileged mutation.
+Next milestone: run the physical baseline, retain the result, then add independent startup/performance measurements before enabling privileged mutation.
 
 ## Research Direction
 
