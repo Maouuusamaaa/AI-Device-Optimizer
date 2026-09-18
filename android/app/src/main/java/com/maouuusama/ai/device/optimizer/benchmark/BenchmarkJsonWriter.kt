@@ -11,9 +11,13 @@ object BenchmarkJsonWriter {
     fun write(
         context: Context,
         workload: String,
-        samples: List<BenchmarkSample>
+        samples: List<BenchmarkSample>,
+        filePrefix: String = "benchmark"
     ): File {
         require(samples.isNotEmpty()) { "samples must not be empty" }
+        require(filePrefix.matches(Regex("[A-Za-z0-9_-]+"))) {
+            "filePrefix must contain only letters, numbers, '_' or '-'"
+        }
 
         val root = JSONObject()
             .put("schemaVersion", 1)
@@ -52,7 +56,7 @@ object BenchmarkJsonWriter {
 
         val file = File(
             directory,
-            "baseline-" + samples.first().timestampMs + ".json"
+            filePrefix + "-" + workload + "-" + samples.first().timestampMs + ".json"
         )
         file.writeText(root.toString(2))
         return file
