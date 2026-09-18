@@ -1,10 +1,16 @@
 package com.maouuusama.ai.device.optimizer
 
+import android.Manifest
 import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import com.maouuusama.ai.device.optimizer.agent.OptimizerBackgroundService
 import com.maouuusama.ai.device.optimizer.benchmark.BenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.benchmark.BenchmarkReport
 import com.maouuusama.ai.device.optimizer.benchmark.ReadOnlyBaselineBenchmark
@@ -14,6 +20,7 @@ class MainActivity : Activity() {
 
     private lateinit var statusText: TextView
     private lateinit var benchmarkButton: Button
+    private lateinit var agentStatusText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +52,12 @@ class MainActivity : Activity() {
             }
         })
 
+        agentStatusText = TextView(this).apply {
+            textSize = 16f
+            text = "\nBackground agent: starting...\nRead-only telemetry + local dry-run policy."
+        }
+        root.addView(agentStatusText)
+
         benchmarkButton = Button(this).apply {
             text = "Run 60s read-only baseline"
             setOnClickListener { runBaseline() }
@@ -58,6 +71,44 @@ class MainActivity : Activity() {
         root.addView(statusText)
 
         setContentView(root)
+        startBackgroundAgent()
+    }
+
+    private fun startBackgroundAgent() {
+        val start = {
+            val intent = Intent(this, OptimizerBackgroundService::class.java)
+            ContextCompat.startForegroundService(this, intent)
+            agentStatusText.text =
+                "\nBackground agent: running\nSampling every 10 seconds.\nNo system mutations; policy mode is DRY_RUN."
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                REQUEST_NOTIFICATION_PERMISSION
+            )
+        }
+
+        start()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
+            agentStatusText.text =
+                if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                    "\nBackground agent: running\nMonitoring notification enabled."
+                } else {
+                    "\nBackground agent: running\nNotification permission was not granted; monitoring remains read-only."
+                }
+        }
     }
 
     private fun runBaseline() {
@@ -125,6 +176,10 @@ class MainActivity : Activity() {
                 }
             }
         }.start()
+    }
+
+    companion object {
+        private const val REQUEST_NOTIFICATION_PERMISSION = 100
     }
 
     private val samplesProgress = java.util.concurrent.atomic.AtomicInteger(1)
