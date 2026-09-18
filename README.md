@@ -74,9 +74,19 @@ The optimizer should fail safely when device state, permissions, or expected out
 
 ## Development Status
 
-Current milestone: repository initialization.
+Current milestone: CI/build verification.
 
-Next milestone: implement the read-only Monitor layer and establish a reproducible Android benchmark baseline before enabling automatic optimization actions.
+Completed:
+
+- read-only Android Monitor layer
+- repeatable monitor benchmark foundation
+- Local Policy Engine
+- dry-run Action Engine
+- connected read-only optimization pipeline
+- Android unit-test suite
+- GitHub Actions build/test workflow
+
+Next milestone: install the CI-built debug APK on a physical Android device and compare telemetry with independent measurements before adding privileged mutation.
 
 ## Research Direction
 
