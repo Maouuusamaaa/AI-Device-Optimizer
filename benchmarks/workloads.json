@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Canonical workload definitions for repeatable physical-device benchmarking.",
+  "principle": "Workload definitions describe measurement conditions; they do not authorize optimization actions.",
+  "scenarios": [
+    {
+      "id": "idle",
+      "label": "Idle",
+      "durationSeconds": 60,
+      "samplingIntervalSeconds": 2,
+      "operatorProcedure": [
+        "Launch AI Device Optimizer.",
+        "Leave the device on the normal home/launcher screen.",
+        "Do not interact with the device during measurement."
+      ],
+      "metrics": [
+        "availableRamMb",
+        "batteryPercent",
+        "batteryTemperatureC",
+        "optimizerProcessCpuTimeMs",
+        "monitorCollectionDurationMs",
+        "appPrivateStorageAvailableMb"
+      ]
+    },
+    {
+      "id": "normal_use",
+      "label": "Normal Application Use",
+      "durationSeconds": 120,
+      "samplingIntervalSeconds": 2,
+      "operatorProcedure": [
+        "Use the device normally with a documented, repeatable set of everyday applications.",
+        "Avoid installing, updating, or deleting applications during measurement.",
+        "Record the application sequence and timing in the benchmark result."
+      ],
+      "metrics": [
+        "availableRamMb",
+        "batteryPercent",
+        "batteryTemperatureC",
+        "optimizerProcessCpuTimeMs",
+        "monitorCollectionDurationMs",
+        "appPrivateStorageAvailableMb"
+      ]
+    },
+    {
+      "id": "sustained_workload",
+      "label": "Sustained Workload",
+      "durationSeconds": 300,
+      "samplingIntervalSeconds": 2,
+      "operatorProcedure": [
+        "Run a documented, repeatable workload that keeps the device actively occupied.",
+        "Use the same workload and duration for before/after comparisons.",
+        "Record battery state, temperature, and workload details."
+      ],
+      "metrics": [
+        "availableRamMb",
+        "batteryPercent",
+        "batteryTemperatureC",
+        "optimizerProcessCpuTimeMs",
+        "monitorCollectionDurationMs",
+        "appPrivateStorageAvailableMb"
+      ]
+    },
+    {
+      "id": "gaming",
+      "label": "Gaming",
+      "durationSeconds": 300,
+      "samplingIntervalSeconds": 2,
+      "operatorProcedure": [
+        "Manually run the same game, mode, graphics settings, and test sequence for each comparison.",
+        "Keep device brightness, network state, charging state, and game version consistent where practical.",
+        "Do not automate gameplay.",
+        "Record game version, graphics settings, and test sequence."
+      ],
+      "metrics": [
+        "availableRamMb",
+        "batteryPercent",
+        "batteryTemperatureC",
+        "optimizerProcessCpuTimeMs",
+        "monitorCollectionDurationMs",
+        "appPrivateStorageAvailableMb",
+        "fpsOrFrameTimeWhenAvailable"
+      ]
+    }
+  ],
+  "comparisonRules": [
+    "Use repeated runs rather than a single run.",
+    "Compare like-for-like workload conditions.",
+    "Keep device model, Android version, app version, and benchmark version recorded.",
+    "Separate observations collected under different workloads; do not merge them into one baseline average.",
+    "Treat benchmark results as evidence for policy decisions, not as proof of causation.",
+    "Do not enable optimization mutation as part of baseline collection."
+  ]
+}
