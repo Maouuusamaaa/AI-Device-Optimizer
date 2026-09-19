@@ -36,7 +36,7 @@ object ShizukuShell {
         if (status() == Status.PERMISSION_REQUIRED) Shizuku.requestPermission(requestCode)
     }
 
-    fun execute(
+    internal fun execute(
         context: Context,
         operation: ShizukuTelemetryOperation,
         timeoutMs: Long = DEFAULT_TIMEOUT_MS
