@@ -1,19 +1,31 @@
 package com.maouuusama.ai.device.optimizer.policy
 
 class LocalPolicyEngine(
-    private val lowRamRatio: Double = 0.15,
+    private val memoryPressureThresholdMb: Long = 1500L,
+    private val memoryCriticalThresholdMb: Long = 1000L,
     private val lowBatteryPercent: Int = 20
 ) {
     fun evaluate(state: DeviceState): List<PolicyDecision> {
         val decisions = mutableListOf<PolicyDecision>()
 
-        if (state.availableRamRatio <= lowRamRatio) {
-            decisions += PolicyDecision(
-                policyId = "memory.low",
-                severity = PolicySeverity.HIGH,
-                reason = "Available RAM is at or below the configured threshold.",
-                proposedActionId = "observe.background_pressure"
-            )
+        when {
+            state.availableRamMb < memoryCriticalThresholdMb -> {
+                decisions += PolicyDecision(
+                    policyId = "memory.critical",
+                    severity = PolicySeverity.HIGH,
+                    reason = "Available RAM is below the experimental critical threshold.",
+                    proposedActionId = "observe.memory_critical"
+                )
+            }
+
+            state.availableRamMb <= memoryPressureThresholdMb -> {
+                decisions += PolicyDecision(
+                    policyId = "memory.pressure",
+                    severity = PolicySeverity.ADVISORY,
+                    reason = "Available RAM is at or below the experimental pressure threshold.",
+                    proposedActionId = "observe.memory_pressure"
+                )
+            }
         }
 
         if (state.batteryPercent != null &&
