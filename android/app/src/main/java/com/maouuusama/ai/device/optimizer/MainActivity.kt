@@ -23,6 +23,7 @@ class MainActivity : Activity() {
     private lateinit var benchmarkButton: Button
     private lateinit var workloadButton: Button
     private lateinit var agentStatusText: TextView
+    private lateinit var processText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +60,18 @@ class MainActivity : Activity() {
             text = "\nBackground agent: starting...\nRead-only telemetry + local dry-run policy."
         }
         root.addView(agentStatusText)
+
+        val processButton = Button(this).apply {
+            text = "Refresh detailed process telemetry"
+            setOnClickListener { refreshProcessTelemetry() }
+        }
+        root.addView(processButton)
+
+        processText = TextView(this).apply {
+            textSize = 14f
+            text = "\nProcesses: not sampled yet"
+        }
+        root.addView(processText)
 
         benchmarkButton = Button(this).apply {
             text = "Run 60s read-only baseline"
@@ -117,6 +130,44 @@ class MainActivity : Activity() {
                     "\nBackground agent: running\nNotification permission was not granted; monitoring remains read-only."
                 }
         }
+    }
+
+    private fun refreshProcessTelemetry() {
+        processText.text = "\nReading running processes..."
+        Thread {
+            try {
+                val snapshot = DeviceMonitor(this).collectSnapshot()
+                val text = buildString {
+                    append("\nDetailed process telemetry\n")
+                    append("RAM available: ").append(snapshot.availableRamMb)
+                        .append("/").append(snapshot.totalRamMb).append(" MB\n")
+                    append("Processes reported by Android: ")
+                        .append(snapshot.processes.size).append("\n\n")
+
+                    snapshot.processes.take(15).forEachIndexed { index, process ->
+                        val label = process.appLabels.firstOrNull() ?: process.processName
+                        append(index + 1).append(". ").append(label).append("\n")
+                        append("   Process: ").append(process.processName).append("\n")
+                        append("   PID: ").append(process.pid)
+                            .append(" • ").append(process.importanceLabel).append("\n")
+                        append("   PSS: ").append(process.pssKb / 1024)
+                            .append(" MB • RSS: ").append(process.rssKb / 1024)
+                            .append(" MB • Swap PSS: ").append(process.swapPssKb / 1024)
+                            .append(" MB\n")
+                        append("   Package: ")
+                            .append(process.packageNames.joinToString(", "))
+                            .append("\n\n")
+                    }
+                }
+                runOnUiThread { processText.text = text }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    processText.text =
+                        "\nProcess telemetry failed: " +
+                            (error.message ?: error.javaClass.simpleName)
+                }
+            }
+        }.start()
     }
 
     private fun runBaseline() {
