@@ -85,7 +85,7 @@ object ShizukuShell {
                 )
                     .tag("shizuku_shell")
                     .version(USER_SERVICE_VERSION)
-                    .daemon(true)
+                    .daemon(false)
                     .processNameSuffix("shizuku_shell")
                     .debuggable(false)
                 serviceArgs = args
