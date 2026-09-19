@@ -90,6 +90,66 @@ def parse_rish(path: Path) -> dict:
     }
 
 
+def summarize_processes(samples: list[dict]) -> dict:
+    observed = {}
+
+    for sample in samples:
+        for process in sample.get("processes", []) or []:
+            key = (
+                tuple(process.get("packageNames", [])),
+                process.get("processName"),
+            )
+            if key == ((), None):
+                continue
+
+            entry = observed.setdefault(
+                key,
+                {
+                    "packageNames": process.get("packageNames", []),
+                    "appLabels": process.get("appLabels", []),
+                    "processName": process.get("processName"),
+                    "samplesSeen": 0,
+                    "pssKb": [],
+                    "rssKb": [],
+                    "swapPssKb": [],
+                    "foregroundSamples": 0,
+                },
+            )
+            entry["samplesSeen"] += 1
+            for metric in ("pssKb", "rssKb", "swapPssKb"):
+                value = process.get(metric)
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    entry[metric].append(value)
+            if process.get("isForeground") is True:
+                entry["foregroundSamples"] += 1
+
+    rows = []
+    for entry in observed.values():
+        rows.append(
+            {
+                "packageNames": entry["packageNames"],
+                "appLabels": entry["appLabels"],
+                "processName": entry["processName"],
+                "samplesSeen": entry["samplesSeen"],
+                "foregroundSamples": entry["foregroundSamples"],
+                "averagePssKb": mean_or_none(entry["pssKb"]),
+                "maxPssKb": max(entry["pssKb"]) if entry["pssKb"] else None,
+                "averageRssKb": mean_or_none(entry["rssKb"]),
+                "averageSwapPssKb": mean_or_none(entry["swapPssKb"]),
+            }
+        )
+
+    rows.sort(key=lambda row: row["averagePssKb"] or 0, reverse=True)
+    return {
+        "processTelemetryAvailable": bool(rows),
+        "uniqueProcesses": len(rows),
+        "topByAveragePss": rows[:20],
+        "foregroundProcesses": [
+            row for row in rows if row["foregroundSamples"] > 0
+        ][:20],
+    }
+
+
 def parse_internal(path: Path) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
     samples = data.get("samples", [])
@@ -165,6 +225,7 @@ def parse_internal(path: Path) -> dict:
             "delta": cpu_delta,
             "percentOfWallTime": cpu_pct_of_wall,
         },
+        "processTelemetry": summarize_processes(samples),
     }
 
 
@@ -189,7 +250,9 @@ def build_unified(internal, external):
         "comparisonNotes": [
             "Internal and external measurements are kept separate because they use different measurement methods.",
             "Multiple internal observations are retained instead of averaged across different device conditions.",
-            "processCpuTimeMs is process CPU time; percentOfWallTime is an approximation of CPU time relative to benchmark wall time.",
+            "processCpuTimeMs is optimizer-process CPU time; it is not per-app CPU utilization.",
+            "Process telemetry uses Android-reported running processes and Debug.MemoryInfo PSS/RSS/swap PSS; the list may be incomplete on modern Android.",
+            "Per-process CPU utilization is intentionally not inferred when Android does not expose a reliable value to the app.",
             "storageAvailableMb is app-private external-files storage availability, not a whole-device storage metric.",
         ],
     }
@@ -213,7 +276,7 @@ def main() -> int:
     external = parse_rish(Path(args.rish)) if args.rish else None
 
     result = {
-        "analyzerVersion": 2,
+        "analyzerVersion": 3,
         **build_unified(internal, external),
     }
 
