@@ -8,6 +8,9 @@ import android.os.BatteryManager
 import android.os.Build
 
 class DeviceMonitor(private val context: Context) {
+
+    private val processMonitor = ProcessMonitor(context)
+
     fun collectSnapshot(): DeviceSnapshot {
         val activityManager =
             context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
@@ -31,7 +34,8 @@ class DeviceMonitor(private val context: Context) {
             availableRamMb = memoryInfo.availMem / 1024 / 1024,
             batteryPercent = batteryPercent,
             isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL
+                status == BatteryManager.BATTERY_STATUS_FULL,
+            processes = processMonitor.collectProcesses()
         )
     }
 }
