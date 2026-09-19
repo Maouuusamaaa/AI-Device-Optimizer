@@ -93,7 +93,7 @@ class BenchmarkAnalyzerTest(unittest.TestCase):
 
     def test_parse_internal(self):
         data = {
-            "schemaVersion": 1,
+            "schemaVersion": 3,
             "timestampMs": 1000,
             "workload": "monitor_foreground_idle",
             "device": {
@@ -109,7 +109,7 @@ class BenchmarkAnalyzerTest(unittest.TestCase):
                     "batteryPercent": 44,
                     "temperatureC": 29.0,
                     "storageAvailableMb": 39980,
-                    "processCpuTimeMs": 100,
+                    "optimizerProcessCpuTimeMs": 100,
                     "collectionDurationMs": 2,
                 },
                 {
@@ -119,7 +119,7 @@ class BenchmarkAnalyzerTest(unittest.TestCase):
                     "batteryPercent": 44,
                     "temperatureC": 29.8,
                     "storageAvailableMb": 39980,
-                    "processCpuTimeMs": 120,
+                    "optimizerProcessCpuTimeMs": 120,
                     "collectionDurationMs": 4,
                 },
             ],
@@ -137,8 +137,8 @@ class BenchmarkAnalyzerTest(unittest.TestCase):
         self.assertEqual(result["collectionDurationMs"]["average"], 3)
         self.assertEqual(result["batteryPercent"]["delta"], 0)
         self.assertAlmostEqual(result["temperatureC"]["delta"], 0.8, places=6)
-        self.assertEqual(result["processCpuTimeMs"]["delta"], 20)
-        self.assertAlmostEqual(result["processCpuTimeMs"]["percentOfWallTime"], 1.0)
+        self.assertEqual(result["optimizerProcessCpuTimeMs"]["delta"], 20)
+        self.assertAlmostEqual(result["optimizerProcessCpuTimeMs"]["percentOfWallTime"], 1.0)
 
     def test_build_unified_keeps_observations_separate(self):
         internal = [
