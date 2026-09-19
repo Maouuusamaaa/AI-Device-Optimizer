@@ -30,7 +30,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val snapshot = DeviceMonitor(this).collectSnapshot()
+        val snapshot = DeviceMonitor(this).collectSnapshot(includeSystemTelemetry = false)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
