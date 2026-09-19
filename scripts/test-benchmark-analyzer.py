@@ -82,10 +82,13 @@ class BenchmarkAnalyzerTest(unittest.TestCase):
             "model": "itel P661N",
             "androidApi": 33,
         })
+        self.assertEqual(result["timestamp"], "2026-09-18T14:01:36+07:00")
         self.assertEqual(result["batteryPercent"], 32)
         self.assertEqual(result["temperatureC"], 35.7)
         self.assertEqual(result["startupMs"]["samples"], [358, 330, 321, 323, 333])
         self.assertEqual(result["startupMs"]["average"], 333)
+        self.assertEqual(result["startupMs"]["median"], 330)
+        self.assertEqual(result["startupMs"]["sampleCount"], 5)
         self.assertEqual(result["waitMs"]["average"], 339.4)
         self.assertEqual(result["memoryKb"]["pss"], 54280)
         self.assertEqual(result["memoryKb"]["rss"], 160364)
