@@ -45,7 +45,7 @@ class ReadOnlyBaselineBenchmark(private val context: Context) {
                 batteryPercent = snapshot.batteryPercent,
                 isCharging = snapshot.isCharging,
                 temperatureC = temperatureC,
-                storageAvailableMb = storageAvailableMb,
+                appFilesStorageAvailableMb = appFilesStorageAvailableMb,
                 optimizerProcessCpuTimeMs = Process.getElapsedCpuTime(),
                 collectionDurationMs = (System.nanoTime() - startedNs) / 1_000_000L,
                 processes = snapshot.processes
