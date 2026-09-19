@@ -45,7 +45,7 @@ object BenchmarkJsonWriter {
                         .put("importanceLabel", process.importanceLabel)
                         .put("isForeground", process.isForeground)
                         .put("pssKb", process.pssKb)
-                        .put("rssKb", process.rssKb)
+                        .put("rssKb", process.rssKb ?: JSONObject.NULL)
                         .put("swapPssKb", process.swapPssKb)
                 )
             }
