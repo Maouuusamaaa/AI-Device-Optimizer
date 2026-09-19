@@ -10,6 +10,7 @@ import android.os.Build
 class DeviceMonitor(private val context: Context) {
 
     private val processMonitor = ProcessMonitor(context)
+    private val systemTelemetryMonitor = SystemTelemetryMonitor()
 
     fun collectSnapshot(): DeviceSnapshot {
         val activityManager =
@@ -35,7 +36,8 @@ class DeviceMonitor(private val context: Context) {
             batteryPercent = batteryPercent,
             isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                 status == BatteryManager.BATTERY_STATUS_FULL,
-            processes = processMonitor.collectProcesses()
+            processes = processMonitor.collectProcesses(),
+            systemTelemetry = systemTelemetryMonitor.collectSnapshot()
         )
     }
 }

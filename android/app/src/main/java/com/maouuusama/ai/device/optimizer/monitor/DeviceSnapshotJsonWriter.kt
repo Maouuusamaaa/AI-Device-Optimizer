@@ -9,7 +9,7 @@ object DeviceSnapshotJsonWriter {
 
     fun writeLatest(context: Context, snapshot: DeviceSnapshot): File {
         val root = JSONObject()
-            .put("schemaVersion", 1)
+            .put("schemaVersion", 2)
             .put("timestampMs", snapshot.timestampMs)
             .put("androidApi", snapshot.androidApi)
             .put("manufacturer", snapshot.manufacturer)
@@ -37,11 +37,53 @@ object DeviceSnapshotJsonWriter {
         }
         root.put("processes", processes)
 
-        val directory = File(
-            context.getExternalFilesDir(null),
-            "telemetry"
-        ).apply { mkdirs() }
+        snapshot.systemTelemetry?.let { telemetry ->
+            val system = JSONObject()
+                .put("status", telemetry.status.name)
+                .put("provider", telemetry.provider)
+                .put("errorMessage", telemetry.errorMessage ?: JSONObject.NULL)
 
+            telemetry.memory?.let { memory ->
+                system.put("memory", JSONObject()
+                    .put("memTotalKb", memory.memTotalKb ?: JSONObject.NULL)
+                    .put("memFreeKb", memory.memFreeKb ?: JSONObject.NULL)
+                    .put("memAvailableKb", memory.memAvailableKb ?: JSONObject.NULL)
+                    .put("cachedKb", memory.cachedKb ?: JSONObject.NULL)
+                    .put("swapTotalKb", memory.swapTotalKb ?: JSONObject.NULL)
+                    .put("swapFreeKb", memory.swapFreeKb ?: JSONObject.NULL)
+                    .put("swapUsedKb", memory.swapUsedKb ?: JSONObject.NULL)
+                    .put("shmemKb", memory.shmemKb ?: JSONObject.NULL)
+                    .put("sreclaimableKb", memory.sreclaimableKb ?: JSONObject.NULL))
+            }
+
+            telemetry.cpu?.let { cpu ->
+                system.put("cpu", JSONObject()
+                    .put("userJiffies", cpu.userJiffies)
+                    .put("niceJiffies", cpu.niceJiffies)
+                    .put("systemJiffies", cpu.systemJiffies)
+                    .put("idleJiffies", cpu.idleJiffies)
+                    .put("ioWaitJiffies", cpu.ioWaitJiffies)
+                    .put("irqJiffies", cpu.irqJiffies)
+                    .put("softIrqJiffies", cpu.softIrqJiffies)
+                    .put("totalJiffies", cpu.totalJiffies)
+                    .put("utilizationPercent", cpu.utilizationPercent ?: JSONObject.NULL))
+            }
+
+            val systemProcesses = JSONArray()
+            telemetry.processes.forEach { process ->
+                systemProcesses.put(
+                    JSONObject()
+                        .put("pid", process.pid)
+                        .put("processName", process.processName)
+                        .put("pssKb", process.pssKb)
+                )
+            }
+            system.put("processes", systemProcesses)
+            root.put("systemTelemetry", system)
+        }
+
+        val directory = File(context.getExternalFilesDir(null), "telemetry")
+            .apply { mkdirs() }
         val file = File(directory, "latest-device-snapshot.json")
         file.writeText(root.toString(2))
         return file
