@@ -7,7 +7,7 @@ class ShizukuTelemetryCommandsTest {
     @Test
     fun mapsOnlySupportedTelemetryOperations() {
         assertEquals(
-            "cat /proc/stat",
+            "awk '/^cpu / { print; exit }' /proc/stat",
             ShizukuTelemetryCommands.commandFor(ShizukuTelemetryOperation.CPU_STAT)
         )
         assertEquals(
