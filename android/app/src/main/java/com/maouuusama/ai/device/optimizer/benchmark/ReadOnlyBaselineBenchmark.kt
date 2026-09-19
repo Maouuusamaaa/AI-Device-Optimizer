@@ -1,6 +1,5 @@
 package com.maouuusama.ai.device.optimizer.benchmark
 
-import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -36,7 +35,7 @@ class ReadOnlyBaselineBenchmark(private val context: Context) {
                 ?.div(10.0)
 
             val storage = StatFs(context.filesDir.absolutePath)
-            val storageAvailableMb =
+            val appFilesStorageAvailableMb =
                 (storage.availableBytes / 1024L / 1024L).coerceAtLeast(0L)
 
             val sample = BenchmarkSample(
@@ -47,7 +46,7 @@ class ReadOnlyBaselineBenchmark(private val context: Context) {
                 isCharging = snapshot.isCharging,
                 temperatureC = temperatureC,
                 storageAvailableMb = storageAvailableMb,
-                processCpuTimeMs = Process.getElapsedCpuTime(),
+                optimizerProcessCpuTimeMs = Process.getElapsedCpuTime(),
                 collectionDurationMs = (System.nanoTime() - startedNs) / 1_000_000L,
                 processes = snapshot.processes
             )
