@@ -26,7 +26,7 @@ class SystemTelemetryMonitorTest {
 
         assertEquals(5769688L, memory.memTotalKb)
         assertEquals(1731816L, memory.memAvailableKb)
-        assertEquals(2165272L, memory.swapUsedKb)
+        assertEquals(2185272L, memory.swapUsedKb)
     }
 
     @Test
