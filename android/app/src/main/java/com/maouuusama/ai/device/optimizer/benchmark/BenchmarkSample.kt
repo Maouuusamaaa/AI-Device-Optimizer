@@ -1,5 +1,7 @@
 package com.maouuusama.ai.device.optimizer.benchmark
 
+import com.maouuusama.ai.device.optimizer.monitor.ProcessSnapshot
+
 data class BenchmarkSample(
     val timestampMs: Long,
     val availableRamMb: Long,
@@ -9,5 +11,6 @@ data class BenchmarkSample(
     val temperatureC: Double?,
     val storageAvailableMb: Long,
     val processCpuTimeMs: Long,
-    val collectionDurationMs: Long
+    val collectionDurationMs: Long,
+    val processes: List<ProcessSnapshot> = emptyList()
 )
