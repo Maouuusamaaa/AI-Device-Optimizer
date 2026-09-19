@@ -25,6 +25,12 @@ def mean_or_none(values):
     return statistics.mean(values) if values else None
 
 
+def percentile_or_none(values, percentile):
+    if not values:
+        return None
+    return statistics.quantiles(values, n=100, method="inclusive")[percentile - 1] if len(values) > 1 else values[0]
+
+
 def numeric_values(samples, key):
     return [
         sample[key]
@@ -157,7 +163,7 @@ def parse_internal(path: Path) -> dict:
     ram = numeric_values(samples, "availableRamMb")
     total_ram = numeric_values(samples, "totalRamMb")
     collection = numeric_values(samples, "collectionDurationMs")
-    storage = numeric_values(samples, "storageAvailableMb")
+    storage = numeric_values(samples, "appFilesStorageAvailableMb") or numeric_values(samples, "storageAvailableMb")
     battery = [
         sample["batteryPercent"]
         for sample in samples
@@ -165,7 +171,7 @@ def parse_internal(path: Path) -> dict:
         and not isinstance(sample.get("batteryPercent"), bool)
     ]
     temp = numeric_values(samples, "temperatureC")
-    cpu = numeric_values(samples, "processCpuTimeMs")
+    cpu = numeric_values(samples, "optimizerProcessCpuTimeMs") or numeric_values(samples, "processCpuTimeMs")
 
     duration_ms = (
         samples[-1]["timestampMs"] - samples[0]["timestampMs"]
@@ -204,8 +210,10 @@ def parse_internal(path: Path) -> dict:
             "average": mean_or_none(collection),
             "min": min(collection) if collection else None,
             "max": max(collection) if collection else None,
+            "p95": percentile_or_none(collection, 95),
+            "p99": percentile_or_none(collection, 99),
         },
-        "storageAvailableMb": {
+        "appFilesStorageAvailableMb": {
             "start": storage[0] if storage else None,
             "end": storage[-1] if storage else None,
         },
@@ -219,11 +227,12 @@ def parse_internal(path: Path) -> dict:
             "end": temp[-1] if temp else None,
             "delta": (temp[-1] - temp[0]) if len(temp) >= 2 else None,
         },
-        "processCpuTimeMs": {
+        "optimizerProcessCpuTimeMs": {
             "start": cpu[0] if cpu else None,
             "end": cpu[-1] if cpu else None,
             "delta": cpu_delta,
             "percentOfWallTime": cpu_pct_of_wall,
+            "scope": "optimizer process only",
         },
         "processTelemetry": summarize_processes(samples),
     }
@@ -250,10 +259,10 @@ def build_unified(internal, external):
         "comparisonNotes": [
             "Internal and external measurements are kept separate because they use different measurement methods.",
             "Multiple internal observations are retained instead of averaged across different device conditions.",
-            "processCpuTimeMs is optimizer-process CPU time; it is not per-app CPU utilization.",
+            "optimizerProcessCpuTimeMs is optimizer-process CPU time; it is not whole-device or per-app CPU utilization.",
             "Process telemetry uses Android-reported running processes and Debug.MemoryInfo PSS/RSS/swap PSS; the list may be incomplete on modern Android.",
             "Per-process CPU utilization is intentionally not inferred when Android does not expose a reliable value to the app.",
-            "storageAvailableMb is app-private external-files storage availability, not a whole-device storage metric.",
+            "appFilesStorageAvailableMb is app-private filesystem availability, not a whole-device storage metric.",
         ],
     }
 
@@ -276,7 +285,7 @@ def main() -> int:
     external = parse_rish(Path(args.rish)) if args.rish else None
 
     result = {
-        "analyzerVersion": 3,
+        "analyzerVersion": 4,
         **build_unified(internal, external),
     }
 

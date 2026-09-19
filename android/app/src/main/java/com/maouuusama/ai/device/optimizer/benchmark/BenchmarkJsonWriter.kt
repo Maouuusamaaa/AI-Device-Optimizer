@@ -20,7 +20,7 @@ object BenchmarkJsonWriter {
         }
 
         val root = JSONObject()
-            .put("schemaVersion", 2)
+            .put("schemaVersion", 3)
             .put("timestampMs", samples.first().timestampMs)
             .put("workload", workload)
             .put(
@@ -58,10 +58,16 @@ object BenchmarkJsonWriter {
                     .put("batteryPercent", sample.batteryPercent ?: JSONObject.NULL)
                     .put("isCharging", sample.isCharging)
                     .put("temperatureC", sample.temperatureC ?: JSONObject.NULL)
-                    .put("storageAvailableMb", sample.storageAvailableMb)
-                    .put("processCpuTimeMs", sample.processCpuTimeMs)
+                    .put("appFilesStorageAvailableMb", sample.appFilesStorageAvailableMb)
+                    .put("optimizerProcessCpuTimeMs", sample.optimizerProcessCpuTimeMs)
                     .put("collectionDurationMs", sample.collectionDurationMs)
                     .put("processes", processArray)
+                    .put("metricSemantics", JSONObject()
+                        .put("optimizerProcessCpuTimeMs", "elapsed CPU time of this optimizer process only")
+                        .put("appFilesStorageAvailableMb", "available space on the app files filesystem")
+                        .put("availableRamMb", "Android ActivityManager available memory for the device")
+                        .put("batteryPercent", "coarse battery percentage from ACTION_BATTERY_CHANGED")
+                        .put("temperatureC", "battery temperature reported by ACTION_BATTERY_CHANGED"))
             )
         }
 

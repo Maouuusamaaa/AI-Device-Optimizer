@@ -10,7 +10,7 @@ import android.os.Build
 class DeviceMonitor(private val context: Context) {
 
     private val processMonitor = ProcessMonitor(context)
-    private val systemTelemetryMonitor = SystemTelemetryMonitor()
+    private val systemTelemetryMonitor = SystemTelemetryMonitor(context)
 
     fun collectSnapshot(includeSystemTelemetry: Boolean = true): DeviceSnapshot {
         val activityManager =
