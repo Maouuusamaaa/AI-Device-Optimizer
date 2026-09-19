@@ -7,8 +7,23 @@ RISH="${RISH:-$HOME/rish}"
 OUT_DIR="${1:-benchmarks/results}"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 OUT_FILE="$OUT_DIR/rish-baseline-$TIMESTAMP.txt"
+JSON_FILE="$OUT_DIR/rish-baseline-$TIMESTAMP.json"
+CSV_FILE="$OUT_DIR/rish-baseline-$TIMESTAMP.csv"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ANALYZER="$SCRIPT_DIR/benchmark-analyzer.py"
+CSV_EXPORTER="$SCRIPT_DIR/benchmark-to-csv.py"
 
 mkdir -p "$OUT_DIR"
+
+if [[ ! -f "$ANALYZER" || ! -f "$CSV_EXPORTER" ]]; then
+  echo "Benchmark analyzer/exporter not found beside the script."
+  exit 1
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "python3 is required to generate JSON/CSV benchmark artifacts."
+  exit 1
+fi
 
 if [[ ! -x "$RISH" ]]; then
   echo "Rish executable not found: $RISH"
@@ -49,4 +64,9 @@ rsh() {
 } | tee "$OUT_FILE"
 
 echo
+python3 "$ANALYZER" --rish "$OUT_FILE" --out "$JSON_FILE" >/dev/null
+python3 "$CSV_EXPORTER" --input "$JSON_FILE" --output "$CSV_FILE"
+
 echo "Saved: $OUT_FILE"
+echo "Saved: $JSON_FILE"
+echo "Saved: $CSV_FILE"
