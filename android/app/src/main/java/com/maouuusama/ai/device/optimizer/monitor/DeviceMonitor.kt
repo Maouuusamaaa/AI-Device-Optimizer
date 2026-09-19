@@ -12,7 +12,7 @@ class DeviceMonitor(private val context: Context) {
     private val processMonitor = ProcessMonitor(context)
     private val systemTelemetryMonitor = SystemTelemetryMonitor()
 
-    fun collectSnapshot(): DeviceSnapshot {
+    fun collectSnapshot(includeSystemTelemetry: Boolean = true): DeviceSnapshot {
         val activityManager =
             context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val memoryInfo = ActivityManager.MemoryInfo()
@@ -37,7 +37,7 @@ class DeviceMonitor(private val context: Context) {
             isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                 status == BatteryManager.BATTERY_STATUS_FULL,
             processes = processMonitor.collectProcesses(),
-            systemTelemetry = systemTelemetryMonitor.collectSnapshot()
+            systemTelemetry = if (includeSystemTelemetry) systemTelemetryMonitor.collectSnapshot() else null
         )
     }
 }
