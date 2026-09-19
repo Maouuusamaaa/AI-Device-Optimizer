@@ -1,6 +1,8 @@
 package com.maouuusama.ai.device.optimizer.monitor
 
-class SystemTelemetryMonitor {
+import android.content.Context
+
+class SystemTelemetryMonitor(private val context: Context? = null) {
 
     private val cpuMonitor = SystemCpuMonitor()
 
@@ -25,17 +27,25 @@ class SystemTelemetryMonitor {
     }
 
     private fun collectWithShizuku(): SystemTelemetrySnapshot = try {
+        val appContext = context?.applicationContext
+            ?: throw IllegalStateException("Context required for Shizuku user service")
+
         val memInfo = ShizukuShell.execute(
+            appContext,
             "cat /proc/meminfo | grep -E '^(MemTotal|MemFree|MemAvailable|Cached|SwapTotal|SwapFree|SReclaimable|Shmem):'"
         ).getOrThrow()
         val processInfo = ShizukuShell.execute(
+            appContext,
             "dumpsys meminfo | grep -E '^[[:space:]]+[0-9,]+K: ' | head -100"
         ).getOrThrow()
-        val cpuInfo = ShizukuShell.execute("cat /proc/stat | head -1").getOrThrow()
+        val cpuInfo = ShizukuShell.execute(
+            appContext,
+            "cat /proc/stat | head -1"
+        ).getOrThrow()
 
         SystemTelemetrySnapshot(
             status = SystemTelemetryStatus.AVAILABLE,
-            provider = "shizuku",
+            provider = "shizuku-user-service",
             memory = parseMemoryInfo(memInfo),
             processes = parseProcesses(processInfo),
             cpu = cpuMonitor.collect(parseCpuLine(cpuInfo))
@@ -43,7 +53,7 @@ class SystemTelemetryMonitor {
     } catch (error: Exception) {
         SystemTelemetrySnapshot(
             status = SystemTelemetryStatus.ERROR,
-            provider = "shizuku",
+            provider = "shizuku-user-service",
             memory = null,
             processes = emptyList(),
             cpu = null,
