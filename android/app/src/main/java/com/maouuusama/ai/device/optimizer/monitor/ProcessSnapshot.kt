@@ -9,6 +9,6 @@ data class ProcessSnapshot(
     val importanceLabel: String,
     val isForeground: Boolean,
     val pssKb: Long,
-    val rssKb: Long,
+    val rssKb: Long?,
     val swapPssKb: Long
 )
