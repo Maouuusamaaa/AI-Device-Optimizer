@@ -64,7 +64,7 @@ class OptimizerBackgroundService : Service() {
             val decisions = policyEngine.evaluate(state)
             DeviceSnapshotJsonWriter.writeLatest(this, snapshot)
             saveLatest(snapshot, decisions)
-            updateNotification(formatStatus(snapshot.availableRamMb, snapshot.totalRamMb, decisions))
+            updateNotification(formatStatus(snapshot, decisions))
         } catch (error: Exception) {
             Log.e(TAG, "Background monitoring failed", error)
             updateNotification("Monitoring error: ${error.javaClass.simpleName}")
@@ -93,20 +93,22 @@ class OptimizerBackgroundService : Service() {
     }
 
     private fun formatStatus(
-        availableRamMb: Long,
-        totalRamMb: Long,
+        snapshot: DeviceSnapshot,
         decisions: List<PolicyDecision>
     ): String {
-        val ratio = if (totalRamMb > 0) {
-            availableRamMb.toDouble() / totalRamMb * 100.0
+        val ratio = if (snapshot.totalRamMb > 0) {
+            snapshot.availableRamMb.toDouble() / snapshot.totalRamMb * 100.0
         } else {
             0.0
         }
         val primary = decisions.firstOrNull()
         val policyId = primary?.policyId ?: "none"
-        return "RAM %.0f%% available • $policyId • dry-run".format(ratio)
+        val topProcess = snapshot.processes.firstOrNull()?.let { process ->
+            val label = process.appLabels.firstOrNull() ?: process.processName
+            label + " " + (process.pssKb / 1024) + "MB"
+        } ?: "no-process"
+        return "RAM %.0f%% • $policyId • top: $topProcess • dry-run".format(ratio)
     }
-
     private fun updateNotification(text: String) {
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(NOTIFICATION_ID, buildNotification(text))
