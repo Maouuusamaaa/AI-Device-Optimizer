@@ -13,7 +13,7 @@ data class BenchmarkReport(
     val endBatteryPercent: Int?,
     val startTemperatureC: Double?,
     val endTemperatureC: Double?,
-    val storageAvailableMb: Long
+    val appFilesStorageAvailableMb: Long
 ) {
     companion object {
         fun from(samples: List<BenchmarkSample>): BenchmarkReport {
@@ -35,7 +35,7 @@ data class BenchmarkReport(
                 endBatteryPercent = last.batteryPercent,
                 startTemperatureC = first.temperatureC,
                 endTemperatureC = last.temperatureC,
-                storageAvailableMb = last.storageAvailableMb
+                appFilesStorageAvailableMb = last.appFilesStorageAvailableMb
             )
         }
     }
