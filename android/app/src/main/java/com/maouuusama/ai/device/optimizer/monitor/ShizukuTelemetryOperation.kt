@@ -11,8 +11,8 @@ internal object ShizukuTelemetryCommands {
         ShizukuTelemetryOperation.MEMORY_INFO ->
             "cat /proc/meminfo | grep -E '^(MemTotal|MemFree|MemAvailable|Cached|SwapTotal|SwapFree|SReclaimable|Shmem):'"
         ShizukuTelemetryOperation.PROCESS_MEMORY_INFO ->
-            "dumpsys meminfo | grep -E '^[[:space:]]+[0-9,]+K: '"
+            "dumpsys meminfo | grep -E '^[[:space:]]+[0-9,]+K: ' | awk 'NR <= 100 { print }'"
         ShizukuTelemetryOperation.CPU_STAT ->
-            "cat /proc/stat"
+            "awk '/^cpu / { print; exit }' /proc/stat"
     }
 }
