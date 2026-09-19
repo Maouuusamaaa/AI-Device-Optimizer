@@ -2,6 +2,7 @@ package com.maouuusama.ai.device.optimizer.monitor
 
 import android.content.pm.PackageManager
 import rikka.shizuku.Shizuku
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 object ShizukuShell {
@@ -27,6 +28,7 @@ object ShizukuShell {
                 IllegalStateException("Shizuku is not available or permission is not granted")
             )
         }
+
         return runCatching {
             val clazz = Class.forName("rikka.shizuku.Shizuku")
             val method = clazz.getDeclaredMethod(
@@ -36,23 +38,43 @@ object ShizukuShell {
                 String::class.java
             ).apply { isAccessible = true }
 
-            val remote = method.invoke(null, arrayOf("sh", "-c", command), null, null) as Process
+            val remote = method.invoke(
+                null,
+                arrayOf("sh", "-c", command),
+                null,
+                null
+            ) as Process
+
+            val executor = Executors.newFixedThreadPool(2)
             try {
-                val output = remote.inputStream.bufferedReader().use { it.readText() }
-                remote.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
-                if (remote.isAlive) {
+                // Shizuku's RemoteProcess uses IPC-backed streams. Read stdout and
+                // stderr concurrently so one full pipe cannot block process exit.
+                val stdoutFuture = executor.submit<String> {
+                    remote.inputStream.bufferedReader().use { it.readText() }
+                }
+                val stderrFuture = executor.submit<String> {
+                    remote.errorStream.bufferedReader().use { it.readText() }
+                }
+
+                if (!remote.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
                     remote.destroy()
                     throw IllegalStateException("Shizuku shell command timed out")
                 }
-                val error = remote.errorStream.bufferedReader().use { it.readText() }
-                if (remote.exitValue() != 0) {
+
+                val output = stdoutFuture.get()
+                val error = stderrFuture.get()
+                val exitCode = remote.exitValue()
+
+                if (exitCode != 0) {
                     throw IllegalStateException(
-                        "Shizuku command failed (${remote.exitValue()}): ${error.trim()}"
+                        "Shizuku command failed ($exitCode): ${error.trim()}"
                     )
                 }
+
                 output
             } finally {
                 if (remote.isAlive) remote.destroy()
+                executor.shutdownNow()
             }
         }
     }
