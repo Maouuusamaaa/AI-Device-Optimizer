@@ -23,6 +23,25 @@ from pathlib import Path
 
 def mean_or_none(values):
     return statistics.mean(values) if values else None
+ 
+def summary_stats(values):
+    if not values:
+        return {
+            "average": None,
+            "median": None,
+            "stdev": None,
+            "min": None,
+            "max": None,
+            "sampleCount": 0,
+        }
+    return {
+        "average": statistics.mean(values),
+        "median": statistics.median(values),
+        "stdev": statistics.stdev(values) if len(values) >= 2 else 0.0,
+        "min": min(values),
+        "max": max(values),
+        "sampleCount": len(values),
+    }
 
 
 def numeric_values(samples, key):
@@ -44,6 +63,7 @@ def parse_rish(path: Path) -> dict:
         match = re.search(pattern, text, re.MULTILINE)
         return match.group(1) if match else None
 
+    timestamp = one(r"^timestamp=(.+)$")
     temp_raw = one(r"^\s*temperature:\s*(\d+)\s*$")
     level = one(r"^\s*level:\s*(\d+)\s*$")
     pss = one(r"^\s*TOTAL\s+(\d+)\s+")
@@ -59,6 +79,7 @@ def parse_rish(path: Path) -> dict:
 
     return {
         "source": str(path),
+        "timestamp": timestamp,
         "device": {
             "manufacturer": device_values[0] if len(device_values) > 0 else None,
             "model": device_values[1] if len(device_values) > 1 else None,
@@ -71,16 +92,12 @@ def parse_rish(path: Path) -> dict:
         "batteryPercent": int(level) if level else None,
         "temperatureC": int(temp_raw) / 10 if temp_raw else None,
         "startupMs": {
+            **summary_stats(startup),
             "samples": startup,
-            "average": mean_or_none(startup),
-            "min": min(startup) if startup else None,
-            "max": max(startup) if startup else None,
         },
         "waitMs": {
+            **summary_stats(wait),
             "samples": wait,
-            "average": mean_or_none(wait),
-            "min": min(wait) if wait else None,
-            "max": max(wait) if wait else None,
         },
         "memoryKb": {
             "pss": int(pss) if pss else None,
@@ -191,20 +208,14 @@ def parse_internal(path: Path) -> dict:
         "sampleCount": len(samples),
         "durationMs": duration_ms,
         "availableRamMb": {
-            "average": mean_or_none(ram),
-            "min": min(ram) if ram else None,
-            "max": max(ram) if ram else None,
+            **summary_stats(ram),
             "percentOfTotalAverage": (
                 (mean_or_none(ram) / mean_or_none(total_ram)) * 100
                 if ram and total_ram and mean_or_none(total_ram)
                 else None
             ),
         },
-        "collectionDurationMs": {
-            "average": mean_or_none(collection),
-            "min": min(collection) if collection else None,
-            "max": max(collection) if collection else None,
-        },
+        "collectionDurationMs": summary_stats(collection),
         "storageAvailableMb": {
             "start": storage[0] if storage else None,
             "end": storage[-1] if storage else None,
@@ -276,7 +287,7 @@ def main() -> int:
     external = parse_rish(Path(args.rish)) if args.rish else None
 
     result = {
-        "analyzerVersion": 3,
+        "analyzerVersion": 4,
         **build_unified(internal, external),
     }
 
