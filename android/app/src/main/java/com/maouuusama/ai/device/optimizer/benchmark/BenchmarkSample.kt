@@ -9,8 +9,8 @@ data class BenchmarkSample(
     val batteryPercent: Int?,
     val isCharging: Boolean,
     val temperatureC: Double?,
-    val storageAvailableMb: Long,
-    val processCpuTimeMs: Long,
+    val appFilesStorageAvailableMb: Long,
+    val optimizerProcessCpuTimeMs: Long,
     val collectionDurationMs: Long,
     val processes: List<ProcessSnapshot> = emptyList()
 )
