@@ -160,7 +160,20 @@ class OptimizerBackgroundService : Service() {
 
     override fun onDestroy() {
         executor.shutdownNow()
+        com.maouuusama.ai.device.optimizer.monitor.ShizukuShell.unbind()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         super.onDestroy()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Do not treat task removal as an instruction to stop the monitoring service.
+        // Android may remove the activity task while the foreground service remains active.
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
