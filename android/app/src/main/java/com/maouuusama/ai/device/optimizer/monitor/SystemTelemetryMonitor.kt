@@ -87,7 +87,7 @@ class SystemTelemetryMonitor {
 
     internal fun parseCpuLine(output: String): SystemCpuCounters? {
         val line = output.lineSequence().firstOrNull { it.trimStart().startsWith("cpu ") } ?: return null
-        val fields = line.trim().split(Regex("\s+"))
+        val fields = line.trim().split(Regex("""\s+"""))
         if (fields.size < 8) return null
         return runCatching {
             SystemCpuCounters(
