@@ -27,6 +27,14 @@ CI performs:
 
 A green CI run is required before treating the Android module as build-verified.
 
+## Benchmark artifacts
+
+Running `scripts/rish-baseline.sh` from Termux creates a raw TXT capture, a structured JSON report, and a flattened CSV row under `benchmarks/results/`. The analyzer reports mean, median, sample standard deviation, minimum, and maximum for repeated startup measurements.
+
+## Evaluation safety
+
+`benchmarks/evaluator.py` performs measurement-only, like-for-like comparisons and requires at least three runs by default. It does not execute or authorize optimizer actions.
+
 ## Safety
 
 The CI build does not install the APK on a physical device and does not execute optimizer actions. The application remains dry-run only.
