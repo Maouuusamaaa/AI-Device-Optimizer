@@ -36,6 +36,12 @@ jobs:
       - name: Validate benchmark analyzer
         run: python3 -m py_compile ../scripts/benchmark-analyzer.py
 
+      - name: Validate benchmark CSV exporter
+        run: python3 -m py_compile ../scripts/benchmark-to-csv.py
+
+      - name: Run benchmark CSV exporter tests
+        run: python3 ../scripts/test-benchmark-to-csv.py
+
       - name: Run benchmark analyzer tests
         run: python3 ../scripts/test-benchmark-analyzer.py
 
