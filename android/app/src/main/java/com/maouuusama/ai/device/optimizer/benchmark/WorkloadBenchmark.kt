@@ -46,7 +46,7 @@ class WorkloadBenchmark(private val context: Context) {
                 ?.div(10.0)
 
             val storage = StatFs(context.filesDir.absolutePath)
-            val storageAvailableMb =
+            val appFilesStorageAvailableMb =
                 (storage.availableBytes / 1024L / 1024L).coerceAtLeast(0L)
 
             val sample = BenchmarkSample(
@@ -57,7 +57,7 @@ class WorkloadBenchmark(private val context: Context) {
                 isCharging = snapshot.isCharging,
                 temperatureC = temperatureC,
                 storageAvailableMb = storageAvailableMb,
-                processCpuTimeMs = Process.getElapsedCpuTime(),
+                optimizerProcessCpuTimeMs = Process.getElapsedCpuTime(),
                 collectionDurationMs = (System.nanoTime() - sampleStartedNs) / 1_000_000L,
                 processes = snapshot.processes
             )
