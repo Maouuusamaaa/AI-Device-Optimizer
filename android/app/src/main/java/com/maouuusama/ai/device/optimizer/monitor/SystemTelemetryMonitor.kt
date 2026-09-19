@@ -17,7 +17,7 @@ class SystemTelemetryMonitor(private val context: Context? = null) {
             )
             ShizukuShell.Status.UNAVAILABLE -> SystemTelemetrySnapshot(
                 status = SystemTelemetryStatus.UNAVAILABLE,
-                provider = "android-api-fallback",
+                provider = "none",
                 memory = null,
                 processes = emptyList(),
                 cpu = null
@@ -32,15 +32,15 @@ class SystemTelemetryMonitor(private val context: Context? = null) {
 
         val memInfo = ShizukuShell.execute(
             appContext,
-            "cat /proc/meminfo | grep -E '^(MemTotal|MemFree|MemAvailable|Cached|SwapTotal|SwapFree|SReclaimable|Shmem):'"
+            ShizukuTelemetryOperation.MEMORY_INFO
         ).getOrThrow()
         val processInfo = ShizukuShell.execute(
             appContext,
-            "dumpsys meminfo | grep -E '^[[:space:]]+[0-9,]+K: ' | head -100"
+            ShizukuTelemetryOperation.PROCESS_MEMORY_INFO
         ).getOrThrow()
         val cpuInfo = ShizukuShell.execute(
             appContext,
-            "cat /proc/stat | head -1"
+            ShizukuTelemetryOperation.CPU_STAT
         ).getOrThrow()
 
         SystemTelemetrySnapshot(
