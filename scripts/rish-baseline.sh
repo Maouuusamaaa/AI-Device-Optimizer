@@ -65,7 +65,7 @@ rsh() {
 
 echo
 python3 "$ANALYZER" --rish "$OUT_FILE" --out "$JSON_FILE" >/dev/null
-python3 "$CSV_EXPORTER" --input "$JSON_FILE" --output "$CSV_FILE"
+python3 "$CSV_EXPORTER" --input "$JSON_FILE" --output "$CSV_FILE" >/dev/null
 
 echo "Saved: $OUT_FILE"
 echo "Saved: $JSON_FILE"
