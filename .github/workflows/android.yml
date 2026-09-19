@@ -44,7 +44,7 @@ jobs:
 
       - name: Run benchmark analyzer tests
         run: python3 ../scripts/test-benchmark-analyzer.py
-
+\n      - name: Run Rish baseline aggregation tests\n        run: python3 ../scripts/test-aggregate-rish-baselines.py\n
       - name: Validate benchmark evaluator
         run: python3 -m py_compile ../benchmarks/evaluator.py
 
