@@ -2,6 +2,7 @@ package com.maouuusama.ai.device.optimizer.monitor
 
 import android.app.ActivityManager
 import android.content.Context
+import java.io.File
 
 class ProcessMonitor(private val context: Context) {
 
@@ -40,11 +41,25 @@ class ProcessMonitor(private val context: Context) {
                 isForeground = process.importance ==
                     ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
                 pssKb = memoryInfo.totalPss.toLong(),
-                rssKb = memoryInfo.totalRss.toLong(),
-                swapPssKb = memoryInfo.totalSwappedOutPss.toLong()
+                rssKb = readRssKb(process.pid),
+                swapPssKb = memoryInfo
+                    .getMemoryStat("summary.total-swap")
+                    ?.toLongOrNull()
+                    ?: 0L
             )
         }.sortedByDescending { it.pssKb }
     }
+
+    private fun readRssKb(pid: Int): Long? =
+        runCatching {
+            File("/proc/$pid/status").useLines { lines ->
+                lines.firstOrNull { it.startsWith("VmRSS:") }
+                    ?.substringAfter(":")
+                    ?.trim()
+                    ?.substringBefore(" ")
+                    ?.toLongOrNull()
+            }
+        }.getOrNull()
 
     private fun importanceLabel(importance: Int): String =
         when (importance) {
