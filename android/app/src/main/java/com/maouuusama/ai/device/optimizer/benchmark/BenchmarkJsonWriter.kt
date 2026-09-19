@@ -20,7 +20,7 @@ object BenchmarkJsonWriter {
         }
 
         val root = JSONObject()
-            .put("schemaVersion", 1)
+            .put("schemaVersion", 2)
             .put("timestampMs", samples.first().timestampMs)
             .put("workload", workload)
             .put(
@@ -33,6 +33,23 @@ object BenchmarkJsonWriter {
 
         val array = JSONArray()
         samples.forEach { sample ->
+            val processArray = JSONArray()
+            sample.processes.forEach { process ->
+                processArray.put(
+                    JSONObject()
+                        .put("pid", process.pid)
+                        .put("processName", process.processName)
+                        .put("packageNames", JSONArray(process.packageNames))
+                        .put("appLabels", JSONArray(process.appLabels))
+                        .put("importance", process.importance)
+                        .put("importanceLabel", process.importanceLabel)
+                        .put("isForeground", process.isForeground)
+                        .put("pssKb", process.pssKb)
+                        .put("rssKb", process.rssKb)
+                        .put("swapPssKb", process.swapPssKb)
+                )
+            }
+
             array.put(
                 JSONObject()
                     .put("timestampMs", sample.timestampMs)
@@ -44,6 +61,7 @@ object BenchmarkJsonWriter {
                     .put("storageAvailableMb", sample.storageAvailableMb)
                     .put("processCpuTimeMs", sample.processCpuTimeMs)
                     .put("collectionDurationMs", sample.collectionDurationMs)
+                    .put("processes", processArray)
             )
         }
 
