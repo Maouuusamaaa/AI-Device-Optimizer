@@ -14,7 +14,7 @@ class OptimizerApplication : Application() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
 
         val activityManager = getSystemService(ActivityManager::class.java)
-        val exit = activityManager.getHistoricalProcessExitReasons(packageName, 0)
+        val exit = activityManager.getHistoricalProcessExitReasons(packageName, 0, 1)
             .firstOrNull() ?: return
 
         getSharedPreferences(PREFERENCES, MODE_PRIVATE).edit()
