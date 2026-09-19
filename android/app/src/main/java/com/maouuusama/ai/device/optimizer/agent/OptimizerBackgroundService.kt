@@ -24,6 +24,9 @@ class OptimizerBackgroundService : Service() {
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private lateinit var monitor: DeviceMonitor
     private val policyEngine = LocalPolicyEngine()
+    @Volatile
+    private var latestSystemTelemetry: com.maouuusama.ai.device.optimizer.monitor.SystemTelemetrySnapshot? = null
+    private var sampleCount = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -56,7 +59,19 @@ class OptimizerBackgroundService : Service() {
 
     private fun collectAndEvaluate() {
         try {
-            val snapshot = monitor.collectSnapshot()
+            sampleCount += 1
+            val shouldRefreshSystemTelemetry =
+                latestSystemTelemetry == null ||
+                    sampleCount % SYSTEM_TELEMETRY_EVERY_N_SAMPLES == 0L
+
+            val snapshot = monitor.collectSnapshot(
+                includeSystemTelemetry = shouldRefreshSystemTelemetry
+            ).let { current ->
+                if (shouldRefreshSystemTelemetry) {
+                    latestSystemTelemetry = current.systemTelemetry
+                }
+                current.copy(systemTelemetry = latestSystemTelemetry)
+            }
             val state = DeviceState.fromSnapshot(snapshot)
             val decisions = policyEngine.evaluate(state)
             DeviceSnapshotJsonWriter.writeLatest(this, snapshot)
@@ -158,5 +173,6 @@ class OptimizerBackgroundService : Service() {
         private const val NOTIFICATION_ID = 1001
         private const val PREFERENCES = "optimizer_agent"
         const val SAMPLE_INTERVAL_MS = 10_000L
+        private const val SYSTEM_TELEMETRY_EVERY_N_SAMPLES = 3L
     }
 }
