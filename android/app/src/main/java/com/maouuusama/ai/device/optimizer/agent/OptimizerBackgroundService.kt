@@ -11,6 +11,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
+import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
+import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshotJsonWriter
 import com.maouuusama.ai.device.optimizer.policy.DeviceState
 import com.maouuusama.ai.device.optimizer.policy.LocalPolicyEngine
 import com.maouuusama.ai.device.optimizer.policy.PolicyDecision
@@ -60,7 +62,8 @@ class OptimizerBackgroundService : Service() {
             val snapshot = monitor.collectSnapshot()
             val state = DeviceState.fromSnapshot(snapshot)
             val decisions = policyEngine.evaluate(state)
-            saveLatest(snapshot.timestampMs, decisions)
+            DeviceSnapshotJsonWriter.writeLatest(this, snapshot)
+            saveLatest(snapshot, decisions)
             updateNotification(formatStatus(snapshot.availableRamMb, snapshot.totalRamMb, decisions))
         } catch (error: Exception) {
             Log.e(TAG, "Background monitoring failed", error)
@@ -68,11 +71,21 @@ class OptimizerBackgroundService : Service() {
         }
     }
 
-    private fun saveLatest(timestampMs: Long, decisions: List<PolicyDecision>) {
+    private fun saveLatest(snapshot: DeviceSnapshot, decisions: List<PolicyDecision>) {
         val primary = decisions.firstOrNull()
         getSharedPreferences(PREFERENCES, MODE_PRIVATE)
             .edit()
-            .putLong("last_sample_timestamp_ms", timestampMs)
+            .putLong("last_sample_timestamp_ms", snapshot.timestampMs)
+            .putLong("last_available_ram_mb", snapshot.availableRamMb)
+            .putLong("last_total_ram_mb", snapshot.totalRamMb)
+            .putInt("last_process_count", snapshot.processes.size)
+            .putString(
+                "last_top_process",
+                snapshot.processes.firstOrNull()?.let { process ->
+                    (process.appLabels.firstOrNull() ?: process.processName) +
+                        " (" + process.pssKb + " KB PSS)"
+                }
+            )
             .putString("last_policy_id", primary?.policyId)
             .putString("last_policy_severity", primary?.severity?.name)
             .putString("last_policy_mode", primary?.mode?.name)
