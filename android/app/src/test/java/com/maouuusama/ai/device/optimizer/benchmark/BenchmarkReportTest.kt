@@ -15,8 +15,8 @@ class BenchmarkReportTest {
                 batteryPercent = 50,
                 isCharging = false,
                 temperatureC = 30.0,
-                storageAvailableMb = 10_000L,
-                processCpuTimeMs = 10L,
+                appFilesStorageAvailableMb = 10_000L,
+                optimizerProcessCpuTimeMs = 10L,
                 collectionDurationMs = 2L
             ),
             BenchmarkSample(
@@ -26,8 +26,8 @@ class BenchmarkReportTest {
                 batteryPercent = 49,
                 isCharging = false,
                 temperatureC = 31.0,
-                storageAvailableMb = 9_900L,
-                processCpuTimeMs = 15L,
+                appFilesStorageAvailableMb = 9_900L,
+                optimizerProcessCpuTimeMs = 15L,
                 collectionDurationMs = 4L
             )
         )
@@ -43,6 +43,6 @@ class BenchmarkReportTest {
         assertEquals(49, report.endBatteryPercent)
         assertEquals(30.0, report.startTemperatureC!!, 0.001)
         assertEquals(31.0, report.endTemperatureC!!, 0.001)
-        assertEquals(9_900L, report.storageAvailableMb)
+        assertEquals(9_900L, report.appFilesStorageAvailableMb)
     }
 }
