@@ -1,6 +1,7 @@
 package com.maouuusama.ai.device.optimizer.policy
 
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
+import com.maouuusama.ai.device.optimizer.monitor.ProcessSnapshot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -63,6 +64,39 @@ class LocalPolicyEngineTest {
     fun missingBatteryDoesNotTriggerLowBatteryPolicy() {
         val result = engine.evaluate(DeviceState(4000, 8000, null, false, false))
         assertEquals("device.normal", result.single().policyId)
+    }
+
+    @Test
+    fun snapshotCarriesProcessTelemetryIntoPolicyState() {
+        val process = ProcessSnapshot(
+            pid = 1234,
+            processName = "example",
+            packageNames = listOf("com.example"),
+            appLabels = listOf("Example"),
+            importance = 100,
+            importanceLabel = "FOREGROUND",
+            isForeground = true,
+            pssKb = 128000L,
+            rssKb = 180000L,
+            swapPssKb = 32000L
+        )
+        val snapshot = DeviceSnapshot(
+            timestampMs = 1L,
+            androidApi = 33,
+            manufacturer = "ITEL",
+            model = "itel P661N",
+            totalRamMb = 5634L,
+            availableRamMb = 1800L,
+            batteryPercent = 44,
+            isCharging = false,
+            processes = listOf(process)
+        )
+
+        val state = DeviceState.fromSnapshot(snapshot)
+
+        assertEquals(1, state.processes.size)
+        assertEquals("com.example", state.processes.single().packageNames.single())
+        assertEquals(128000L, state.processes.single().pssKb)
     }
 
     @Test
