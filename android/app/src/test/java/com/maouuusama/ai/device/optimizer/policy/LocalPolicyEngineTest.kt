@@ -16,12 +16,27 @@ class LocalPolicyEngineTest {
     }
 
     @Test
-    fun lowMemoryProducesObservation() {
-        val result = engine.evaluate(DeviceState(1000, 8000, 80, false, false))
-        assertEquals("memory.low", result.single().policyId)
-        assertEquals(PolicySeverity.HIGH, result.single().severity)
-        assertEquals("observe.background_pressure", result.single().proposedActionId)
+    fun memoryPressureThresholdProducesPressureDecision() {
+        val result = engine.evaluate(DeviceState(1500, 5634, 80, false, false))
+        assertEquals("memory.pressure", result.single().policyId)
+        assertEquals(PolicySeverity.ADVISORY, result.single().severity)
+        assertEquals("observe.memory_pressure", result.single().proposedActionId)
         assertEquals(PolicyMode.DRY_RUN, result.single().mode)
+    }
+
+    @Test
+    fun memoryCriticalThresholdProducesCriticalDecision() {
+        val result = engine.evaluate(DeviceState(999, 5634, 80, false, false))
+        assertEquals("memory.critical", result.single().policyId)
+        assertEquals(PolicySeverity.HIGH, result.single().severity)
+        assertEquals("observe.memory_critical", result.single().proposedActionId)
+        assertEquals(PolicyMode.DRY_RUN, result.single().mode)
+    }
+
+    @Test
+    fun abovePressureThresholdRemainsNormal() {
+        val result = engine.evaluate(DeviceState(1501, 5634, 80, false, false))
+        assertEquals("device.normal", result.single().policyId)
     }
 
     @Test
@@ -41,7 +56,7 @@ class LocalPolicyEngineTest {
     fun gamingProducesProtectiveDecision() {
         val result = engine.evaluate(DeviceState(4000, 8000, 80, false, true))
         assertTrue(result.any { it.policyId == "workload.gaming" })
-        assertTrue(result.none { it.proposedActionId == "observe.background_pressure" })
+        assertTrue(result.none { it.proposedActionId == "observe.memory_pressure" })
     }
 
     @Test
