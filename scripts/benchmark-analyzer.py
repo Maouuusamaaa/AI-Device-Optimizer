@@ -23,7 +23,7 @@ from pathlib import Path
 
 def mean_or_none(values):
     return statistics.mean(values) if values else None
- 
+
 def summary_stats(values):
     if not values:
         return {
