@@ -16,20 +16,21 @@ import com.maouuusama.ai.device.optimizer.benchmark.BenchmarkReport
 import com.maouuusama.ai.device.optimizer.benchmark.ReadOnlyBaselineBenchmark
 import com.maouuusama.ai.device.optimizer.benchmark.WorkloadBenchmark
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
+import com.maouuusama.ai.device.optimizer.monitor.ShizukuShell
+import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetrySnapshot
+import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetryStatus
 
 class MainActivity : Activity() {
-
     private lateinit var statusText: TextView
     private lateinit var benchmarkButton: Button
     private lateinit var workloadButton: Button
     private lateinit var agentStatusText: TextView
     private lateinit var processText: TextView
+    private lateinit var systemText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val monitor = DeviceMonitor(this)
-        val snapshot = monitor.collectSnapshot()
+        val snapshot = DeviceMonitor(this).collectSnapshot(includeSystemTelemetry = false)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -40,14 +41,12 @@ class MainActivity : Activity() {
             textSize = 20f
             text = "AI Device Optimizer"
         })
-
         root.addView(TextView(this).apply {
             textSize = 17f
             text = buildString {
                 append("Monitor prototype\n\n")
                 append("Android API: ").append(snapshot.androidApi).append("\n")
-                append("Device: ").append(snapshot.manufacturer)
-                    .append(" ").append(snapshot.model).append("\n")
+                append("Device: ").append(snapshot.manufacturer).append(" ").append(snapshot.model).append("\n")
                 append("RAM total: ").append(snapshot.totalRamMb).append(" MB\n")
                 append("RAM available: ").append(snapshot.availableRamMb).append(" MB\n")
                 append("Battery: ").append(snapshot.batteryPercent ?: "unknown").append("%\n")
@@ -61,17 +60,25 @@ class MainActivity : Activity() {
         }
         root.addView(agentStatusText)
 
-        val processButton = Button(this).apply {
+        root.addView(Button(this).apply {
             text = "Refresh detailed process telemetry"
             setOnClickListener { refreshProcessTelemetry() }
-        }
-        root.addView(processButton)
-
+        })
         processText = TextView(this).apply {
             textSize = 14f
             text = "\nProcesses: not sampled yet"
         }
         root.addView(processText)
+
+        root.addView(Button(this).apply {
+            text = "Refresh system telemetry (Shizuku)"
+            setOnClickListener { refreshSystemTelemetry() }
+        })
+        systemText = TextView(this).apply {
+            textSize = 14f
+            text = formatSystemTelemetry(snapshot.systemTelemetry)
+        }
+        root.addView(systemText)
 
         benchmarkButton = Button(this).apply {
             text = "Run 60s read-only baseline"
@@ -97,22 +104,19 @@ class MainActivity : Activity() {
 
     private fun startBackgroundAgent() {
         val start = {
-            val intent = Intent(this, OptimizerBackgroundService::class.java)
-            ContextCompat.startForegroundService(this, intent)
+            ContextCompat.startForegroundService(
+                this,
+                Intent(this, OptimizerBackgroundService::class.java)
+            )
             agentStatusText.text =
                 "\nBackground agent: running\nSampling every 10 seconds.\nNo system mutations; policy mode is DRY_RUN."
         }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissions(
-                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                REQUEST_NOTIFICATION_PERMISSION
-            )
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATION_PERMISSION)
         }
-
         start()
     }
 
@@ -141,63 +145,97 @@ class MainActivity : Activity() {
                     append("\nDetailed process telemetry\n")
                     append("RAM available: ").append(snapshot.availableRamMb)
                         .append("/").append(snapshot.totalRamMb).append(" MB\n")
-                    append("Processes reported by Android: ")
-                        .append(snapshot.processes.size).append("\n\n")
-
+                    append("Processes reported by Android: ").append(snapshot.processes.size).append("\n\n")
                     snapshot.processes.take(15).forEachIndexed { index, process ->
                         val label = process.appLabels.firstOrNull() ?: process.processName
                         append(index + 1).append(". ").append(label).append("\n")
                         append("   Process: ").append(process.processName).append("\n")
-                        append("   PID: ").append(process.pid)
-                            .append(" • ").append(process.importanceLabel).append("\n")
+                        append("   PID: ").append(process.pid).append(" • ").append(process.importanceLabel).append("\n")
                         append("   PSS: ").append(process.pssKb / 1024)
                             .append(" MB • RSS: ")
                             .append(process.rssKb?.let { it / 1024 } ?: "unavailable")
-                            .append(" MB • Swap PSS: ").append(process.swapPssKb / 1024)
-                            .append(" MB\n")
-                        append("   Package: ")
-                            .append(process.packageNames.joinToString(", "))
-                            .append("\n\n")
+                            .append(" MB • Swap PSS: ").append(process.swapPssKb / 1024).append(" MB\n")
+                        append("   Package: ").append(process.packageNames.joinToString(", ")).append("\n\n")
                     }
                 }
                 runOnUiThread { processText.text = text }
             } catch (error: Exception) {
                 runOnUiThread {
-                    processText.text =
-                        "\nProcess telemetry failed: " +
-                            (error.message ?: error.javaClass.simpleName)
+                    processText.text = "\nProcess telemetry failed: " +
+                        (error.message ?: error.javaClass.simpleName)
                 }
             }
         }.start()
+    }
+
+    private fun refreshSystemTelemetry() {
+        when (ShizukuShell.status()) {
+            ShizukuShell.Status.PERMISSION_REQUIRED -> {
+                systemText.text = "\nSystem telemetry: Shizuku permission required. Requesting permission..."
+                ShizukuShell.requestPermission(REQUEST_SHIZUKU_PERMISSION)
+            }
+            ShizukuShell.Status.UNAVAILABLE -> {
+                systemText.text =
+                    "\nSystem telemetry: Shizuku unavailable. Android API telemetry remains active."
+            }
+            ShizukuShell.Status.AVAILABLE -> {
+                systemText.text = "\nSystem telemetry: collecting..."
+                Thread {
+                    val telemetry = DeviceMonitor(this).collectSnapshot().systemTelemetry
+                    runOnUiThread { systemText.text = formatSystemTelemetry(telemetry) }
+                }.start()
+            }
+        }
+    }
+
+    private fun formatSystemTelemetry(telemetry: SystemTelemetrySnapshot?): String = buildString {
+        append("\nSystem telemetry\n")
+        if (telemetry == null) {
+            append("Status: unavailable")
+            return@buildString
+        }
+        append("Status: ").append(telemetry.status.name).append("\n")
+        append("Provider: ").append(telemetry.provider).append("\n")
+        telemetry.errorMessage?.let { append("Error: ").append(it).append("\n") }
+        telemetry.memory?.let { memory ->
+            append("MemAvailable: ").append(memory.memAvailableKb?.div(1024) ?: "unknown").append(" MB\n")
+            append("Swap used: ").append(memory.swapUsedKb?.div(1024) ?: "unknown").append(" MB\n")
+            append("Cached: ").append(memory.cachedKb?.div(1024) ?: "unknown").append(" MB\n")
+        }
+        telemetry.cpu?.utilizationPercent?.let {
+            append("CPU utilization: ").append(String.format("%.1f%%", it)).append("\n")
+        } ?: append("CPU utilization: warming up\n")
+        append("System processes: ").append(telemetry.processes.size).append("\n")
+        telemetry.processes.take(10).forEachIndexed { index, process ->
+            append(index + 1).append(". ").append(process.processName)
+                .append(" • PID ").append(process.pid)
+                .append(" • PSS ").append(process.pssKb / 1024).append(" MB\n")
+        }
+        if (telemetry.status == SystemTelemetryStatus.PERMISSION_REQUIRED) {
+            append("Tap refresh to request Shizuku permission.")
+        }
     }
 
     private fun runBaseline() {
         benchmarkButton.isEnabled = false
         workloadButton.isEnabled = false
         statusText.text = "\nBaseline starting...\nKeep the device in its current state."
-
         Thread {
             try {
-                val benchmark = ReadOnlyBaselineBenchmark(this)
-                val samples = benchmark.run(
+                val samples = ReadOnlyBaselineBenchmark(this).run(
                     sampleCount = ReadOnlyBaselineBenchmark.DEFAULT_SAMPLE_COUNT,
                     intervalMs = ReadOnlyBaselineBenchmark.DEFAULT_INTERVAL_MS
                 ) { sample ->
                     runOnUiThread {
-                        statusText.text =
-                            "\nBaseline running\nRAM available: " + sample.availableRamMb +
-                                " MB\nBattery: " + (sample.batteryPercent ?: "unknown") + "%"
+                        statusText.text = "\nBaseline running\nRAM available: " +
+                            sample.availableRamMb + " MB\nBattery: " +
+                            (sample.batteryPercent ?: "unknown") + "%"
                     }
                 }
-
                 val report = BenchmarkReport.from(samples)
                 val file = BenchmarkJsonWriter.write(
-                    this,
-                    workload = "monitor_foreground_idle",
-                    samples = samples,
-                    filePrefix = "baseline"
+                    this, workload = "monitor_foreground_idle", samples = samples, filePrefix = "baseline"
                 )
-
                 runOnUiThread {
                     statusText.text = formatReport("Baseline complete", report, file.name)
                     benchmarkButton.isEnabled = true
@@ -219,37 +257,26 @@ class MainActivity : Activity() {
         statusText.text =
             "\nWorkload benchmark preparing...\nYou have 3 seconds to switch to your game/app.\n" +
                 "Run it normally for 5 minutes.\nNo system mutations; policy remains DRY_RUN."
-
         Thread {
             try {
                 Thread.sleep(3_000L)
-
-                val benchmark = WorkloadBenchmark(this)
-                val samples = benchmark.run(
+                val samples = WorkloadBenchmark(this).run(
                     durationMs = WorkloadBenchmark.DEFAULT_DURATION_MS,
                     intervalMs = WorkloadBenchmark.DEFAULT_INTERVAL_MS
                 ) { sample, index, elapsedMs ->
-                    val elapsedSeconds = elapsedMs / 1_000L
-                    val totalSeconds = WorkloadBenchmark.DEFAULT_DURATION_MS / 1_000L
                     runOnUiThread {
-                        statusText.text =
-                            "\nWorkload benchmark running\n" +
-                                "Time: " + elapsedSeconds + "/" + totalSeconds + " s\n" +
-                                "Samples: " + index + "\n" +
-                                "RAM available: " + sample.availableRamMb + " MB\n" +
-                                "Battery: " + (sample.batteryPercent ?: "unknown") + "%\n" +
-                                "Temperature: " + (sample.temperatureC?.let { String.format("%.1f°C", it) } ?: "unknown")
+                        statusText.text = "\nWorkload benchmark running\nTime: " +
+                            (elapsedMs / 1_000L) + "/" +
+                            (WorkloadBenchmark.DEFAULT_DURATION_MS / 1_000L) + " s\nSamples: " +
+                            index + "\nRAM available: " + sample.availableRamMb + " MB\nBattery: " +
+                            (sample.batteryPercent ?: "unknown") + "%\nTemperature: " +
+                            (sample.temperatureC?.let { String.format("%.1f°C", it) } ?: "unknown")
                     }
                 }
-
                 val report = BenchmarkReport.from(samples)
                 val file = BenchmarkJsonWriter.write(
-                    this,
-                    workload = "foreground_user_workload",
-                    samples = samples,
-                    filePrefix = "workload"
+                    this, workload = "foreground_user_workload", samples = samples, filePrefix = "workload"
                 )
-
                 runOnUiThread {
                     statusText.text = formatReport("Workload benchmark complete", report, file.name)
                     benchmarkButton.isEnabled = true
@@ -257,9 +284,8 @@ class MainActivity : Activity() {
                 }
             } catch (error: Exception) {
                 runOnUiThread {
-                    statusText.text =
-                        "\nWorkload benchmark failed: " +
-                            (error.message ?: error.javaClass.simpleName)
+                    statusText.text = "\nWorkload benchmark failed: " +
+                        (error.message ?: error.javaClass.simpleName)
                     benchmarkButton.isEnabled = true
                     workloadButton.isEnabled = true
                 }
@@ -272,21 +298,13 @@ class MainActivity : Activity() {
             append("\n").append(title).append("\n")
             append("Samples: ").append(report.sampleCount).append("\n")
             append("Duration: ").append(report.durationMs / 1000).append(" s\n")
-            append("Average RAM available: ")
-                .append(report.averageAvailableRamMb).append(" MB\n")
-            append("RAM range: ")
-                .append(report.minimumAvailableRamMb)
-                .append("–")
-                .append(report.maximumAvailableRamMb)
-                .append(" MB\n")
+            append("Average RAM available: ").append(report.averageAvailableRamMb).append(" MB\n")
+            append("RAM range: ").append(report.minimumAvailableRamMb).append("–")
+                .append(report.maximumAvailableRamMb).append(" MB\n")
             append("Average monitor collection: ")
-                .append(String.format("%.2f", report.averageCollectionDurationMs))
-                .append(" ms\n")
-            append("Battery: ")
-                .append(report.startBatteryPercent ?: "unknown")
-                .append("% → ")
-                .append(report.endBatteryPercent ?: "unknown")
-                .append("%\n")
+                .append(String.format("%.2f", report.averageCollectionDurationMs)).append(" ms\n")
+            append("Battery: ").append(report.startBatteryPercent ?: "unknown").append("% → ")
+                .append(report.endBatteryPercent ?: "unknown").append("%\n")
             append("Temperature: ")
                 .append(report.startTemperatureC?.let { String.format("%.1f°C", it) } ?: "unknown")
                 .append(" → ")
@@ -297,5 +315,6 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQUEST_NOTIFICATION_PERMISSION = 100
+        private const val REQUEST_SHIZUKU_PERMISSION = 101
     }
 }

@@ -21,7 +21,6 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 class OptimizerBackgroundService : Service() {
-
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private lateinit var monitor: DeviceMonitor
     private val policyEngine = LocalPolicyEngine()
@@ -39,9 +38,7 @@ class OptimizerBackgroundService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            } else {
-                0
-            }
+            } else 0
             ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, type)
         } else {
             startForeground(NOTIFICATION_ID, notification)
@@ -67,14 +64,14 @@ class OptimizerBackgroundService : Service() {
             updateNotification(formatStatus(snapshot, decisions))
         } catch (error: Exception) {
             Log.e(TAG, "Background monitoring failed", error)
-            updateNotification("Monitoring error: ${error.javaClass.simpleName}")
+            updateNotification("Monitoring error: " + error.javaClass.simpleName)
         }
     }
 
     private fun saveLatest(snapshot: DeviceSnapshot, decisions: List<PolicyDecision>) {
         val primary = decisions.firstOrNull()
-        getSharedPreferences(PREFERENCES, MODE_PRIVATE)
-            .edit()
+        val telemetry = snapshot.systemTelemetry
+        getSharedPreferences(PREFERENCES, MODE_PRIVATE).edit()
             .putLong("last_sample_timestamp_ms", snapshot.timestampMs)
             .putLong("last_available_ram_mb", snapshot.availableRamMb)
             .putLong("last_total_ram_mb", snapshot.totalRamMb)
@@ -86,32 +83,41 @@ class OptimizerBackgroundService : Service() {
                         " (" + process.pssKb + " KB PSS)"
                 }
             )
+            .putString("last_system_telemetry_status", telemetry?.status?.name)
+            .putString("last_system_telemetry_provider", telemetry?.provider)
+            .putInt("last_system_process_count", telemetry?.processes?.size ?: 0)
+            .putLong("last_system_mem_available_kb", telemetry?.memory?.memAvailableKb ?: -1L)
+            .putLong("last_system_swap_used_kb", telemetry?.memory?.swapUsedKb ?: -1L)
+            .putFloat(
+                "last_system_cpu_utilization",
+                telemetry?.cpu?.utilizationPercent?.toFloat() ?: -1f
+            )
             .putString("last_policy_id", primary?.policyId)
             .putString("last_policy_severity", primary?.severity?.name)
             .putString("last_policy_mode", primary?.mode?.name)
             .apply()
     }
 
-    private fun formatStatus(
-        snapshot: DeviceSnapshot,
-        decisions: List<PolicyDecision>
-    ): String {
+    private fun formatStatus(snapshot: DeviceSnapshot, decisions: List<PolicyDecision>): String {
         val ratio = if (snapshot.totalRamMb > 0) {
             snapshot.availableRamMb.toDouble() / snapshot.totalRamMb * 100.0
-        } else {
-            0.0
-        }
+        } else 0.0
         val primary = decisions.firstOrNull()
         val policyId = primary?.policyId ?: "none"
         val topProcess = snapshot.processes.firstOrNull()?.let { process ->
             val label = process.appLabels.firstOrNull() ?: process.processName
             label + " " + (process.pssKb / 1024) + "MB"
         } ?: "no-process"
-        return "RAM %.0f%% • $policyId • top: $topProcess • dry-run".format(ratio)
+        val telemetry = snapshot.systemTelemetry
+        val cpu = telemetry?.cpu?.utilizationPercent?.let { String.format("%.0f%%", it) } ?: "n/a"
+        val systemStatus = telemetry?.status?.name ?: "NONE"
+        return ("RAM %.0f%% • CPU %s • SYS %s • %s • top: %s • dry-run")
+            .format(ratio, cpu, systemStatus, policyId, topProcess)
     }
+
     private fun updateNotification(text: String) {
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.notify(NOTIFICATION_ID, buildNotification(text))
+        getSystemService(NotificationManager::class.java)
+            .notify(NOTIFICATION_ID, buildNotification(text))
     }
 
     private fun buildNotification(text: String): Notification =
@@ -144,8 +150,7 @@ class OptimizerBackgroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int =
-        START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
 
     companion object {
         private const val TAG = "OptimizerAgent"

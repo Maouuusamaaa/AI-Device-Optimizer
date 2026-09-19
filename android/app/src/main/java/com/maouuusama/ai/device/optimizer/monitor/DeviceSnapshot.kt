@@ -9,5 +9,6 @@ data class DeviceSnapshot(
     val availableRamMb: Long,
     val batteryPercent: Int?,
     val isCharging: Boolean,
-    val processes: List<ProcessSnapshot> = emptyList()
+    val processes: List<ProcessSnapshot> = emptyList(),
+    val systemTelemetry: SystemTelemetrySnapshot? = null
 )

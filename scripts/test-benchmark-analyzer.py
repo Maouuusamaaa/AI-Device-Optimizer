@@ -153,7 +153,7 @@ class BenchmarkAnalyzerTest(unittest.TestCase):
         self.assertEqual(len(result["internalObservations"]), 2)
         self.assertEqual(result["externalRish"], external)
         self.assertTrue(result["deviceConsistency"]["allMatch"])
-        self.assertEqual(len(result["comparisonNotes"]), 4)
+        self.assertEqual(len(result["comparisonNotes"]), 6)
 
     def test_device_consistency_detects_mismatch(self):
         internal = [
