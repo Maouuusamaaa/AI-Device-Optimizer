@@ -2,6 +2,7 @@ package com.maouuusama.ai.device.optimizer.policy
 
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
 import com.maouuusama.ai.device.optimizer.monitor.ProcessSnapshot
+import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetrySnapshot
 
 data class DeviceState(
     val availableRamMb: Long,
@@ -9,7 +10,8 @@ data class DeviceState(
     val batteryPercent: Int?,
     val isCharging: Boolean,
     val isGaming: Boolean,
-    val processes: List<ProcessSnapshot> = emptyList()
+    val processes: List<ProcessSnapshot> = emptyList(),
+    val systemTelemetry: SystemTelemetrySnapshot? = null
 ) {
     val availableRamRatio: Double
         get() = if (totalRamMb > 0) availableRamMb.toDouble() / totalRamMb else 0.0
@@ -22,7 +24,8 @@ data class DeviceState(
                 batteryPercent = snapshot.batteryPercent,
                 isCharging = snapshot.isCharging,
                 isGaming = isGaming,
-                processes = snapshot.processes
+                processes = snapshot.processes,
+                systemTelemetry = snapshot.systemTelemetry
             )
     }
 }
