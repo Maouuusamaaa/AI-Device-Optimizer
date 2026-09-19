@@ -48,7 +48,8 @@ class ReadOnlyBaselineBenchmark(private val context: Context) {
                 temperatureC = temperatureC,
                 storageAvailableMb = storageAvailableMb,
                 processCpuTimeMs = Process.getElapsedCpuTime(),
-                collectionDurationMs = (System.nanoTime() - startedNs) / 1_000_000L
+                collectionDurationMs = (System.nanoTime() - startedNs) / 1_000_000L,
+                processes = snapshot.processes
             )
 
             samples += sample
