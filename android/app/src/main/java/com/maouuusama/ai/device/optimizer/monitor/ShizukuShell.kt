@@ -55,12 +55,13 @@ object ShizukuShell {
         }
 
         return runCatching {
-            val service = getRemoteService(context.applicationContext)
-            service.execute(command, timeoutMs)
+            getRemoteService(context.applicationContext).execute(command, timeoutMs)
         }
     }
 
     private fun getRemoteService(context: Context): IShizukuShellService {
+        val latch: CountDownLatch
+
         synchronized(lock) {
             remoteService?.let { service ->
                 if (service.asBinder().pingBinder()) {
@@ -109,12 +110,17 @@ object ShizukuShell {
                 }
             }
 
-            val latch = connectionLatch
-            if (!latch.await(CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                binding = false
-                throw IllegalStateException("Shizuku user service connection timed out")
-            }
+            latch = connectionLatch
+        }
 
+        if (!latch.await(CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            synchronized(lock) {
+                binding = false
+            }
+            throw IllegalStateException("Shizuku user service connection timed out")
+        }
+
+        synchronized(lock) {
             return remoteService
                 ?: throw IllegalStateException("Shizuku user service did not provide a binder")
         }
