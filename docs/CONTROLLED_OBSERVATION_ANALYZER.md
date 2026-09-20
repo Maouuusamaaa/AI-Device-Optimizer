@@ -23,10 +23,15 @@ python3 scripts/controlled-observation-analyzer.py "$ROOT" \
   --out-md "$ROOT/controlled-observation-report.md"
 ```
 
-The analyzer validates the manifest safety flags, all three phases, one JSON artifact per phase, Rish metric structure, sample counts, and consistent device identity.
+The analyzer validates the manifest safety flags, all three phases, one JSON artifact per phase, Rish metric structure, sample counts, internal consistency of reported statistics against the raw sample arrays, and consistent device identity.
 
 It compares startup timing, wait timing, PSS, RSS, and swap PSS. Battery percentage and temperature are reported as device conditions.
 
 ## Interpretation
 
 The report is descriptive only. Differences are not attributed to an optimizer action because the current controlled runner intentionally performs the same read-only measurement routine in all three phases.
+
+## Validation in CI
+
+The measurement validation workflow runs the analyzer regression tests and Python compilation checks on pushes and pull requests targeting `main`. The workflow does not access a physical Android device and does not execute optimizer actions.
+

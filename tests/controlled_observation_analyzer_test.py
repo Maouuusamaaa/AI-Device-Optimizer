@@ -75,6 +75,15 @@ class TestAnalyzer(unittest.TestCase):
         with self.assertRaises(MODULE.ObservationError):
             MODULE.analyze(r)
 
+    def test_reported_statistics_mismatch_rejected(self):
+        r = self.root()
+        path = r / "experiment" / "experiment.json"
+        payload = json.loads(path.read_text())
+        payload["externalRish"]["startupMs"]["average"] = 999.0
+        path.write_text(json.dumps(payload))
+        with self.assertRaises(MODULE.ObservationError):
+            MODULE.analyze(r)
+
     def test_missing_phase_rejected(self):
         r = self.root()
         p = json.loads((r/"manifest.json").read_text())
