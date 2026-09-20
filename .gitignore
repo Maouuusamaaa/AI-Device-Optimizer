@@ -6,3 +6,8 @@ build/
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Local benchmark artifacts.
+# Keep the canonical aggregated physical baseline tracked.
+benchmarks/results/*
+!benchmarks/results/rish-baseline-aggregate.json
