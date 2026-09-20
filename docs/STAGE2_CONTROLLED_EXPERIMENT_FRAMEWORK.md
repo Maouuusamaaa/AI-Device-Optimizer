@@ -43,3 +43,64 @@ Before enabling an actual action, the repository should add:
 7. real-device validation with the action disabled by default.
 
 Only after those checks should an action-specific experiment be considered.
+
+
+## Runner integration
+
+The repository now provides `scripts/controlled-experiment-runner.py`. It connects the Stage 2 protocol contract to the existing read-only Rish measurement routine and the controlled-observation analyzer.
+
+The runner requires a validated protocol with:
+
+- `execution.enabled=false`
+- `execution.deviceMutationAllowed=false`
+- `policySelectionAllowed=false`
+- `executionAllowed=false`
+
+It then executes the same read-only measurement routine in three phases:
+
+1. `baseline`
+2. `intervention`
+3. `post`
+
+The `intervention` phase is deliberately a reserved slot. The runner does not call the Action Engine, does not change Android state, and does not grant permissions.
+
+A run produces this evidence structure:
+
+```text
+stage2-run/
+├── manifest.json
+├── baseline/
+│   ├── rish-baseline-*.txt
+│   ├── rish-baseline-*.json
+│   └── rish-baseline-*.csv
+├── intervention/
+│   ├── rish-baseline-*.txt
+│   ├── rish-baseline-*.json
+│   └── rish-baseline-*.csv
+├── post/
+│   ├── rish-baseline-*.txt
+│   ├── rish-baseline-*.json
+│   └── rish-baseline-*.csv
+├── controlled-report.json
+└── controlled-report.md
+```
+
+The manifest records the experiment ID, candidate action ID, phase purposes, and the non-authorizing execution state. The analyzer validates device identity, sample counts, and reported statistics before producing descriptive comparisons.
+
+Example protocol: `docs/examples/stage2-controlled-experiment.json`.
+
+### Execution
+
+Validate a definition without touching the device:
+
+```bash
+python3 scripts/experiment-protocol.py docs/examples/stage2-controlled-experiment.json
+```
+
+Run the controlled physical experiment only when a real Rish/Termux environment is intentionally being measured:
+
+```bash
+python3 scripts/controlled-experiment-runner.py docs/examples/stage2-controlled-experiment.json
+```
+
+The runner remains measurement-only. A successful run is evidence that the protocol and measurement pipeline executed; it is not evidence that an optimization improved the device.
