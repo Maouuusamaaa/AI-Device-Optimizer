@@ -72,7 +72,9 @@ def validate_phase(phase: str, data: dict[str, Any]) -> dict[str, Any]:
             finite_number(sample, f"{phase}:{name}.samples[{i}]")
         for key in ("average", "median", "stdev", "min", "max", "sampleCount"):
             finite_number(section.get(key), f"{phase}:{name}.{key}")
-        if int(section["sampleCount"]) != len(samples):
+        if not isinstance(section["sampleCount"], int) or isinstance(section["sampleCount"], bool):
+            raise ObservationError(f"{phase}: {name}.sampleCount must be an integer")
+        if section["sampleCount"] != len(samples):
             raise ObservationError(f"{phase}: {name}.sampleCount does not match samples length")
     for key in ("pss", "rss", "swapPss"):
         finite_number(memory.get(key), f"{phase}:memoryKb.{key}")
@@ -124,6 +126,16 @@ def analyze(root: Path) -> dict[str, Any]:
         (data[p]["external"]["device"]["manufacturer"], data[p]["external"]["device"]["model"], data[p]["external"]["device"]["androidApi"])
         for p in PHASES
     ]
+    if len(set(devices)) != 1:
+        raise ObservationError("Device identity differs between controlled-observation phases")
+
+    sample_counts = {p: data[p]["external"]["startupMs"]["sampleCount"] for p in PHASES}
+    wait_counts = {p: data[p]["external"]["waitMs"]["sampleCount"] for p in PHASES}
+    if len(set(sample_counts.values())) != 1:
+        raise ObservationError("Startup sample counts differ between phases")
+    if wait_counts != sample_counts:
+        raise ObservationError("Startup and wait sample counts differ")
+
     baseline, experiment, post = (data[p]["external"] for p in PHASES)
     return {
         "reportVersion": 1,
@@ -137,9 +149,10 @@ def analyze(root: Path) -> dict[str, Any]:
         },
         "validation": {
             "requiredPhasesPresent": True,
-            "deviceConsistent": len(set(devices)) == 1,
+            "deviceConsistent": True,
             "device": {"manufacturer": devices[0][0], "model": devices[0][1], "androidApi": devices[0][2]},
-            "sampleCounts": {p: data[p]["external"]["startupMs"]["sampleCount"] for p in PHASES},
+            "sampleCounts": sample_counts,
+            "waitSampleCounts": wait_counts,
         },
         "phases": {
             p: {
