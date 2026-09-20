@@ -3,9 +3,20 @@ package com.maouuusama.ai.device.optimizer.policy
 import android.content.Context
 import java.io.File
 
-class PersistentDecisionHistoryStore private constructor(private val file: File, private val maxEntries: Int, marker: Unit) {\n    constructor(context: Context, maxEntries: Int = DEFAULT_MAX_ENTRIES) : this(File(context.filesDir, HISTORY_FILE_NAME), maxEntries, Unit)\n    constructor(file: File, maxEntries: Int) : this(file, maxEntries, Unit)
-    init { require(maxEntries > 0) { "maxEntries must be positive." } }
-    private val file = File(context.filesDir, HISTORY_FILE_NAME)
+class PersistentDecisionHistoryStore private constructor(
+    private val historyFile: File,
+    private val maxEntries: Int,
+    marker: Unit
+) {
+    constructor(context: Context, maxEntries: Int = DEFAULT_MAX_ENTRIES) :
+        this(File(context.filesDir, HISTORY_FILE_NAME), maxEntries, Unit)
+
+    constructor(file: File, maxEntries: Int) :
+        this(file, maxEntries, Unit)
+
+    init {
+        require(maxEntries > 0) { "maxEntries must be positive." }
+    }
 
     fun append(entry: DecisionHistoryEntry) {
         val entries = loadMutable().apply { add(entry) }
@@ -16,20 +27,33 @@ class PersistentDecisionHistoryStore private constructor(private val file: File,
     fun snapshot(): List<DecisionHistoryEntry> = loadMutable().toList()
 
     fun clear() {
-        if (file.exists() && !file.delete()) throw IllegalStateException("Unable to delete decision history.")
+        if (historyFile.exists() && !historyFile.delete()) {
+            throw IllegalStateException("Unable to delete decision history.")
+        }
     }
 
-    private fun loadMutable(): MutableList<DecisionHistoryEntry> = if (!file.exists()) mutableListOf() else try {
-        DecisionHistoryJsonCodec.decode(file.readText()).toMutableList()
-    } catch (error: Exception) {
-        throw IllegalStateException("Decision history is unreadable.", error)
-    }
+    private fun loadMutable(): MutableList<DecisionHistoryEntry> =
+        if (!historyFile.exists()) {
+            mutableListOf()
+        } else {
+            try {
+                DecisionHistoryJsonCodec.decode(historyFile.readText()).toMutableList()
+            } catch (error: Exception) {
+                throw IllegalStateException("Decision history is unreadable.", error)
+            }
+        }
 
     private fun writeAtomically(entries: List<DecisionHistoryEntry>) {
-        val temporary = File(file.parentFile, "$HISTORY_FILE_NAME.tmp")
+        val temporary = File(historyFile.parentFile, "$HISTORY_FILE_NAME.tmp")
         temporary.writeText(DecisionHistoryJsonCodec.encode(entries))
-        if (file.exists() && !file.delete()) { temporary.delete(); throw IllegalStateException("Unable to replace decision history.") }
-        if (!temporary.renameTo(file)) { temporary.delete(); throw IllegalStateException("Unable to commit decision history.") }
+        if (historyFile.exists() && !historyFile.delete()) {
+            temporary.delete()
+            throw IllegalStateException("Unable to replace decision history.")
+        }
+        if (!temporary.renameTo(historyFile)) {
+            temporary.delete()
+            throw IllegalStateException("Unable to commit decision history.")
+        }
     }
 
     companion object {
