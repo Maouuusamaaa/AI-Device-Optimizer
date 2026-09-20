@@ -13,7 +13,7 @@ Each record can carry:
 - a declared workload label;
 - an optional controlled outcome label.
 
-Missing values remain missing. The optimizer must not infer a workload or outcome from unrelated telemetry.
+`OfflineEvaluationMetadataFactory` maps only fields already collected by `DeviceSnapshot`. Missing values remain missing. The factory does not infer a workload or outcome from unrelated telemetry.
 
 A controlled outcome is intentionally separate from descriptive before/after deltas. The current application remains DRY_RUN and does not generate real action-effect labels.
 
