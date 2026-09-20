@@ -106,8 +106,8 @@ def percent_delta(before: float | int | None, after: float | int | None) -> floa
         return None
     return ((float(after) - float(before)) / float(before)) * 100.0
 
-def compare_metric(baseline, experiment, post, section, key):
-    values = {"baseline": baseline[section][key], "experiment": experiment[section][key], "post": post[section][key]}
+def compare_metric(baseline, intervention, post, section, key):
+    values = {"baseline": baseline[section][key], "intervention": intervention[section][key], "post": post[section][key]}
     base = values["baseline"]
     return {
         "metric": f"{section}.{key}", **values,
