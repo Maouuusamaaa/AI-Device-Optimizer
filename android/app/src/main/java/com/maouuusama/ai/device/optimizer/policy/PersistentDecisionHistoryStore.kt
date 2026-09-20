@@ -3,7 +3,7 @@ package com.maouuusama.ai.device.optimizer.policy
 import android.content.Context
 import java.io.File
 
-class PersistentDecisionHistoryStore(context: Context, private val maxEntries: Int = DEFAULT_MAX_ENTRIES) {
+class PersistentDecisionHistoryStore private constructor(private val file: File, private val maxEntries: Int) {\n    constructor(context: Context, maxEntries: Int = DEFAULT_MAX_ENTRIES) : this(File(context.filesDir, HISTORY_FILE_NAME), maxEntries)\n    constructor(file: File, maxEntries: Int) : this(file, maxEntries)
     init { require(maxEntries > 0) { "maxEntries must be positive." } }
     private val file = File(context.filesDir, HISTORY_FILE_NAME)
 
