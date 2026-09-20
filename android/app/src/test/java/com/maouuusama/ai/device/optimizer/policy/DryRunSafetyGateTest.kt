@@ -1,5 +1,7 @@
 package com.maouuusama.ai.device.optimizer.policy
 
+import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
+
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
