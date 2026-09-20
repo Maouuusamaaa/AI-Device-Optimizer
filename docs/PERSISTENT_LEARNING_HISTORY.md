@@ -3,6 +3,7 @@
 The adaptive-learning history now has a versioned local persistence boundary.
 
 Schema:
+- binary format with magic header
 - schemaVersion: 1
 - ordered entries
 - each entry contains timestamp, conditions, diagnoses, DRY_RUN decisions, simulated/blocked actions, and descriptive measurement reports.
