@@ -27,6 +27,7 @@ jobs:
           python -m py_compile scripts/health-snapshot-observation.py
           python -m py_compile scripts/descriptive-evaluation-report.py
           python -m py_compile scripts/experiment-protocol.py
+          python -m py_compile scripts/controlled-experiment-runner.py
       - name: Run controlled observation analyzer tests
         run: python tests/controlled_observation_analyzer_test.py
       - name: Run benchmark analyzer tests
@@ -42,3 +43,5 @@ jobs:
         run: python tests/descriptive_evaluation_report_test.py
       - name: Run Stage 2 experiment protocol tests
         run: python tests/experiment_protocol_test.py
+      - name: Run Stage 2 controlled experiment runner tests
+        run: python tests/controlled_experiment_runner_test.py
