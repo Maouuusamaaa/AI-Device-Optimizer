@@ -184,7 +184,7 @@ def analyze(root: Path) -> dict[str, Any]:
             } for p in PHASES
         },
         "comparisons": {
-            "metrics": [compare_metric(baseline, experiment, post, s, k) for s, k in METRICS],
+            "metrics": [compare_metric(baseline, intervention, post, s, k) for s, k in METRICS],
             "batteryPercent": {p: data[p]["external"].get("batteryPercent") for p in PHASES},
             "temperatureC": {p: data[p]["external"].get("temperatureC") for p in PHASES},
         },
