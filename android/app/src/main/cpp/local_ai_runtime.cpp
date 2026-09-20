@@ -33,7 +33,6 @@ std::string json_escape(const std::string & input) {
     for (unsigned char ch : input) {
         switch (ch) {
             case '\\': output += "\\\\"; break;
-            case '"': output += "\\""; break;
             case '"': output.push_back('\\'); output.push_back('"'); break;
             case '\r': output += "\\r"; break;
             case '\t': output += "\\t"; break;
