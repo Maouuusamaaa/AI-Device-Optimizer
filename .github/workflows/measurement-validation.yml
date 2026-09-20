@@ -1,0 +1,39 @@
+name: Measurement Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  controlled-observation-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile measurement scripts
+        run: |
+          python -m py_compile scripts/controlled-observation-analyzer.py
+          python -m py_compile scripts/benchmark-analyzer.py
+
+      - name: Run controlled observation analyzer tests
+        run: |
+          python tests/controlled_observation_analyzer_test.py
+
+      - name: Run benchmark analyzer tests
+        run: |
+          if [ -f tests/benchmark_analyzer_test.py ]; then
+            python tests/benchmark_analyzer_test.py
+          else
+            echo "No benchmark_analyzer_test.py present; skipping."
+          fi
