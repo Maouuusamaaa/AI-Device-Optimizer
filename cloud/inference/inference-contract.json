@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Device Optimizer Inference Contract v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "modelId",
+    "inputObservationId",
+    "recommendation"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "modelId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputObservationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recommendation": {
+      "type": "object",
+      "required": [
+        "mode",
+        "confidence",
+        "actionId"
+      ],
+      "properties": {
+        "mode": {
+          "const": "ADVISORY_ONLY"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "actionId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
