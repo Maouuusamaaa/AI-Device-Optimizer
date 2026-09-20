@@ -2,31 +2,36 @@ name: AI Cloud Validation
 
 on:
   push:
-    branches: ["main", "feat/stage3-ai-cloud-foundation", "feat/stage3-ai-cloud-model-contracts"]
+    branches: ["main","feat/stage4-ai-dataset-baseline"]
     paths:
       - "cloud/**"
       - "scripts/validate-ai-cloud-contract.py"
-      - "tests/ai_cloud_contract_test.py"
-      - "docs/AI_CLOUD_ARCHITECTURE.md"
+      - "tests/**"
+      - "docs/**"
       - ".github/workflows/ai-cloud-validation.yml"
   pull_request:
     paths:
       - "cloud/**"
       - "scripts/validate-ai-cloud-contract.py"
-      - "tests/ai_cloud_contract_test.py"
-      - "docs/AI_CLOUD_ARCHITECTURE.md"
+      - "tests/**"
+      - "docs/**"
       - ".github/workflows/ai-cloud-validation.yml"
-
 jobs:
   validate:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Compile Stage 3 Python
-        run: python3 -m py_compile scripts/validate-ai-cloud-contract.py tests/ai_cloud_contract_test.py cloud/models/model-interface.py
-      - name: Parse Stage 3 JSON contracts
+      - name: Compile Python
+        run: python3 -m py_compile scripts/validate-ai-cloud-contract.py cloud/dataset/build-dataset.py cloud/models/baseline-advisor.py cloud/evaluation/evaluate-baseline.py cloud/models/model-interface.py tests/ai_cloud_contract_test.py tests/stage4_ai_baseline_test.py
+      - name: Parse JSON
         run: python3 -c "import json,glob; [json.load(open(p,encoding='utf-8')) for p in glob.glob('cloud/**/*.json', recursive=True)]"
-      - name: Validate example contract
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -p '*test.py' -v
+      - name: Validate contract
         run: python3 scripts/validate-ai-cloud-contract.py cloud/contracts/example-ai-cloud-response.json
-      - name: Run AI cloud contract tests
-        run: python3 -m unittest discover -s tests -p 'ai_cloud_contract_test.py' -v
+      - name: Run baseline
+        run: python3 cloud/models/baseline-advisor.py cloud/dataset/example-training-dataset.json --out /tmp/baseline.json
+      - name: Evaluate baseline
+        run: python3 cloud/evaluation/evaluate-baseline.py cloud/dataset/example-training-dataset.json --out /tmp/evaluation.json
+      - name: Verify safety invariant
+        run: python3 -c "import json; d=json.load(open('/tmp/baseline.json')); assert d['execution']['deviceMutationAllowed'] is False; assert d['execution']['requested'] is False"
