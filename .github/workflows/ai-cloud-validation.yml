@@ -1,0 +1,30 @@
+name: AI Cloud Validation
+
+on:
+  push:
+    branches: ["main", "feat/stage3-ai-cloud-foundation"]
+    paths:
+      - "cloud/**"
+      - "scripts/validate-ai-cloud-contract.py"
+      - "tests/ai_cloud_contract_test.py"
+      - "docs/AI_CLOUD_ARCHITECTURE.md"
+      - ".github/workflows/ai-cloud-validation.yml"
+  pull_request:
+    paths:
+      - "cloud/**"
+      - "scripts/validate-ai-cloud-contract.py"
+      - "tests/ai_cloud_contract_test.py"
+      - "docs/AI_CLOUD_ARCHITECTURE.md"
+      - ".github/workflows/ai-cloud-validation.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile contract validator
+        run: python3 -m py_compile scripts/validate-ai-cloud-contract.py tests/ai_cloud_contract_test.py
+      - name: Validate example contract
+        run: python3 scripts/validate-ai-cloud-contract.py cloud/contracts/example-ai-cloud-response.json
+      - name: Run AI cloud contract tests
+        run: python3 -m unittest discover -s tests -p 'ai_cloud_contract_test.py' -v
