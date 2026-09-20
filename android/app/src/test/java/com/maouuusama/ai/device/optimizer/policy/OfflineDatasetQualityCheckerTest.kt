@@ -2,6 +2,7 @@ package com.maouuusama.ai.device.optimizer.policy
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -27,10 +28,7 @@ class OfflineDatasetQualityCheckerTest {
 
     @Test
     fun cleanChronologicalDataHasNoDuplicateLeakage() {
-        val report = OfflineDatasetQualityChecker().check(
-            listOf(entry(1), entry(2), entry(3))
-        )
-
+        val report = OfflineDatasetQualityChecker().check(listOf(entry(1), entry(2), entry(3)))
         assertEquals(3, report.observationCount)
         assertEquals(0, report.duplicateTimestampCount)
         assertFalse(report.leakageDetected)
@@ -41,10 +39,7 @@ class OfflineDatasetQualityCheckerTest {
 
     @Test
     fun duplicateTimestampIsReportedAsLeakageRisk() {
-        val report = OfflineDatasetQualityChecker().check(
-            listOf(entry(1), entry(1), entry(2))
-        )
-
+        val report = OfflineDatasetQualityChecker().check(listOf(entry(1), entry(1), entry(2)))
         assertEquals(1, report.duplicateTimestampCount)
         assertTrue(report.duplicateTimestampRisk)
         assertTrue(report.leakageDetected)
@@ -55,7 +50,6 @@ class OfflineDatasetQualityCheckerTest {
         val report = OfflineDatasetQualityChecker().check(
             listOf(entry(1, "observe.memory_pressure"), entry(2, "observe.memory_pressure"))
         )
-
         assertEquals(1, report.actionOverlapCount)
         assertTrue(report.actionOverlapRisk)
         assertFalse(report.leakageDetected)
@@ -66,33 +60,29 @@ class OfflineDatasetQualityCheckerTest {
         val report = OfflineDatasetQualityChecker().check(
             listOf(entry(1), entry(2, "observe.memory_pressure"))
         )
-
         assertEquals(1, report.actionlessObservationCount)
         assertTrue(report.descriptiveOnly)
     }
 
     @Test
-    fun nonDescriptiveReportIsMarkedUnsafeForReview() {
-        val invalid = DecisionHistoryEntry(
-            timestampMs = 1L,
-            conditionIds = listOf("memory.pressure"),
-            diagnoses = emptyList(),
-            decisions = emptyList(),
-            simulations = emptyList(),
-            measurementReports = listOf(
-                PostActionMeasurementReport(
-                    actionId = "observe.memory_pressure",
-                    status = ActionSimulationStatus.BLOCKED,
-                    deltas = emptyList(),
-                    interpretation = "causal_result: invalid"
+    fun decisionHistoryRejectsNonDescriptiveReportsBeforeQualityCheck() {
+        assertThrows(IllegalArgumentException::class.java) {
+            DecisionHistoryEntry(
+                timestampMs = 1L,
+                conditionIds = listOf("memory.pressure"),
+                diagnoses = emptyList(),
+                decisions = emptyList(),
+                simulations = emptyList(),
+                measurementReports = listOf(
+                    PostActionMeasurementReport(
+                        actionId = "observe.memory_pressure",
+                        status = ActionSimulationStatus.BLOCKED,
+                        deltas = emptyList(),
+                        interpretation = "causal_result: invalid"
+                    )
                 )
             )
-        )
-
-        val report = OfflineDatasetQualityChecker().check(listOf(invalid))
-
-        assertFalse(report.descriptiveOnly)
-        assertFalse(report.evaluationSafeForReview)
+        }
     }
 
     @Test
