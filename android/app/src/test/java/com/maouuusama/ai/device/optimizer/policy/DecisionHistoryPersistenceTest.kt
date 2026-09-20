@@ -17,11 +17,11 @@ class DecisionHistoryPersistenceTest {
 
     @Test fun codecRoundTripsNestedHistory() {
         val original = listOf(entry(100L))
-        assertEquals(original, DecisionHistoryJsonCodec.decode(DecisionHistoryJsonCodec.encode(original)))
+        assertEquals(original, DecisionHistoryBinaryCodec.decode(DecisionHistoryBinaryCodec.encode(original)))
     }
 
     @Test(expected = IllegalArgumentException::class) fun unsupportedSchemaIsRejected() {
-        DecisionHistoryJsonCodec.decode("{\"schemaVersion\":999,\"entries\":[]}")
+        DecisionHistoryBinaryCodec.decode(byteArrayOf(0, 1, 2, 3))
     }
 
     @Test fun persistentStoreKeepsNewestEntriesWithinBound() {
