@@ -56,7 +56,7 @@ The action engine must be capability-based and policy-controlled. Monitoring sho
 
 ## Development Status
 
-Current milestone: connected read-only monitor → local policy → dry-run proposal pipeline.
+Current milestone: normalized read-only device health snapshot → local policy → dry-run proposal pipeline.
 
 Completed:
 
@@ -66,6 +66,8 @@ Completed:
 - Local Policy Engine
 - immutable DRY_RUN-only policy proposal model
 - connected DeviceSnapshot → DeviceState → LocalPolicyEngine → DryRunPolicyProposal pipeline
+- normalized device health snapshot fields for battery temperature, thermal status, storage, network, interactivity, and uptime
+- schemaVersion 3 JSON snapshot persistence for the expanded health state
 - background agent persistence of policy/proposal metadata without executing actions
 - Android unit tests for the monitor, policy foundation, and connected dry-run flow
 - GitHub Actions build/test workflow configuration
@@ -80,7 +82,7 @@ The external Rish baseline produces raw TXT, structured JSON, and flattened CSV 
 
 Primary mobile development path: Termux + Shizuku/Rish for independent device measurements. PC + ADB remains an optional fallback.
 
-Next experiment: define and run matching candidate observations only when a dry-run policy proposal exists. Candidate measurements must preserve the Rish workload, five-sample startup structure, memory capture, device identity, and comparable power/thermal conditions. No privileged mutation is enabled by this benchmark tooling.
+Next experiment: collect repeated health snapshots under controlled idle and user-workload conditions, then quantify normal variation before enabling any mutation-capable action experiments. Candidate measurements must preserve the Rish workload, five-sample startup structure, memory capture, device identity, and comparable power/thermal conditions. No privileged mutation is enabled by this benchmark tooling.
 
 ## Research Direction
 
