@@ -7,7 +7,7 @@ class PersistentDecisionHistoryStore private constructor(
     private val historyFile: File,
     private val maxEntries: Int,
     marker: Unit
-) {
+) : DecisionHistorySink {
     constructor(context: Context, maxEntries: Int = DEFAULT_MAX_ENTRIES) :
         this(File(context.filesDir, HISTORY_FILE_NAME), maxEntries, Unit)
 
