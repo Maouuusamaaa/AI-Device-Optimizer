@@ -29,8 +29,7 @@ object DecisionHistoryBinaryCodec {
         DataInputStream(ByteArrayInputStream(bytes)).use { input ->
             require(input.readUTF() == MAGIC) { "Invalid decision history header." }
             require(input.readInt() == SCHEMA_VERSION) { "Unsupported decision history schema version." }
-            val count = input.readInt()
-            require(count >= 0) { "Invalid decision history entry count." }
+            val count = input.readCount()
             return buildList(count) { repeat(count) { add(readEntry(input)) } }
         }
     }
