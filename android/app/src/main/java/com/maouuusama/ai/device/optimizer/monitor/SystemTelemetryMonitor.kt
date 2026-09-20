@@ -25,13 +25,15 @@ class SystemTelemetryMonitor {
     }
 
     private fun collectWithShizuku(): SystemTelemetrySnapshot = try {
-        val memInfo = ShizukuShell.execute(
+        val memInfo = executeRequired(
+            "memory",
             "cat /proc/meminfo | grep -E '^(MemTotal|MemFree|MemAvailable|Cached|SwapTotal|SwapFree|SReclaimable|Shmem):'"
-        ).getOrThrow()
-        val processInfo = ShizukuShell.execute(
+        )
+        val processInfo = executeRequired(
+            "process",
             "dumpsys meminfo | grep -E '^[[:space:]]+[0-9,]+K: ' | head -100"
-        ).getOrThrow()
-        val cpuInfo = ShizukuShell.execute("cat /proc/stat | head -1").getOrThrow()
+        )
+        val cpuInfo = executeRequired("cpu", "cat /proc/stat | head -1")
 
         SystemTelemetrySnapshot(
             status = SystemTelemetryStatus.AVAILABLE,
@@ -50,6 +52,14 @@ class SystemTelemetryMonitor {
             errorMessage = error.message ?: error.javaClass.simpleName
         )
     }
+
+    private fun executeRequired(name: String, command: String): String =
+        ShizukuShell.execute(command).getOrElse { error ->
+            throw IllegalStateException(
+                "Shizuku $name telemetry command failed: ${error.message ?: error.javaClass.simpleName}",
+                error
+            )
+        }
 
     internal fun parseMemoryInfo(output: String): SystemMemorySnapshot {
         val values = mutableMapOf<String, Long>()

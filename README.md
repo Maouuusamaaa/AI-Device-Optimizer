@@ -19,8 +19,8 @@ Monitor → Local Policy → Action Engine → Benchmark → Cloud API → Cloud
 ## Architecture
 
 - android/app/ — Android application
-- android/app/src/main/ — current Android monitor and local benchmark implementation
-- android/app/src/test/ — JVM unit tests for the current read-only foundation
+- android/app/src/main/ — current Android monitor, dry-run policy pipeline, and local benchmark implementation
+- android/app/src/test/ — JVM unit tests for the current read-only foundation and monitor-to-policy flow
 - cloud/api/ — cloud service interface
 - cloud/optimizer/ — server-side policy reasoning
 - cloud/models/ — model adapters and inference logic
@@ -46,32 +46,17 @@ Monitor → Local Policy → Action Engine → Benchmark → Cloud API → Cloud
 
 ## Benchmark Targets
 
-Every optimization should be evaluated against measurable device behavior, including:
-
-- RAM usage
-- CPU utilization
-- battery drain
-- device temperature
-- application launch time
-- game/application FPS where measurable
-- frame-time stability
-- network latency where relevant
-- storage usage
-- optimizer CPU/RAM overhead
+Every optimization should be evaluated against measurable device behavior, including RAM usage, CPU utilization, battery drain, device temperature, application launch time, FPS where measurable, frame-time stability, network latency where relevant, storage usage, and optimizer CPU/RAM overhead.
 
 Initial engineering target for the lightweight local agent: remain below roughly 100 MB average RAM usage and remain near-idle when no optimization work is required. These are engineering targets, not guarantees; real-device benchmarks determine whether they are achieved.
 
 ## Safety Model
 
-The action engine must be capability-based and policy-controlled.
-
-Monitoring should be available independently from mutation. Actions should be categorized by risk and require explicit policy authorization. High-impact system changes must not be triggered merely because an AI model suggested them.
-
-The optimizer should fail safely when device state, permissions, or expected outcomes are uncertain.
+The action engine must be capability-based and policy-controlled. Monitoring should be available independently from mutation. Actions should be categorized by risk and require explicit policy authorization. High-impact system changes must not be triggered merely because an AI model suggested them. The optimizer should fail safely when device state, permissions, or expected outcomes are uncertain.
 
 ## Development Status
 
-Current milestone: physical-device baseline benchmark and structured measurement artifacts.
+Current milestone: connected read-only monitor → local policy → dry-run proposal pipeline.
 
 Completed:
 
@@ -79,24 +64,19 @@ Completed:
 - repeatable monitor benchmark foundation
 - read-only physical baseline runner
 - Local Policy Engine
-- Android unit tests for the current monitor and policy foundation
+- immutable DRY_RUN-only policy proposal model
+- connected DeviceSnapshot → DeviceState → LocalPolicyEngine → DryRunPolicyProposal pipeline
+- background agent persistence of policy/proposal metadata without executing actions
+- Android unit tests for the monitor, policy foundation, and connected dry-run flow
 - GitHub Actions build/test workflow configuration
 - successful post-fix GitHub Actions build/test verification
 - debug APK installed and running on a physical Android API 33 device
 
-Current baseline runner:
+The Action Engine remains future work. This milestone intentionally stops at a DRY_RUN proposal boundary: proposals can describe observation candidates, but no proposal can authorize execution.
 
-- 30 telemetry samples
-- 2-second sampling interval
-- roughly 60 seconds per run
-- JSON result saved under the app external-files benchmark directory
-- no Shizuku or privileged mutation
+The external Rish baseline produces raw TXT, structured JSON, and flattened CSV artifacts. Repeated startup measurements are aggregated descriptively; the current physical baseline contains three observations for the same itel P661N/API 33 workload.
 
-The dry-run Action Engine and connected optimization pipeline described by the target architecture are not present in this checkout and remain future work.
-
-The external Rish baseline now produces three artifacts in `benchmarks/results/`: raw `.txt`, structured `.json`, and flattened `.csv`. The analyzer reports mean, median, sample standard deviation, minimum, and maximum for repeated startup measurements. Three physical baseline observations for the same itel P661N/API 33 workload have now been aggregated into `benchmarks/results/rish-baseline-aggregate.json` and documented in `benchmarks/physical-device/2026-09-20-itel-p661n-rish-protocol.md`.
-
-Primary mobile development path: use Termux + Shizuku/Rish for independent device measurements while away from a PC. The PC + ADB script remains an optional fallback for desktop sessions.
+Primary mobile development path: Termux + Shizuku/Rish for independent device measurements. PC + ADB remains an optional fallback.
 
 Next experiment: define and run matching candidate observations only when a dry-run policy proposal exists. Candidate measurements must preserve the Rish workload, five-sample startup structure, memory capture, device identity, and comparable power/thermal conditions. No privileged mutation is enabled by this benchmark tooling.
 
