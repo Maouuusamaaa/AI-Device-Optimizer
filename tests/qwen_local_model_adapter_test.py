@@ -23,8 +23,9 @@ def test_adapter_is_safety_wrapped():
         root = pathlib.Path(d)
         fake = root / "fake-cli.py"
         fake.write_text(
-            "#!/usr/bin/env python3\n"
-            "print('{"actionId":"CLEAR_CACHE","confidence":0.99,"abstain":false}')\n",
+            '''#!/usr/bin/env python3
+print('{"actionId":"CLEAR_CACHE","confidence":0.99,"abstain":false}')
+''',
             encoding="utf-8",
         )
         fake.chmod(0o755)
@@ -43,7 +44,12 @@ def test_malformed_model_output_stays_safe():
     with tempfile.TemporaryDirectory() as d:
         root = pathlib.Path(d)
         fake = root / "fake-cli.py"
-        fake.write_text("#!/usr/bin/env python3\nprint('not json')\n", encoding="utf-8")
+        fake.write_text(
+            '''#!/usr/bin/env python3
+print("not json")
+''',
+            encoding="utf-8",
+        )
         fake.chmod(0o755)
         out = run_adapter(fake, {"features": {
             "batteryPercent": 50, "temperatureC": 40, "availableRamMb": 2000
@@ -60,7 +66,9 @@ def test_invalid_telemetry_does_not_invoke_model():
         root = pathlib.Path(d)
         fake = root / "must-not-run.py"
         fake.write_text(
-            "#!/usr/bin/env python3\nraise SystemExit(99)\n",
+            '''#!/usr/bin/env python3
+raise SystemExit(99)
+''',
             encoding="utf-8",
         )
         fake.chmod(0o755)
@@ -77,7 +85,12 @@ def test_resource_bounds_are_rejected():
     with tempfile.TemporaryDirectory() as d:
         root = pathlib.Path(d)
         fake = root / "must-not-run.py"
-        fake.write_text("#!/usr/bin/env python3\nraise SystemExit(99)\n", encoding="utf-8")
+        fake.write_text(
+            '''#!/usr/bin/env python3
+raise SystemExit(99)
+''',
+            encoding="utf-8",
+        )
         fake.chmod(0o755)
         payload = {"features": {
             "batteryPercent": 50, "temperatureC": 40, "availableRamMb": 2000
