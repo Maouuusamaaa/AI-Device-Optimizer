@@ -7,11 +7,12 @@ class PostActionMeasurementEvaluatorTest {
     private fun state(ram: Long, battery: Int = 50, temp: Double = 40.0, storage: Long = 5000L) =
         DeviceState(ram, 5634L, battery, true, false, temp, null, 10000L, storage)
 
+    private val simulation = ActionSimulation(
+        "observe.memory_pressure", ActionSimulationStatus.SIMULATED, "simulation",
+        listOf("catalog membership: PASS"), "memory", "none"
+    )
+
     @Test fun computesDescriptiveDeltas() {
-        val simulation = ActionSimulation(
-            "observe.memory_pressure", ActionSimulationStatus.SIMULATED, "simulation",
-            listOf("catalog membership: PASS"), "memory", "none"
-        )
         val report = PostActionMeasurementEvaluator().evaluate(simulation, state(1000), state(1200, 49, 41.0, 5500))
         assertEquals(4, report.deltas.size)
         assertEquals(200.0, report.deltas.first { it.metric == "availableRamMb" }.absoluteDelta, 0.0)
@@ -20,7 +21,6 @@ class PostActionMeasurementEvaluatorTest {
     }
 
     @Test fun missingOptionalMetricsAreNotInvented() {
-        val simulation = ActionSimulation("observe.memory_pressure", ActionSimulationStatus.BLOCKED, "blocked", emptyList(), "", "")
         val report = PostActionMeasurementEvaluator().evaluate(
             simulation,
             state(1000, 50, 40.0, 5000),
@@ -32,7 +32,16 @@ class PostActionMeasurementEvaluatorTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun invalidRamIsRejected() {
-        val simulation = ActionSimulation("observe.memory_pressure", ActionSimulationStatus.SIMULATED, "simulation", emptyList(), "m", "r")
         PostActionMeasurementEvaluator().evaluate(simulation, state(-1), state(1000))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun invalidBatteryIsRejected() {
+        PostActionMeasurementEvaluator().evaluate(simulation, state(1000, 101), state(1000))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun invalidStorageRelationIsRejected() {
+        PostActionMeasurementEvaluator().evaluate(simulation, state(1000, 50, 40.0, 12000), state(1000, 50, 40.0, 5000))
     }
 }
