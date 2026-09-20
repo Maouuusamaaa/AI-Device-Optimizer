@@ -1,0 +1,44 @@
+name: Local Qwen Model Adapter Validation
+
+on:
+  push:
+    branches:
+      - main
+      - feat/stage7-qwen3-local-model-adapter
+    paths:
+      - 'android/local-ai/**'
+      - 'tests/qwen_local_model_adapter_test.py'
+      - '.github/workflows/local-qwen-model-validation.yml'
+  pull_request:
+    paths:
+      - 'android/local-ai/**'
+      - 'tests/qwen_local_model_adapter_test.py'
+      - '.github/workflows/local-qwen-model-validation.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile adapter
+        run: python3 -m py_compile android/local-ai/llama-adapter.py android/local-ai/benchmark-llama.py
+      - name: Run adapter safety tests
+        run: python3 tests/qwen_local_model_adapter_test.py
+      - name: Validate model manifest and repository policy
+        run: |
+          python3 - <<'PY'
+          import json
+          import pathlib
+          p=json.load(open("android/local-ai/model-manifest.json", encoding="utf-8"))
+          assert p["runtime"] == "llama.cpp"
+          assert p["targetAbi"] == "arm64-v8a"
+          assert p["repositoryMustNotContainModelBinary"] is True
+          assert p["advisoryOnly"] is True
+          assert p["executionRequested"] is False
+          assert p["deviceMutationAllowed"] is False
+          assert p["localSafetyGateRequired"] is True
+          assert p["defaultContextTokens"] == 4096
+          tracked=list(pathlib.Path(".").rglob("*.gguf"))
+          assert not tracked, "GGUF binary must not be present in repository"
+          print("Qwen model manifest and repository policy valid")
+          PY

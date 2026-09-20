@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "modelId": "qwen3-0.6b-q4_0",
+  "family": "Qwen3",
+  "parameterCount": "0.6B",
+  "format": "GGUF",
+  "quantization": "Q4_0",
+  "modelSizeBytes": 449839104,
+  "source": "https://huggingface.co/ggml-org/Qwen3-0.6B-GGUF",
+  "runtime": "llama.cpp",
+  "targetAbi": "arm64-v8a",
+  "defaultContextTokens": 4096,
+  "advisoryOnly": true,
+  "executionRequested": false,
+  "deviceMutationAllowed": false,
+  "localSafetyGateRequired": true,
+  "repositoryMustNotContainModelBinary": true
+}
