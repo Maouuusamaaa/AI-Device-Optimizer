@@ -6,7 +6,7 @@ external Rish metrics descriptively, and writes JSON/Markdown reports. It never
 executes device commands or makes optimization decisions.
 """
 from __future__ import annotations
-import argparse, json, math
+import argparse, json, math, statistics
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +51,23 @@ def finite_number(value: Any, label: str) -> float | int:
         raise ObservationError(f"{label} must be finite")
     return value
 
+def validate_summary_against_samples(phase: str, name: str, section: dict[str, Any], samples: list[Any]) -> None:
+    expected = {
+        "average": statistics.mean(samples),
+        "median": statistics.median(samples),
+        "stdev": statistics.stdev(samples),
+        "min": min(samples),
+        "max": max(samples),
+    }
+    for key, actual in expected.items():
+        observed = section[key]
+        if not math.isclose(float(observed), float(actual), rel_tol=1e-9, abs_tol=1e-9):
+            raise ObservationError(
+                f"{phase}: {name}.{key} does not match samples "
+                f"(reported={observed!r}, expected={actual!r})"
+            )
+
+
 def validate_phase(phase: str, data: dict[str, Any]) -> dict[str, Any]:
     external = data.get("externalRish")
     if not isinstance(external, dict):
@@ -76,6 +93,7 @@ def validate_phase(phase: str, data: dict[str, Any]) -> dict[str, Any]:
             raise ObservationError(f"{phase}: {name}.sampleCount must be an integer")
         if section["sampleCount"] != len(samples):
             raise ObservationError(f"{phase}: {name}.sampleCount does not match samples length")
+        validate_summary_against_samples(phase, name, section, samples)
     for key in ("pss", "rss", "swapPss"):
         finite_number(memory.get(key), f"{phase}:memoryKb.{key}")
     for key in ("batteryPercent", "temperatureC"):
