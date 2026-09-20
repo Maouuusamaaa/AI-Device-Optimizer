@@ -34,10 +34,10 @@ class TestAnalyzer(unittest.TestCase):
         (r/"manifest.json").write_text(json.dumps({
             "schemaVersion": 1, "candidateActionId": "observe.remeasure_baseline",
             "executionEnabled": False, "deviceMutationAllowed": False,
-            "phases": {p: {"rawText": f"/storage/{p}/rish-baseline-{p}.txt"} for p in ("baseline","experiment","post")}
+            "phases": {p: {"rawText": f"/storage/{p}/rish-baseline-{p}.txt"} for p in ("baseline","intervention","post")}
         }), encoding="utf-8")
         write_phase(r, "baseline", [600,610,620,630,640], 57000)
-        write_phase(r, "experiment", [610,620,630,640,650], 58000)
+        write_phase(r, "intervention", [610,620,630,640,650], 58000)
         write_phase(r, "post", [590,600,610,620,630], 57500)
         return r
 
@@ -46,7 +46,7 @@ class TestAnalyzer(unittest.TestCase):
         self.assertTrue(report["measurementOnly"])
         self.assertTrue(report["validation"]["deviceConsistent"])
         m = next(x for x in report["comparisons"]["metrics"] if x["metric"] == "startupMs.average")
-        self.assertAlmostEqual(m["experimentVsBaseline"]["absoluteDelta"], 10.0)
+        self.assertAlmostEqual(m["interventionVsBaseline"]["absoluteDelta"], 10.0)
         self.assertAlmostEqual(m["postVsBaseline"]["absoluteDelta"], -10.0)
 
     def test_execution_rejected(self):
@@ -59,7 +59,7 @@ class TestAnalyzer(unittest.TestCase):
 
     def test_device_mismatch_rejected(self):
         r = self.root()
-        path = r / "experiment" / "experiment.json"
+        path = r / "intervention" / "intervention.json"
         payload = json.loads(path.read_text())
         payload["externalRish"]["device"]["model"] = "different-model"
         path.write_text(json.dumps(payload))
@@ -77,7 +77,7 @@ class TestAnalyzer(unittest.TestCase):
 
     def test_reported_statistics_mismatch_rejected(self):
         r = self.root()
-        path = r / "experiment" / "experiment.json"
+        path = r / "intervention" / "intervention.json"
         payload = json.loads(path.read_text())
         payload["externalRish"]["startupMs"]["average"] = 999.0
         path.write_text(json.dumps(payload))

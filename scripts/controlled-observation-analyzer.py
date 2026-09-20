@@ -10,7 +10,7 @@ import argparse, json, math, statistics
 from pathlib import Path
 from typing import Any
 
-PHASES = ("baseline", "experiment", "post")
+PHASES = ("baseline", "intervention", "post")
 METRICS = (
     ("startupMs", "average"), ("startupMs", "median"), ("startupMs", "stdev"),
     ("waitMs", "average"), ("waitMs", "median"), ("waitMs", "stdev"),
@@ -106,12 +106,12 @@ def percent_delta(before: float | int | None, after: float | int | None) -> floa
         return None
     return ((float(after) - float(before)) / float(before)) * 100.0
 
-def compare_metric(baseline, experiment, post, section, key):
-    values = {"baseline": baseline[section][key], "experiment": experiment[section][key], "post": post[section][key]}
+def compare_metric(baseline, intervention, post, section, key):
+    values = {"baseline": baseline[section][key], "intervention": intervention[section][key], "post": post[section][key]}
     base = values["baseline"]
     return {
         "metric": f"{section}.{key}", **values,
-        "experimentVsBaseline": {"absoluteDelta": values["experiment"] - base, "percentDelta": percent_delta(base, values["experiment"])},
+        "interventionVsBaseline": {"absoluteDelta": values["intervention"] - base, "percentDelta": percent_delta(base, values["intervention"])},
         "postVsBaseline": {"absoluteDelta": values["post"] - base, "percentDelta": percent_delta(base, values["post"])},
     }
 
@@ -154,7 +154,7 @@ def analyze(root: Path) -> dict[str, Any]:
     if wait_counts != sample_counts:
         raise ObservationError("Startup and wait sample counts differ")
 
-    baseline, experiment, post = (data[p]["external"] for p in PHASES)
+    baseline, intervention, post = (data[p]["external"] for p in PHASES)
     return {
         "reportVersion": 1,
         "measurementOnly": True,
@@ -184,7 +184,7 @@ def analyze(root: Path) -> dict[str, Any]:
             } for p in PHASES
         },
         "comparisons": {
-            "metrics": [compare_metric(baseline, experiment, post, s, k) for s, k in METRICS],
+            "metrics": [compare_metric(baseline, intervention, post, s, k) for s, k in METRICS],
             "batteryPercent": {p: data[p]["external"].get("batteryPercent") for p in PHASES},
             "temperatureC": {p: data[p]["external"].get("temperatureC") for p in PHASES},
         },
@@ -210,10 +210,10 @@ def markdown_report(report):
         f"- Execution enabled: {report['manifest']['executionEnabled']}",
         f"- Device mutation allowed: {report['manifest']['deviceMutationAllowed']}", "",
         "## Phase measurements", "",
-        "| Metric | Baseline | Experiment | Post |", "|---|---:|---:|---:|",
+        "| Metric | Baseline | Intervention | Post |", "|---|---:|---:|---:|",
     ]
     for m in report["comparisons"]["metrics"]:
-        lines.append(f"| {m['metric']} | {fmt(m['baseline'])} | {fmt(m['experiment'])} | {fmt(m['post'])} |")
+        lines.append(f"| {m['metric']} | {fmt(m['baseline'])} | {fmt(m['intervention'])} | {fmt(m['post'])} |")
     lines += [
         "", "## Device conditions", "",
         "| Condition | Baseline | Experiment | Post |", "|---|---:|---:|---:|",

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "stage2.read-only-observation-001",
+  "candidateAction": {
+    "actionId": "observe.measure_only",
+    "description": "Repeat the existing read-only benchmark routine during a reserved intervention slot.",
+    "risk": "LOW",
+    "requiredPermission": "none",
+    "reversible": true,
+    "measurement": "startup timing, wait timing, process memory, battery, temperature",
+    "rollback": "Not applicable; no device state is changed."
+  },
+  "execution": {
+    "enabled": false,
+    "deviceMutationAllowed": false
+  },
+  "phases": {
+    "baseline": {
+      "purpose": "Measure the device before the reserved intervention slot."
+    },
+    "intervention": {
+      "purpose": "Reserve the experimental slot while executing no mutation."
+    },
+    "post": {
+      "purpose": "Measure the device after the reserved intervention slot."
+    }
+  },
+  "measurementPlan": {
+    "metrics": [
+      "startupMs",
+      "waitMs",
+      "memoryKb.pss",
+      "memoryKb.rss",
+      "memoryKb.swapPss",
+      "batteryPercent",
+      "temperatureC"
+    ],
+    "primaryMetric": "startupMs"
+  }
+}
