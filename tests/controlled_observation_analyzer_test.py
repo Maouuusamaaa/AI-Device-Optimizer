@@ -57,6 +57,23 @@ class TestAnalyzer(unittest.TestCase):
         with self.assertRaises(MODULE.ObservationError):
             MODULE.analyze(r)
 
+    def test_device_mismatch_rejected(self):
+        r = self.root()
+        path = r / "experiment" / "experiment.json"
+        payload = json.loads(path.read_text())
+        payload["externalRish"]["device"]["model"] = "different-model"
+        path.write_text(json.dumps(payload))
+        with self.assertRaises(MODULE.ObservationError):
+            MODULE.analyze(r)
+
+    def test_sample_count_mismatch_rejected(self):
+        r = self.root()
+        path = r / "post" / "post.json"
+        payload = json.loads(path.read_text())
+        payload["externalRish"]["startupMs"]["sampleCount"] = 4
+        with self.assertRaises(MODULE.ObservationError):
+            MODULE.analyze(r)
+
     def test_missing_phase_rejected(self):
         r = self.root()
         p = json.loads((r/"manifest.json").read_text())
