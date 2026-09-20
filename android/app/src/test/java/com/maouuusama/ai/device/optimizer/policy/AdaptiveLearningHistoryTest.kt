@@ -92,26 +92,22 @@ class AdaptiveLearningHistoryTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun nonDryRunDecisionIsRejected() {
-        val bad = DecisionHistoryEntry(
+    fun nonDescriptiveMeasurementIsRejected() {
+        DecisionHistoryEntry(
             timestampMs = 1L,
             conditionIds = listOf("memory.pressure"),
             diagnoses = listOf(diagnosis("memory.pressure")),
-            decisions = listOf(
-                PolicyDecision(
-                    policyId = "bad",
-                    severity = PolicySeverity.HIGH,
-                    reason = "test",
-                    mode = PolicyMode.DRY_RUN
+            decisions = listOf(decision("observe.memory_pressure")),
+            simulations = listOf(simulation("observe.memory_pressure")),
+            measurementReports = listOf(
+                PostActionMeasurementReport(
+                    actionId = "observe.memory_pressure",
+                    status = ActionSimulationStatus.SIMULATED,
+                    deltas = emptyList(),
+                    interpretation = "causal_success"
                 )
-            ),
-            simulations = emptyList(),
-            measurementReports = emptyList()
+            )
         )
-        // Condition/decision remains dry-run, so this should be valid; this test documents
-        // that history does not require an action to exist.
-        assertEquals(1, bad.decisions.size)
-        throw IllegalArgumentException("test")
     }
 
     @Test(expected = IllegalArgumentException::class)
