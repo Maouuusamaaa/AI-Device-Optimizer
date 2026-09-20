@@ -30,7 +30,7 @@ class OfflineEvaluationMetadataFactoryTest {
         )
         val metadata = OfflineEvaluationMetadataFactory.fromSnapshot(snapshot)
         assertEquals(true, metadata.charging)
-        assertEquals(36.5, metadata.batteryTemperatureC, 0.0)
+        assertEquals(36.5, metadata.batteryTemperatureC ?: Double.NaN, 0.0)
         assertEquals(0, metadata.thermalStatus)
         assertEquals("wifi", metadata.networkTransport)
         assertEquals(true, metadata.networkValidated)
