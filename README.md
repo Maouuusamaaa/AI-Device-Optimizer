@@ -94,11 +94,11 @@ Current baseline runner:
 
 The dry-run Action Engine and connected optimization pipeline described by the target architecture are not present in this checkout and remain future work.
 
-The external Rish baseline now produces three artifacts in `benchmarks/results/`: raw `.txt`, structured `.json`, and flattened `.csv`. The analyzer reports mean, median, sample standard deviation, minimum, and maximum for repeated startup measurements.
+The external Rish baseline now produces three artifacts in `benchmarks/results/`: raw `.txt`, structured `.json`, and flattened `.csv`. The analyzer reports mean, median, sample standard deviation, minimum, and maximum for repeated startup measurements. Three physical baseline observations for the same itel P661N/API 33 workload have now been aggregated into `benchmarks/results/rish-baseline-aggregate.json` and documented in `benchmarks/physical-device/2026-09-20-itel-p661n-rish-protocol.md`.
 
 Primary mobile development path: use Termux + Shizuku/Rish for independent device measurements while away from a PC. The PC + ADB script remains an optional fallback for desktop sessions.
 
-Next experiment: collect at least 3 like-for-like baseline observations for the same workload, then collect matching candidate observations only when a dry-run policy proposal exists. No privileged mutation is enabled by this benchmark tooling.
+Next experiment: define and run matching candidate observations only when a dry-run policy proposal exists. Candidate measurements must preserve the Rish workload, five-sample startup structure, memory capture, device identity, and comparable power/thermal conditions. No privileged mutation is enabled by this benchmark tooling.
 
 ## Research Direction
 
