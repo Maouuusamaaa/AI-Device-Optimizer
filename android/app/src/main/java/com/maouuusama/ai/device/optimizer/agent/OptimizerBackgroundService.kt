@@ -15,6 +15,8 @@ import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshotJsonWriter
 import com.maouuusama.ai.device.optimizer.policy.DryRunPolicyEvaluator
 import com.maouuusama.ai.device.optimizer.policy.DryRunPolicyProposal
+import com.maouuusama.ai.device.optimizer.policy.DryRunSafetyGate
+import com.maouuusama.ai.device.optimizer.policy.SafetyGateResult
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -23,6 +25,7 @@ class OptimizerBackgroundService : Service() {
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private lateinit var monitor: DeviceMonitor
     private val policyEvaluator = DryRunPolicyEvaluator()
+    private val safetyGate = DryRunSafetyGate()
 
     override fun onCreate() {
         super.onCreate()
@@ -52,16 +55,17 @@ class OptimizerBackgroundService : Service() {
         try {
             val snapshot = monitor.collectSnapshot()
             val proposal = policyEvaluator.evaluate(snapshot)
+            val safetyGateResult = safetyGate.evaluate(proposal)
             DeviceSnapshotJsonWriter.writeLatest(this, snapshot)
-            saveLatest(snapshot, proposal)
-            updateNotification(formatStatus(snapshot, proposal))
+            saveLatest(snapshot, proposal, safetyGateResult)
+            updateNotification(formatStatus(snapshot, proposal, safetyGateResult))
         } catch (error: Exception) {
             Log.e(TAG, "Background monitoring failed", error)
             updateNotification("Monitoring error: " + error.javaClass.simpleName)
         }
     }
 
-    private fun saveLatest(snapshot: DeviceSnapshot, proposal: DryRunPolicyProposal) {
+    private fun saveLatest(snapshot: DeviceSnapshot, proposal: DryRunPolicyProposal, safetyGateResult: SafetyGateResult) {
         val primary = proposal.decisions.firstOrNull()
         val telemetry = snapshot.systemTelemetry
         getSharedPreferences(PREFERENCES, MODE_PRIVATE).edit()
@@ -85,10 +89,12 @@ class OptimizerBackgroundService : Service() {
             .putBoolean("last_action_execution_allowed", proposal.actionExecutionAllowed)
             .putBoolean("last_has_action_proposal", proposal.hasActionProposal)
             .putString("last_proposed_action_ids", proposal.decisions.mapNotNull { it.proposedActionId }.joinToString(","))
+            .putBoolean("last_safety_gate_allowed", safetyGateResult.allowed)
+            .putString("last_safety_gate_reasons", safetyGateResult.reasons.joinToString(" | "))
             .apply()
     }
 
-    private fun formatStatus(snapshot: DeviceSnapshot, proposal: DryRunPolicyProposal): String {
+    private fun formatStatus(snapshot: DeviceSnapshot, proposal: DryRunPolicyProposal, safetyGateResult: SafetyGateResult): String {
         val ratio = if (snapshot.totalRamMb > 0) snapshot.availableRamMb.toDouble() / snapshot.totalRamMb * 100.0 else 0.0
         val primary = proposal.decisions.firstOrNull()
         val policyId = primary?.policyId ?: "none"
@@ -100,7 +106,8 @@ class OptimizerBackgroundService : Service() {
         val cpu = telemetry?.cpu?.utilizationPercent?.let { String.format("%.0f%%", it) } ?: "n/a"
         val systemStatus = telemetry?.status?.name ?: "NONE"
         val proposalState = if (proposal.hasActionProposal) "proposal" else "observe"
-        return ("RAM %.0f%% • CPU %s • SYS %s • %s • %s • top: %s • DRY_RUN").format(ratio, cpu, systemStatus, policyId, proposalState, topProcess)
+        val gateState = if (safetyGateResult.allowed) "gate-open" else "gate-blocked"
+        return ("RAM %.0f%% • CPU %s • SYS %s • %s • %s • %s • top: %s • DRY_RUN").format(ratio, cpu, systemStatus, policyId, proposalState, gateState, topProcess)
     }
 
     private fun updateNotification(text: String) {
