@@ -16,13 +16,10 @@ data class PostActionMeasurementReport(
 )
 
 class PostActionMeasurementEvaluator {
-    fun evaluate(
-        simulation: ActionSimulation,
-        before: DeviceState,
-        after: DeviceState
-    ): PostActionMeasurementReport {
+    fun evaluate(simulation: ActionSimulation, before: DeviceState, after: DeviceState): PostActionMeasurementReport {
         require(simulation.actionId.isNotBlank()) { "Action id must not be blank." }
-        require(before.totalRamMb >= 0L && after.totalRamMb >= 0L) { "RAM values must be non-negative." }
+        validateState(before, "before")
+        validateState(after, "after")
 
         val deltas = listOf(
             delta("availableRamMb", before.availableRamMb.toDouble(), after.availableRamMb.toDouble()),
@@ -32,11 +29,20 @@ class PostActionMeasurementEvaluator {
         ).filterNotNull()
 
         return PostActionMeasurementReport(
-            actionId = simulation.actionId,
-            status = simulation.status,
-            deltas = deltas,
-            interpretation = "descriptive_only: this action was simulated and no device mutation was performed; deltas cannot be attributed to the action."
+            simulation.actionId, simulation.status, deltas,
+            "descriptive_only: this action was simulated and no device mutation was performed; deltas cannot be attributed to the action."
         )
+    }
+
+    private fun validateState(state: DeviceState, label: String) {
+        require(state.totalRamMb >= 0L && state.availableRamMb >= 0L) { "$label RAM values must be non-negative." }
+        require(state.batteryPercent == null || state.batteryPercent in 0..100) { "$label battery percentage must be between 0 and 100." }
+        require(state.storageTotalBytes == null || state.storageTotalBytes >= 0L) { "$label storage total must be non-negative." }
+        require(state.storageFreeBytes == null || state.storageFreeBytes >= 0L) { "$label storage free must be non-negative." }
+        require(
+            state.storageTotalBytes == null || state.storageFreeBytes == null ||
+                state.storageFreeBytes <= state.storageTotalBytes
+        ) { "$label storage free cannot exceed storage total." }
     }
 
     private fun delta(metric: String, before: Double, after: Double): MeasurementDelta =
