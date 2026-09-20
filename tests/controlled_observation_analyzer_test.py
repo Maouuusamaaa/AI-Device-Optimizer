@@ -71,6 +71,7 @@ class TestAnalyzer(unittest.TestCase):
         path = r / "post" / "post.json"
         payload = json.loads(path.read_text())
         payload["externalRish"]["startupMs"]["sampleCount"] = 4
+        path.write_text(json.dumps(payload))
         with self.assertRaises(MODULE.ObservationError):
             MODULE.analyze(r)
 
