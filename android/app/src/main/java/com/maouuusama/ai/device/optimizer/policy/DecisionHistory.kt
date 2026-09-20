@@ -45,7 +45,7 @@ data class DecisionHistoryEntry(
 class DecisionHistoryStore : DecisionHistorySink {
     private val entries = mutableListOf<DecisionHistoryEntry>()
 
-    fun append(entry: DecisionHistoryEntry) {
+    override fun append(entry: DecisionHistoryEntry) {
         entries += entry
     }
 
