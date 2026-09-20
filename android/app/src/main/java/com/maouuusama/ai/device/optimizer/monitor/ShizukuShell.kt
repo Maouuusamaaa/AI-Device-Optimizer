@@ -38,16 +38,18 @@ object ShizukuShell {
 
             val remote = method.invoke(null, arrayOf("sh", "-c", command), null, null) as Process
             try {
-                val output = remote.inputStream.bufferedReader().use { it.readText() }
-                remote.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
-                if (remote.isAlive) {
+                if (!remote.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
                     remote.destroy()
-                    throw IllegalStateException("Shizuku shell command timed out")
+                    throw IllegalStateException("Shizuku shell command timed out after ${timeoutMs}ms")
                 }
+
+                val output = remote.inputStream.bufferedReader().use { it.readText() }
                 val error = remote.errorStream.bufferedReader().use { it.readText() }
-                if (remote.exitValue() != 0) {
+                val exitCode = remote.exitValue()
+                if (exitCode != 0) {
+                    val detail = error.trim().ifEmpty { "no stderr output" }
                     throw IllegalStateException(
-                        "Shizuku command failed (${remote.exitValue()}): ${error.trim()}"
+                        "Shizuku command failed ($exitCode): $detail"
                     )
                 }
                 output
