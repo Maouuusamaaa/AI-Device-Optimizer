@@ -74,6 +74,7 @@ class OptimizerBackgroundService : Service() {
             })
             .putString("last_system_telemetry_status", telemetry?.status?.name)
             .putString("last_system_telemetry_provider", telemetry?.provider)
+            .putString("last_system_telemetry_error", telemetry?.errorMessage)
             .putInt("last_system_process_count", telemetry?.processes?.size ?: 0)
             .putLong("last_system_mem_available_kb", telemetry?.memory?.memAvailableKb ?: -1L)
             .putLong("last_system_swap_used_kb", telemetry?.memory?.swapUsedKb ?: -1L)
