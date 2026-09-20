@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Local advisory inference contract for Android",
+  "inputFeatures": ["batteryPercent", "temperatureC", "availableRamMb"],
+  "output": {
+    "actionId": "string",
+    "confidence": "0..1",
+    "abstain": "boolean",
+    "reason": "string"
+  },
+  "safety": {
+    "advisoryOnly": true,
+    "executionRequested": false,
+    "deviceMutationAllowed": false,
+    "localSafetyGateRequired": true
+  }
+}
