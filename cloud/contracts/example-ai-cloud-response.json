@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "observation": {
+    "observationId": "obs-example-001",
+    "capturedAt": "2026-09-20T00:00:00Z",
+    "device": {
+      "apiLevel": 33,
+      "architecture": "arm64-v8a"
+    },
+    "telemetry": {
+      "batteryPercent": 44,
+      "temperatureC": 43.2,
+      "availableRamMb": 1800,
+      "cpuPercent": 18,
+      "storageFreeMb": 42000,
+      "networkConnected": true
+    }
+  },
+  "recommendation": {
+    "recommendationId": "rec-example-001",
+    "mode": "ADVISORY_ONLY",
+    "diagnosis": "Example advisory only; no optimization benefit is asserted.",
+    "confidence": 0.5,
+    "evidenceRefs": [
+      "offline-example"
+    ],
+    "candidateAction": {
+      "actionId": "OBSERVE_ONLY",
+      "reason": "Use observation-only fallback until an allowlisted intervention has validated evidence.",
+      "reversible": true,
+      "risk": "NONE"
+    },
+    "execution": {
+      "requested": false,
+      "deviceMutationAllowed": false
+    }
+  }
+}
