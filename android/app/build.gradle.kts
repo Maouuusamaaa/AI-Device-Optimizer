@@ -5,6 +5,7 @@ plugins {
 android {
     namespace = "com.maouuusama.ai.device.optimizer"
     compileSdk = 36
+    ndkVersion = "27.2.12479018"
 
     defaultConfig {
         applicationId = "com.maouuusama.ai.device.optimizer"
@@ -12,7 +13,6 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.1"
-        ndkVersion = "27.2.12479018"
 
         externalNativeBuild {
             cmake {
