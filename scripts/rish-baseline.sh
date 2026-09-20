@@ -3,7 +3,7 @@ set -euo pipefail
 
 PACKAGE="com.maouuusama.ai.device.optimizer"
 ACTIVITY="$PACKAGE/.MainActivity"
-RISH="${RISH:-$HOME/rish}"
+RISH="${RISH:-$(command -v rish)}"
 OUT_DIR="${1:-benchmarks/results}"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 OUT_FILE="$OUT_DIR/rish-baseline-$TIMESTAMP.txt"
@@ -25,9 +25,9 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-if [[ ! -x "$RISH" ]]; then
+if [[ -z "$RISH" ]] || ! command -v "$RISH" >/dev/null 2>&1 && [[ ! -x "$RISH" ]]; then
   echo "Rish executable not found: $RISH"
-  echo "Set RISH=/path/to/rish or place rish at ~/rish."
+  echo "Set RISH=/path/to/rish or ensure rish is available on PATH."
   exit 1
 fi
 
