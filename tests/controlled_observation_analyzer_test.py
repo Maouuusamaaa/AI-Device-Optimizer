@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import importlib.util, json, tempfile, unittest
+import importlib.util, json, statistics, tempfile, unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "controlled-observation-analyzer.py"
@@ -19,10 +19,10 @@ def write_phase(root, phase, startup, pss):
         "source": str(raw), "timestamp": "2026-09-20T11:46:08+07:00",
         "device": {"manufacturer": "ITEL", "model": "itel P661N", "androidApi": 33},
         "batteryPercent": 26, "temperatureC": 43.0,
-        "startupMs": {"average": sum(samples)/len(samples), "median": sorted(samples)[len(samples)//2],
-                      "stdev": 1.0, "min": min(samples), "max": max(samples),
+        "startupMs": {"average": statistics.mean(samples), "median": statistics.median(samples),
+                      "stdev": statistics.stdev(samples), "min": min(samples), "max": max(samples),
                       "sampleCount": len(samples), "samples": samples},
-        "waitMs": {"average": 100.0, "median": 100.0, "stdev": 1.0, "min": 99.0,
+        "waitMs": {"average": statistics.mean([99,100,100,100,101]), "median": statistics.median([99,100,100,100,101]), "stdev": statistics.stdev([99,100,100,100,101]), "min": 99.0,
                    "max": 101.0, "sampleCount": 5, "samples": [99,100,100,100,101]},
         "memoryKb": {"pss": pss, "rss": 175000, "swapPss": 150},
     }}
