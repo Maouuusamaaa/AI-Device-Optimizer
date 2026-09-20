@@ -23,12 +23,13 @@ class DecisionHistoryPersistenceTest {
     }
 
     @Test(expected = IllegalArgumentException::class) fun unsupportedSchemaIsRejected() {
-        val bytes = ByteArrayOutputStream().also { stream -> DataOutputStream(stream).use { output -> output.writeUTF("AI_DEVICE_OPTIMIZER_HISTORY"); output.writeInt(999); output.writeInt(0) } }.toByteArray()\n        DecisionHistoryBinaryCodec.decode(bytes)
+        val bytes = ByteArrayOutputStream().also { stream -> DataOutputStream(stream).use { output -> output.writeUTF("AI_DEVICE_OPTIMIZER_HISTORY"); output.writeInt(999); output.writeInt(0) } }.toByteArray()
+        DecisionHistoryBinaryCodec.decode(bytes)
     }
 
     @Test fun persistentStoreKeepsNewestEntriesWithinBound() {
         val dir = createTempDirectory("optimizer-history").toFile()
-        val file = File(dir, "history.json")
+        val file = File(dir, "history.bin")
         val store = PersistentDecisionHistoryStore(file, 2)
         store.append(entry(1L)); store.append(entry(2L)); store.append(entry(3L))
         assertEquals(listOf(2L, 3L), store.snapshot().map { it.timestampMs })
