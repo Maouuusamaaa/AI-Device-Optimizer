@@ -10,7 +10,7 @@ import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
  * the observed values to change.
  */
 class DecisionHistoryRecorder(
-    private val historyStore: DecisionHistoryStore,
+    private val historyStore: DecisionHistorySink,
     private val measurementEvaluator: PostActionMeasurementEvaluator = PostActionMeasurementEvaluator()
 ) {
     fun record(
