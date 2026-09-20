@@ -34,7 +34,7 @@ class TestAnalyzer(unittest.TestCase):
         (r/"manifest.json").write_text(json.dumps({
             "schemaVersion": 1, "candidateActionId": "observe.remeasure_baseline",
             "executionEnabled": False, "deviceMutationAllowed": False,
-            "phases": {p: {"rawText": f"/storage/{p}/rish-baseline-{p}.txt"} for p in ("baseline","experiment","post")}
+            "phases": {p: {"rawText": f"/storage/{p}/rish-baseline-{p}.txt"} for p in ("baseline","intervention","post")}
         }), encoding="utf-8")
         write_phase(r, "baseline", [600,610,620,630,640], 57000)
         write_phase(r, "intervention", [610,620,630,640,650], 58000)
