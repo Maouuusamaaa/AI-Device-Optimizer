@@ -37,7 +37,7 @@ object DecisionLogFormatter {
     }
 
     private fun StringBuilder.appendNumber(name: String, value: Long) {
-        append(',').append('"').append(name).append("":").append(value)
+        append(',').append('"').append(name).append("\":").append(value)
     }
 
     private fun StringBuilder.appendStringArray(values: List<String>) {
