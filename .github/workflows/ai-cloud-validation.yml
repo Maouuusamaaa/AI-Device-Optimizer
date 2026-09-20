@@ -22,12 +22,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Compile Python
-        run: python3 -m py_compile scripts/validate-ai-cloud-contract.py cloud/dataset/build-dataset.py cloud/models/baseline-advisor.py cloud/evaluation/evaluate-baseline.py cloud/models/model-interface.py tests/ai_cloud_contract_test.py tests/stage4_ai_baseline_test.py
+        run: python3 -m py_compile scripts/validate-ai-cloud-contract.py cloud/dataset/build-dataset.py cloud/dataset/training-readiness.py cloud/models/baseline-advisor.py cloud/evaluation/evaluate-baseline.py cloud/models/model-interface.py tests/ai_cloud_contract_test.py tests/stage4_ai_baseline_test.py tests/training_readiness_test.py
       - name: Parse JSON
         run: python3 -c "import json,glob; [json.load(open(p,encoding='utf-8')) for p in glob.glob('cloud/**/*.json', recursive=True)]"
       - name: Run tests
         run: python3 -m unittest discover -s tests -p '*test.py' -v
-      - name: Validate contract
+      - name: Validate training readiness gate\n        run: |\n          set +e\n          python3 cloud/dataset/training-readiness.py cloud/dataset/example-training-dataset.json --out /tmp/training-readiness.json\n          code=$?\n          set -e\n          python3 -c "import json; d=json.load(open('/tmp/training-readiness.json')); assert code if False else True; assert d['status']=='TRAINING_BLOCKED_INSUFFICIENT_LABEL_DIVERSITY'; assert d['uniqueLabelCount']==1; assert d['policy']['deviceMutationAllowed'] is False"\n          test "$code" -eq 2\n      - name: Validate contract
         run: python3 scripts/validate-ai-cloud-contract.py cloud/contracts/example-ai-cloud-response.json
       - name: Run baseline
         run: python3 cloud/models/baseline-advisor.py cloud/dataset/example-training-dataset.json --out /tmp/baseline.json
