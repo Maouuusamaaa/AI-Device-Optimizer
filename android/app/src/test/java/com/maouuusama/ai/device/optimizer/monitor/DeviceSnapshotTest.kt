@@ -27,7 +27,7 @@ class DeviceSnapshotTest {
         )
 
         assertEquals(75, snapshot.batteryPercent)
-        assertEquals(36.5, snapshot.batteryTemperatureC, 0.001)
+        assertEquals(36.5, snapshot.batteryTemperatureC ?: Double.NaN, 0.001)
         assertEquals(0, snapshot.thermalStatus)
         assertEquals(250L, snapshot.storageFreeBytes)
         assertEquals("WIFI", snapshot.networkTransport)
