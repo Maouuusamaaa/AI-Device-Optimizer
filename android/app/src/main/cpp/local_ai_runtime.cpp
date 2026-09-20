@@ -34,7 +34,7 @@ std::string json_escape(const std::string & input) {
         switch (ch) {
             case '\\': output += "\\\\"; break;
             case '"': output += "\\""; break;
-            case '\n': output += "\\n"; break;
+            case '"': output.push_back('\\'); output.push_back('"'); break;
             case '\r': output += "\\r"; break;
             case '\t': output += "\\t"; break;
             default: output += ch < 0x20 ? ' ' : static_cast<char>(ch);
@@ -144,7 +144,7 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
     std::string output;
     output.reserve(static_cast<size_t>(max_tokens) * 4);
     for (int i = 0; i < max_tokens; ++i) {
-        const llama_token token = llama_sampler_sample(sampler, context, -1);
+        llama_token token = llama_sampler_sample(sampler, context, -1);
         if (llama_vocab_is_eog(vocab, token)) break;
 
         char buffer[512];
