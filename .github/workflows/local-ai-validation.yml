@@ -1,0 +1,41 @@
+name: Local AI Validation
+
+on:
+  push:
+    branches:
+      - main
+      - feat/stage6-local-ai-inference-foundation
+    paths:
+      - 'android/local-ai/**'
+      - 'tests/local_ai_test.py'
+      - 'docs/examples/local-ai-input.json'
+      - '.github/workflows/local-ai-validation.yml'
+  pull_request:
+    paths:
+      - 'android/local-ai/**'
+      - 'tests/local_ai_test.py'
+      - 'docs/examples/local-ai-input.json'
+      - '.github/workflows/local-ai-validation.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Python
+        run: python3 -m py_compile android/local-ai/local-ai-advisor.py android/local-ai/benchmark-local-ai.py tests/local_ai_test.py
+      - name: Run tests
+        run: python3 tests/local_ai_test.py
+      - name: Validate safety and benchmark contract
+        run: |
+          python3 android/local-ai/local-ai-advisor.py < docs/examples/local-ai-input.json > /tmp/local-ai.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/local-ai.json'))
+          assert p["safety"]["advisoryOnly"] is True
+          assert p["safety"]["executionRequested"] is False
+          assert p["safety"]["deviceMutationAllowed"] is False
+          assert p["safety"]["localSafetyGateRequired"] is True
+          assert p["recommendation"]["abstain"] is True
+          print("local AI safety contract valid")
+          PY
