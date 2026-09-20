@@ -50,7 +50,13 @@ class MainActivity : Activity() {
                 append("RAM total: ").append(snapshot.totalRamMb).append(" MB\n")
                 append("RAM available: ").append(snapshot.availableRamMb).append(" MB\n")
                 append("Battery: ").append(snapshot.batteryPercent ?: "unknown").append("%\n")
-                append("Charging: ").append(snapshot.isCharging)
+                append("Charging: ").append(snapshot.isCharging).append("\n")
+                append("Battery temperature: ").append(snapshot.batteryTemperatureC ?: "unknown").append(" °C\n")
+                append("Thermal status: ").append(snapshot.thermalStatus ?: "unknown").append("\n")
+                append("Storage free: ").append(formatStorage(snapshot.storageFreeBytes)).append(" / ").append(formatStorage(snapshot.storageTotalBytes)).append("\n")
+                append("Network: ").append(snapshot.networkTransport ?: "offline").append("\n")
+                append("Network validated: ").append(snapshot.networkValidated ?: "unknown").append("\n")
+                append("Interactive: ").append(snapshot.isInteractive ?: "unknown")
             }
         })
 
@@ -100,6 +106,11 @@ class MainActivity : Activity() {
 
         setContentView(root)
         startBackgroundAgent()
+    }
+
+    private fun formatStorage(bytes: Long?): String {
+        if (bytes == null || bytes < 0L) return "unknown"
+        return String.format("%.2f GB", bytes / 1024.0 / 1024.0 / 1024.0)
     }
 
     private fun startBackgroundAgent() {
