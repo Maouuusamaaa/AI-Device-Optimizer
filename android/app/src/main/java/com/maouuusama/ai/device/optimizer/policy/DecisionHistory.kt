@@ -6,7 +6,11 @@ package com.maouuusama.ai.device.optimizer.policy
  * This record is intentionally descriptive. It does not authorize execution and does not
  * infer causal effectiveness from before/after measurements.
  */
-interface DecisionHistorySink {\n    fun append(entry: DecisionHistoryEntry)\n}\n\ndata class DecisionHistoryEntry(
+interface DecisionHistorySink {
+    fun append(entry: DecisionHistoryEntry)
+}
+
+data class DecisionHistoryEntry(
     val timestampMs: Long,
     val conditionIds: List<String>,
     val diagnoses: List<Diagnosis>,
