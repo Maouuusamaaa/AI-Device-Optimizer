@@ -21,6 +21,9 @@ import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetrySnapshot
 import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetryStatus
 import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningSummarizer
 import com.maouuusama.ai.device.optimizer.policy.PersistentDecisionHistoryStore
+import com.maouuusama.ai.device.optimizer.localai.LocalLlamaRuntime
+import com.maouuusama.ai.device.optimizer.localai.QwenLocalModel
+import com.maouuusama.ai.device.optimizer.localai.QwenModelDownloader
 
 class MainActivity : Activity() {
     private lateinit var statusText: TextView
@@ -30,6 +33,9 @@ class MainActivity : Activity() {
     private lateinit var processText: TextView
     private lateinit var systemText: TextView
     private lateinit var learningText: TextView
+    private lateinit var localAiText: TextView
+    private lateinit var localAiDownloadButton: Button
+    private lateinit var localAiRunButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,6 +104,27 @@ class MainActivity : Activity() {
             text = "\\nAdaptive learning: not summarized yet"
         }
         root.addView(learningText)
+
+        localAiText = TextView(this).apply {
+            textSize = 14f
+            text = "\\nLocal AI: runtime loading..."
+        }
+        root.addView(localAiText)
+
+        localAiDownloadButton = Button(this).apply {
+            text = "Download / verify Qwen3 0.6B"
+            setOnClickListener { downloadLocalModel() }
+        }
+        root.addView(localAiDownloadButton)
+
+        localAiRunButton = Button(this).apply {
+            text = "Run local AI advisory test"
+            isEnabled = false
+            setOnClickListener { runLocalAiTest() }
+        }
+        root.addView(localAiRunButton)
+
+        refreshLocalAiStatus()
 
         benchmarkButton = Button(this).apply {
             text = "Run 60s read-only baseline"
@@ -282,6 +309,99 @@ class MainActivity : Activity() {
         if (telemetry.status == SystemTelemetryStatus.PERMISSION_REQUIRED) {
             append("Tap refresh to request Shizuku permission.")
         }
+    }
+
+    private fun refreshLocalAiStatus() {
+        Thread {
+            try {
+                val downloader = QwenModelDownloader(this)
+                val modelInstalled = downloader.isInstalled()
+                val runtime = LocalLlamaRuntime()
+                val version = runCatching { runtime.runtimeVersion() }.getOrElse { "load failed" }
+                val status = if (modelInstalled) "model verified" else "model not installed"
+                runOnUiThread {
+                    localAiText.text =
+                        "\\nLocal AI runtime\\n" +
+                            "llama.cpp: " + version + "\\n" +
+                            "Qwen3 0.6B Q4_0: " + status + "\\n" +
+                            "Mode: advisory-only; no device mutation."
+                    localAiRunButton.isEnabled = modelInstalled
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    localAiText.text = "\\nLocal AI unavailable: " +
+                        (error.message ?: error.javaClass.simpleName)
+                    localAiRunButton.isEnabled = false
+                }
+            }
+        }.start()
+    }
+
+    private fun downloadLocalModel() {
+        localAiDownloadButton.isEnabled = false
+        localAiRunButton.isEnabled = false
+        localAiText.text = "\\nQwen3 download starting...\\nRequired model size: 429 MiB.\\nThe APK does not bundle the model."
+        Thread {
+            try {
+                val downloader = QwenModelDownloader(this)
+                check(downloader.hasEnoughStorage()) { "Insufficient free storage for the verified model" }
+                downloader.download { downloaded, total ->
+                    val percent = if (total > 0L) downloaded * 100L / total else 0L
+                    runOnUiThread {
+                        localAiText.text = "\\nQwen3 download: " + percent + "%\\nDownloaded: " +
+                            (downloaded / 1024 / 1024) + " / " + (total / 1024 / 1024) + " MiB"
+                    }
+                }
+                runOnUiThread {
+                    localAiText.text = "\\nQwen3 model verified successfully.\\nSHA-256 matches the pinned manifest.\\nMode: advisory-only."
+                    localAiDownloadButton.isEnabled = true
+                    localAiRunButton.isEnabled = true
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    localAiText.text = "\\nQwen3 download/verification failed: " +
+                        (error.message ?: error.javaClass.simpleName)
+                    localAiDownloadButton.isEnabled = true
+                    localAiRunButton.isEnabled = false
+                }
+            }
+        }.start()
+    }
+
+    private fun runLocalAiTest() {
+        localAiRunButton.isEnabled = false
+        localAiDownloadButton.isEnabled = false
+        localAiText.text = "\\nLocal AI inference running...\\nNo action execution is permitted."
+        Thread {
+            val started = System.currentTimeMillis()
+            try {
+                val runtime = LocalLlamaRuntime()
+                val snapshot = DeviceMonitor(this).collectSnapshot(includeSystemTelemetry = false)
+                val prompt = QwenLocalModel.prompt(
+                    "Analyze this Android device observation and identify whether more evidence is needed. " +
+                        "Battery=" + (snapshot.batteryPercent ?: "unknown") + "%, " +
+                        "Temperature=" + (snapshot.batteryTemperatureC ?: "unknown") + "C, " +
+                        "AvailableRAM=" + snapshot.availableRamMb + "MB. " +
+                        "Do not propose or execute device mutations."
+                )
+                val result = runtime.generate(QwenLocalModel.file(this), prompt)
+                val elapsed = System.currentTimeMillis() - started
+                runOnUiThread {
+                    localAiText.text = "\\nLocal AI advisory result\\nInference wall time: " + elapsed +
+                        " ms\\nRaw model result:\\n" + result +
+                        "\\n\\nSafety: executionRequested=false; deviceMutationAllowed=false."
+                    localAiRunButton.isEnabled = true
+                    localAiDownloadButton.isEnabled = true
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    localAiText.text = "\\nLocal AI inference failed: " +
+                        (error.message ?: error.javaClass.simpleName)
+                    localAiRunButton.isEnabled = true
+                    localAiDownloadButton.isEnabled = true
+                }
+            }
+        }.start()
     }
 
     private fun runBaseline() {

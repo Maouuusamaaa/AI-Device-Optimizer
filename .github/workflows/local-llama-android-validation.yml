@@ -1,0 +1,69 @@
+name: Local Llama Android Validation
+
+on:
+  pull_request:
+    paths:
+      - "android/**"
+      - ".github/workflows/local-llama-android-validation.yml"
+  push:
+    branches:
+      - main
+      - "feat/**"
+    paths:
+      - "android/**"
+      - ".github/workflows/local-llama-android-validation.yml"
+
+jobs:
+  android-native-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ""
+
+      - name: Install Android build components
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "cmake;3.22.1" "ndk;27.2.12479018"
+
+      - name: Verify runtime contract
+        run: |
+          test -f android/app/src/main/cpp/CMakeLists.txt
+          grep -q 'b10982' android/app/src/main/cpp/CMakeLists.txt
+          grep -q 'GGML_NATIVE OFF' android/app/src/main/cpp/CMakeLists.txt
+          grep -q 'LLAMA_OPENSSL OFF' android/app/src/main/cpp/CMakeLists.txt
+          grep -q 'deviceMutationAllowed' android/app/src/main/cpp/local_ai_runtime.cpp
+          if find . -type f -name "*.gguf" | grep -q .; then
+            echo "GGUF binaries must not be committed."
+            exit 1
+          fi
+
+      - name: Build debug APK and unit tests
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
+
+      - name: Verify native library in APK
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          unzip -l "$APK" | grep -E 'lib/arm64-v8a/lib(ai_local_runtime|llama|ggml).*\.so'
+          unzip -l "$APK" | grep -q 'lib/arm64-v8a/libai_local_runtime.so'
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-device-optimizer-stage8-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
