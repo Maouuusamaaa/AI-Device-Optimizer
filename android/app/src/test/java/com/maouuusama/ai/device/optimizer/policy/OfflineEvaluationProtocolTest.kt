@@ -38,7 +38,6 @@ class OfflineEvaluationProtocolTest {
         val evaluator = ReproducibleOfflineEvaluator()
         val (split, integrity) = evaluator.validateAndSplit(records)
         val report = OfflineEvaluationProtocol().assess(split, integrity)
-
         assertEquals(5, report.totalObservations)
         assertEquals(4, report.trainingObservations)
         assertEquals(1, report.holdoutObservations)
@@ -69,11 +68,12 @@ class OfflineEvaluationProtocolTest {
     }
 
     @Test
-    fun noHoldoutBlocksReadiness() {
+    fun insufficientTrainingSetBlocksReadiness() {
         val records = listOf(record("1", 1))
         val (split, integrity) = ReproducibleOfflineEvaluator(0.8).validateAndSplit(records)
         val report = OfflineEvaluationProtocol().assess(split, integrity)
-        assertEquals(0, report.holdoutObservations)
+        assertEquals(0, report.trainingObservations)
+        assertEquals(1, report.holdoutObservations)
         assertEquals(OfflineEvaluationReadiness.NOT_READY, report.readiness)
     }
 }
