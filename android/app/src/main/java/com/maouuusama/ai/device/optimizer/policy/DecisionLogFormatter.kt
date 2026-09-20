@@ -3,7 +3,7 @@ package com.maouuusama.ai.device.optimizer.policy
 object DecisionLogFormatter {
     fun toJson(entry: DecisionLogEntry): String = buildString {
         append('{')
-        appendNumber("timestampMs", entry.timestampMs)
+        append("\"timestampMs\":").append(entry.timestampMs)
         appendNumber("availableRamMb", entry.availableRamMb)
         appendNumber("totalRamMb", entry.totalRamMb)
         append(",\"batteryPercent\":")
