@@ -70,6 +70,8 @@ Completed:
 - Android unit tests for the monitor, policy foundation, and connected dry-run flow
 - GitHub Actions build/test workflow configuration
 - successful post-fix GitHub Actions build/test verification
+- controlled-observation analyzer validates reported statistics against raw sample arrays
+- measurement-validation GitHub Actions workflow for the Python measurement layer
 - debug APK installed and running on a physical Android API 33 device
 
 The Action Engine remains future work. This milestone intentionally stops at a DRY_RUN proposal boundary: proposals can describe observation candidates, but no proposal can authorize execution.
