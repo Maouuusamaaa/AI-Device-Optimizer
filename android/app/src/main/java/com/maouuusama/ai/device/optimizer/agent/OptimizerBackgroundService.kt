@@ -13,12 +13,16 @@ import androidx.core.app.ServiceCompat
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshotJsonWriter
-import com.maouuusama.ai.device.optimizer.policy.DryRunPolicyEvaluator
+import com.maouuusama.ai.device.optimizer.policy.DecisionHistoryRecorder
+import com.maouuusama.ai.device.optimizer.policy.DeviceState
+import com.maouuusama.ai.device.optimizer.policy.DryRunActionEngine
 import com.maouuusama.ai.device.optimizer.policy.DryRunPolicyProposal
 import com.maouuusama.ai.device.optimizer.policy.DecisionLogEntry
 import com.maouuusama.ai.device.optimizer.policy.DecisionLogger
-import com.maouuusama.ai.device.optimizer.policy.DryRunSafetyGate
+import com.maouuusama.ai.device.optimizer.policy.PersistentDecisionHistoryStore
+import com.maouuusama.ai.device.optimizer.policy.PolicySimulationEvaluator
 import com.maouuusama.ai.device.optimizer.policy.SafetyGateResult
+import com.maouuusama.ai.device.optimizer.policy.SimulatedOptimizationPlan
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -27,13 +31,17 @@ class OptimizerBackgroundService : Service() {
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private lateinit var monitor: DeviceMonitor
     private lateinit var decisionLogger: DecisionLogger
-    private val policyEvaluator = DryRunPolicyEvaluator()
-    private val safetyGate = DryRunSafetyGate()
+    private lateinit var historyRecorder: DecisionHistoryRecorder
+    private val simulationEvaluator = PolicySimulationEvaluator()
+    private val actionEngine = DryRunActionEngine()
 
     override fun onCreate() {
         super.onCreate()
         monitor = DeviceMonitor(this)
         decisionLogger = DecisionLogger(this)
+        historyRecorder = DecisionHistoryRecorder(
+            PersistentDecisionHistoryStore(this)
+        )
         createNotificationChannel()
         startAsForeground()
         scheduleMonitoring()
@@ -58,10 +66,19 @@ class OptimizerBackgroundService : Service() {
     private fun collectAndEvaluate() {
         try {
             val snapshot = monitor.collectSnapshot()
-            val proposal = policyEvaluator.evaluate(snapshot)
-            val safetyGateResult = safetyGate.evaluate(proposal)
+            val plan = simulationEvaluator.evaluate(snapshot)
+            val proposal = DryRunPolicyProposal(
+                state = DeviceState.fromSnapshot(snapshot),
+                decisions = plan.simulation.decisions,
+                actionExecutionAllowed = plan.simulation.executionAllowed
+            )
+            val safetyGateResult = plan.safetyGate
+            val simulations = actionEngine.simulate(proposal, safetyGateResult)
+
             DeviceSnapshotJsonWriter.writeLatest(this, snapshot)
             saveLatest(snapshot, proposal, safetyGateResult)
+            recordHistory(snapshot, plan, simulations)
+
             decisionLogger.append(
                 DecisionLogEntry(
                     timestampMs = snapshot.timestampMs,
@@ -82,6 +99,20 @@ class OptimizerBackgroundService : Service() {
         } catch (error: Exception) {
             Log.e(TAG, "Background monitoring failed", error)
             updateNotification("Monitoring error: " + error.javaClass.simpleName)
+        }
+    }
+
+    private fun recordHistory(
+        snapshot: DeviceSnapshot,
+        plan: SimulatedOptimizationPlan,
+        simulations: List<com.maouuusama.ai.device.optimizer.policy.ActionSimulation>
+    ) {
+        try {
+            historyRecorder.record(snapshot, plan, simulations)
+        } catch (error: Exception) {
+            // History persistence must never authorize or execute an action, and a persistence
+            // failure must not stop read-only device monitoring.
+            Log.e(TAG, "Decision history persistence failed", error)
         }
     }
 
@@ -152,7 +183,11 @@ class OptimizerBackgroundService : Service() {
         }
     }
 
-    override fun onDestroy() { executor.shutdownNow(); super.onDestroy() }
+    override fun onDestroy() {
+        executor.shutdownNow()
+        super.onDestroy()
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
 
