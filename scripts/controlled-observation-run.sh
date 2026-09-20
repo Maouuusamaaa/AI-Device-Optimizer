@@ -4,8 +4,8 @@ set -euo pipefail
 OUT_ROOT="${1:-benchmarks/results/controlled-observation-$(date +%Y%m%d-%H%M%S)}"
 BASELINE_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/rish-baseline.sh"
 
-if [[ ! -x "$BASELINE_SCRIPT" ]]; then
-  echo "Missing executable baseline script: $BASELINE_SCRIPT" >&2
+if [[ ! -f "$BASELINE_SCRIPT" ]]; then
+  echo "Missing baseline script: $BASELINE_SCRIPT" >&2
   exit 1
 fi
 
@@ -16,7 +16,7 @@ run_phase() {
   local dir="$OUT_ROOT/$phase"
   mkdir -p "$dir"
   echo "=== phase=$phase ==="
-  "$BASELINE_SCRIPT" "$dir"
+  bash "$BASELINE_SCRIPT" "$dir"
   local latest
   latest="$(find "$dir" -maxdepth 1 -type f -name 'rish-baseline-*.txt' -print | sort | tail -n 1)"
   [[ -n "$latest" ]] || { echo "No raw baseline artifact produced for $phase" >&2; exit 1; }

@@ -24,7 +24,7 @@ Optional output directory:
 bash scripts/controlled-observation-run.sh benchmarks/results/controlled-observation-YYYYMMDD-HHMMSS
 ```
 
-The script requires the existing `~/rish` executable and Python 3. It only force-stops/starts the optimizer app for measurement and reads telemetry through the existing Rish baseline routine. It does not invoke an optimizer action.
+The runner is invoked explicitly with `bash` because repositories located in Termux shared storage may not preserve executable permission bits. The baseline routine resolves `rish` from the Termux `PATH` by default; an explicit `RISH=/path/to/rish` override is also supported. It only force-stops/starts the optimizer app for measurement and reads telemetry through the existing Rish baseline routine. It does not invoke an optimizer action.
 
 ## Evidence to preserve
 
