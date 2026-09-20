@@ -6,6 +6,10 @@ package com.maouuusama.ai.device.optimizer.policy
  * This record is intentionally descriptive. It does not authorize execution and does not
  * infer causal effectiveness from before/after measurements.
  */
+interface DecisionHistorySink {
+    fun append(entry: DecisionHistoryEntry)
+}
+
 data class DecisionHistoryEntry(
     val timestampMs: Long,
     val conditionIds: List<String>,
@@ -38,10 +42,10 @@ data class DecisionHistoryEntry(
  * The store keeps records in insertion order and returns snapshots, so callers cannot mutate
  * the internal collection. Persistence can be added later without changing the record contract.
  */
-class DecisionHistoryStore {
+class DecisionHistoryStore : DecisionHistorySink {
     private val entries = mutableListOf<DecisionHistoryEntry>()
 
-    fun append(entry: DecisionHistoryEntry) {
+    override fun append(entry: DecisionHistoryEntry) {
         entries += entry
     }
 

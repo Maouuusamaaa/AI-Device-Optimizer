@@ -7,7 +7,7 @@ class PersistentDecisionHistoryStore private constructor(
     private val historyFile: File,
     private val maxEntries: Int,
     marker: Unit
-) {
+) : DecisionHistorySink {
     constructor(context: Context, maxEntries: Int = DEFAULT_MAX_ENTRIES) :
         this(File(context.filesDir, HISTORY_FILE_NAME), maxEntries, Unit)
 
@@ -18,7 +18,7 @@ class PersistentDecisionHistoryStore private constructor(
         require(maxEntries > 0) { "maxEntries must be positive." }
     }
 
-    fun append(entry: DecisionHistoryEntry) {
+    override fun append(entry: DecisionHistoryEntry) {
         val entries = loadMutable().apply { add(entry) }
         val bounded = if (entries.size > maxEntries) entries.takeLast(maxEntries) else entries
         writeAtomically(bounded)
@@ -57,7 +57,7 @@ class PersistentDecisionHistoryStore private constructor(
     }
 
     companion object {
-        const val HISTORY_FILE_NAME = "decision-history.json"
+        const val HISTORY_FILE_NAME = "decision-history.bin"
         const val DEFAULT_MAX_ENTRIES = 1000
     }
 }
