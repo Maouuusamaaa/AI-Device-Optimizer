@@ -15,6 +15,8 @@ import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshotJsonWriter
 import com.maouuusama.ai.device.optimizer.policy.DryRunPolicyEvaluator
 import com.maouuusama.ai.device.optimizer.policy.DryRunPolicyProposal
+import com.maouuusama.ai.device.optimizer.policy.DecisionLogEntry
+import com.maouuusama.ai.device.optimizer.policy.DecisionLogger
 import com.maouuusama.ai.device.optimizer.policy.DryRunSafetyGate
 import com.maouuusama.ai.device.optimizer.policy.SafetyGateResult
 import java.util.concurrent.Executors
@@ -24,12 +26,14 @@ import java.util.concurrent.TimeUnit
 class OptimizerBackgroundService : Service() {
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private lateinit var monitor: DeviceMonitor
+    private lateinit var decisionLogger: DecisionLogger
     private val policyEvaluator = DryRunPolicyEvaluator()
     private val safetyGate = DryRunSafetyGate()
 
     override fun onCreate() {
         super.onCreate()
         monitor = DeviceMonitor(this)
+        decisionLogger = DecisionLogger(this)
         createNotificationChannel()
         startAsForeground()
         scheduleMonitoring()
@@ -58,6 +62,22 @@ class OptimizerBackgroundService : Service() {
             val safetyGateResult = safetyGate.evaluate(proposal)
             DeviceSnapshotJsonWriter.writeLatest(this, snapshot)
             saveLatest(snapshot, proposal, safetyGateResult)
+            decisionLogger.append(
+                DecisionLogEntry(
+                    timestampMs = snapshot.timestampMs,
+                    availableRamMb = snapshot.availableRamMb,
+                    totalRamMb = snapshot.totalRamMb,
+                    batteryPercent = snapshot.batteryPercent,
+                    isCharging = snapshot.isCharging,
+                    isGaming = proposal.state.isGaming,
+                    policyIds = proposal.decisions.map { it.policyId },
+                    proposedActionIds = proposal.decisions.mapNotNull { it.proposedActionId },
+                    policyModes = proposal.decisions.map { it.mode.name },
+                    safetyGateAllowed = safetyGateResult.allowed,
+                    safetyGateReasons = safetyGateResult.reasons,
+                    actionExecutionAllowed = proposal.actionExecutionAllowed
+                )
+            )
             updateNotification(formatStatus(snapshot, proposal, safetyGateResult))
         } catch (error: Exception) {
             Log.e(TAG, "Background monitoring failed", error)
