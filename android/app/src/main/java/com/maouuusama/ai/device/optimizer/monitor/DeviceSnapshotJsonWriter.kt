@@ -9,7 +9,7 @@ object DeviceSnapshotJsonWriter {
 
     fun writeLatest(context: Context, snapshot: DeviceSnapshot): File {
         val root = JSONObject()
-            .put("schemaVersion", 2)
+            .put("schemaVersion", 3)
             .put("timestampMs", snapshot.timestampMs)
             .put("androidApi", snapshot.androidApi)
             .put("manufacturer", snapshot.manufacturer)
@@ -18,6 +18,14 @@ object DeviceSnapshotJsonWriter {
             .put("availableRamMb", snapshot.availableRamMb)
             .put("batteryPercent", snapshot.batteryPercent ?: JSONObject.NULL)
             .put("isCharging", snapshot.isCharging)
+            .put("batteryTemperatureC", snapshot.batteryTemperatureC ?: JSONObject.NULL)
+            .put("thermalStatus", snapshot.thermalStatus ?: JSONObject.NULL)
+            .put("storageTotalBytes", snapshot.storageTotalBytes ?: JSONObject.NULL)
+            .put("storageFreeBytes", snapshot.storageFreeBytes ?: JSONObject.NULL)
+            .put("networkTransport", snapshot.networkTransport ?: JSONObject.NULL)
+            .put("networkValidated", snapshot.networkValidated ?: JSONObject.NULL)
+            .put("isInteractive", snapshot.isInteractive ?: JSONObject.NULL)
+            .put("uptimeMs", snapshot.uptimeMs ?: JSONObject.NULL)
 
         val processes = JSONArray()
         snapshot.processes.forEach { process ->
