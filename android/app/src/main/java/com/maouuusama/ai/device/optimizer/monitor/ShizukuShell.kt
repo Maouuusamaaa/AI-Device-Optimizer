@@ -2,6 +2,7 @@ package com.maouuusama.ai.device.optimizer.monitor
 
 import android.content.pm.PackageManager
 import rikka.shizuku.Shizuku
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 object ShizukuShell {
@@ -27,6 +28,7 @@ object ShizukuShell {
                 IllegalStateException("Shizuku is not available or permission is not granted")
             )
         }
+
         return runCatching {
             val clazz = Class.forName("rikka.shizuku.Shizuku")
             val method = clazz.getDeclaredMethod(
@@ -37,24 +39,40 @@ object ShizukuShell {
             ).apply { isAccessible = true }
 
             val remote = method.invoke(null, arrayOf("sh", "-c", command), null, null) as Process
+            val streamExecutor = Executors.newFixedThreadPool(2)
+
             try {
-                if (!remote.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
-                    remote.destroy()
-                    throw IllegalStateException("Shizuku shell command timed out after ${timeoutMs}ms")
+                val stdoutFuture = streamExecutor.submit<String> {
+                    remote.inputStream.bufferedReader().use { it.readText() }
+                }
+                val stderrFuture = streamExecutor.submit<String> {
+                    remote.errorStream.bufferedReader().use { it.readText() }
                 }
 
-                val output = remote.inputStream.bufferedReader().use { it.readText() }
-                val error = remote.errorStream.bufferedReader().use { it.readText() }
+                if (!remote.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
+                    remote.destroy()
+                    stdoutFuture.cancel(true)
+                    stderrFuture.cancel(true)
+                    throw IllegalStateException(
+                        "Shizuku shell command timed out after ${timeoutMs}ms"
+                    )
+                }
+
+                val output = stdoutFuture.get(timeoutMs, TimeUnit.MILLISECONDS)
+                val error = stderrFuture.get(timeoutMs, TimeUnit.MILLISECONDS)
                 val exitCode = remote.exitValue()
+
                 if (exitCode != 0) {
                     val detail = error.trim().ifEmpty { "no stderr output" }
                     throw IllegalStateException(
                         "Shizuku command failed ($exitCode): $detail"
                     )
                 }
+
                 output
             } finally {
                 if (remote.isAlive) remote.destroy()
+                streamExecutor.shutdownNow()
             }
         }
     }
