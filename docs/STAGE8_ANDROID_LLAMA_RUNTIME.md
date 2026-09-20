@@ -13,10 +13,10 @@ Model:
 - GGUF
 - Q4_0
 - file: Qwen3-0.6B-Q4_0.gguf
-- expected size: 449839104 bytes
+- expected size: 428970080 bytes
 - expected SHA-256: da2572f16c06133561ce56accaa822216f2391ef4d37fba427801cd6736417d4
 
-The model is downloaded to the app-private model directory only after the user starts the download. The downloader supports resumable transfers and verifies the full SHA-256 before replacing the final model file.
+The verified upstream artifact is currently reported as 429 MB by Hugging Face. The exact byte count used by the Android downloader is 428970080 bytes. The model is downloaded to the app-private model directory only after the user starts the download. The downloader supports resumable transfers and verifies the full SHA-256 before replacing the final model file.
 
 ## Runtime safety
 

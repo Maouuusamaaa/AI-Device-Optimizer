@@ -30,6 +30,7 @@ def main():
     assert '"deviceMutationAllowed":false' in native
 
     assert 'MODEL_ID = "qwen3-0.6b-q4_0"' in model
+    assert "EXPECTED_SIZE_BYTES = 428970080L" in model
     assert "EXPECTED_SHA256" in model
     assert "Qwen3-0.6B-Q4_0.gguf" in model
 

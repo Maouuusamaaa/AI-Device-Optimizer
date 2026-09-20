@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - "feat/**"
+      - "fix/**"
     paths:
       - "android/**"
       - ".github/workflows/local-llama-android-validation.yml"
