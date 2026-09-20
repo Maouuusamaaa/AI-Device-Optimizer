@@ -22,3 +22,9 @@ def test_safety_invariant_is_static():
     sample = module.recommend({"batteryPercent": 20, "temperatureC": 46, "availableRamMb": 1000})
     assert sample["actionId"] == "OBSERVE_ONLY"
     assert sample["abstain"] is True
+
+if __name__ == "__main__":
+    test_normal_telemetry_abstains()
+    test_missing_telemetry_abstains()
+    test_safety_invariant_is_static()
+    print("local AI tests passed")
