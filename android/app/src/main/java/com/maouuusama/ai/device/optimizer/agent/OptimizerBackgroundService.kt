@@ -13,6 +13,9 @@ import androidx.core.app.ServiceCompat
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshotJsonWriter
+import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningReport
+import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningReportWriter
+import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningSummarizer
 import com.maouuusama.ai.device.optimizer.policy.DecisionHistoryRecorder
 import com.maouuusama.ai.device.optimizer.policy.DeviceState
 import com.maouuusama.ai.device.optimizer.policy.DryRunActionEngine
@@ -31,7 +34,10 @@ class OptimizerBackgroundService : Service() {
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private lateinit var monitor: DeviceMonitor
     private lateinit var decisionLogger: DecisionLogger
+    private lateinit var historyStore: PersistentDecisionHistoryStore
     private lateinit var historyRecorder: DecisionHistoryRecorder
+    private lateinit var learningReportWriter: AdaptiveLearningReportWriter
+    private val learningSummarizer = AdaptiveLearningSummarizer()
     private val simulationEvaluator = PolicySimulationEvaluator()
     private val actionEngine = DryRunActionEngine()
 
@@ -39,9 +45,9 @@ class OptimizerBackgroundService : Service() {
         super.onCreate()
         monitor = DeviceMonitor(this)
         decisionLogger = DecisionLogger(this)
-        historyRecorder = DecisionHistoryRecorder(
-            PersistentDecisionHistoryStore(this)
-        )
+        historyStore = PersistentDecisionHistoryStore(this)
+        historyRecorder = DecisionHistoryRecorder(historyStore)
+        learningReportWriter = AdaptiveLearningReportWriter(this)
         createNotificationChannel()
         startAsForeground()
         scheduleMonitoring()
@@ -78,6 +84,7 @@ class OptimizerBackgroundService : Service() {
             DeviceSnapshotJsonWriter.writeLatest(this, snapshot)
             saveLatest(snapshot, proposal, safetyGateResult)
             recordHistory(snapshot, plan, simulations)
+            updateLearningReport(snapshot.timestampMs)
 
             decisionLogger.append(
                 DecisionLogEntry(
@@ -110,9 +117,16 @@ class OptimizerBackgroundService : Service() {
         try {
             historyRecorder.record(snapshot, plan, simulations)
         } catch (error: Exception) {
-            // History persistence must never authorize or execute an action, and a persistence
-            // failure must not stop read-only device monitoring.
             Log.e(TAG, "Decision history persistence failed", error)
+        }
+    }
+
+    private fun updateLearningReport(timestampMs: Long) {
+        try {
+            val summary = learningSummarizer.summarize(historyStore.snapshot())
+            learningReportWriter.write(AdaptiveLearningReport(timestampMs, summary))
+        } catch (error: Exception) {
+            Log.e(TAG, "Adaptive learning report generation failed", error)
         }
     }
 

@@ -19,6 +19,8 @@ import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
 import com.maouuusama.ai.device.optimizer.monitor.ShizukuShell
 import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetrySnapshot
 import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetryStatus
+import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningSummarizer
+import com.maouuusama.ai.device.optimizer.policy.PersistentDecisionHistoryStore
 
 class MainActivity : Activity() {
     private lateinit var statusText: TextView
@@ -27,6 +29,7 @@ class MainActivity : Activity() {
     private lateinit var agentStatusText: TextView
     private lateinit var processText: TextView
     private lateinit var systemText: TextView
+    private lateinit var learningText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,6 +88,16 @@ class MainActivity : Activity() {
             text = formatSystemTelemetry(snapshot.systemTelemetry)
         }
         root.addView(systemText)
+
+        root.addView(Button(this).apply {
+            text = "Refresh adaptive learning summary"
+            setOnClickListener { refreshLearningSummary() }
+        })
+        learningText = TextView(this).apply {
+            textSize = 14f
+            text = "\\nAdaptive learning: not summarized yet"
+        }
+        root.addView(learningText)
 
         benchmarkButton = Button(this).apply {
             text = "Run 60s read-only baseline"
@@ -173,6 +186,50 @@ class MainActivity : Activity() {
             } catch (error: Exception) {
                 runOnUiThread {
                     processText.text = "\nProcess telemetry failed: " +
+                        (error.message ?: error.javaClass.simpleName)
+                }
+            }
+        }.start()
+    }
+
+    private fun refreshLearningSummary() {
+        learningText.text = "\\nAdaptive learning: reading persistent history..."
+        Thread {
+            try {
+                val history = PersistentDecisionHistoryStore(this).snapshot()
+                val summary = AdaptiveLearningSummarizer().summarize(history)
+                val text = buildString {
+                    append("\\nAdaptive learning summary\\n")
+                    append("Observations: ").append(summary.observationCount).append("\\n")
+                    append("Conditions:\\n")
+                    if (summary.conditionCounts.isEmpty()) {
+                        append("  none\\n")
+                    } else {
+                        summary.conditionCounts.forEach { (condition, count) ->
+                            append("  ").append(condition).append(": ").append(count).append("\\n")
+                        }
+                    }
+                    append("Action observations:\\n")
+                    if (summary.actionStats.isEmpty()) {
+                        append("  none\\n")
+                    } else {
+                        summary.actionStats.forEach { stats ->
+                            append("  ").append(stats.actionId)
+                                .append(": ").append(stats.observationCount).append("\\n")
+                            stats.averageRamDeltaMb?.let {
+                                append("    avg RAM delta: ").append(String.format("%.2f MB", it)).append("\\n")
+                            }
+                            stats.averageBatteryDeltaPercent?.let {
+                                append("    avg battery delta: ").append(String.format("%.2f%%", it)).append("\\n")
+                            }
+                        }
+                    }
+                    append("Mode: descriptive-only; no learned action is authorized.")
+                }
+                runOnUiThread { learningText.text = text }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    learningText.text = "\\nAdaptive learning failed: " +
                         (error.message ?: error.javaClass.simpleName)
                 }
             }
