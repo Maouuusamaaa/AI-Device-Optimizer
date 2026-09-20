@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Device Optimizer Training Row v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "rowId",
+    "observationRef",
+    "features",
+    "label"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "rowId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observationRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "features": {
+      "type": "object",
+      "required": [
+        "batteryPercent",
+        "temperatureC",
+        "availableRamMb"
+      ],
+      "properties": {
+        "batteryPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "temperatureC": {
+          "type": "number"
+        },
+        "availableRamMb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cpuPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "storageFreeMb": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "label": {
+      "type": "object",
+      "required": [
+        "outcomeClass"
+      ],
+      "properties": {
+        "outcomeClass": {
+          "enum": [
+            "NO_ACTION",
+            "OBSERVE",
+            "CANDIDATE_ACTION",
+            "INSUFFICIENT_EVIDENCE"
+          ]
+        },
+        "actionId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "split": {
+          "enum": [
+            "train",
+            "validation",
+            "test"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

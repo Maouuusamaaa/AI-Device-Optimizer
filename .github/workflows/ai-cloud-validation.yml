@@ -2,7 +2,7 @@ name: AI Cloud Validation
 
 on:
   push:
-    branches: ["main", "feat/stage3-ai-cloud-foundation"]
+    branches: ["main", "feat/stage3-ai-cloud-foundation", "feat/stage3-ai-cloud-model-contracts"]
     paths:
       - "cloud/**"
       - "scripts/validate-ai-cloud-contract.py"
@@ -22,8 +22,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Compile contract validator
-        run: python3 -m py_compile scripts/validate-ai-cloud-contract.py tests/ai_cloud_contract_test.py
+      - name: Compile Stage 3 Python
+        run: python3 -m py_compile scripts/validate-ai-cloud-contract.py tests/ai_cloud_contract_test.py cloud/models/model-interface.py
+      - name: Parse Stage 3 JSON contracts
+        run: python3 -c "import json,glob; [json.load(open(p,encoding='utf-8')) for p in glob.glob('cloud/**/*.json', recursive=True)]"
       - name: Validate example contract
         run: python3 scripts/validate-ai-cloud-contract.py cloud/contracts/example-ai-cloud-response.json
       - name: Run AI cloud contract tests
