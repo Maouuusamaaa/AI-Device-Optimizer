@@ -2,7 +2,7 @@
 
 ## Scope
 
-This record documents one successful physical-device runtime validation of the connected read-only pipeline on the real Android development device.
+This record documents physical-device runtime validation of the connected read-only pipeline on the real Android development device.
 
 The validation covers:
 
@@ -17,40 +17,48 @@ No privileged mutation or Action Engine execution was enabled.
 - Application package: com.maouuusama.ai.device.optimizer
 - Shizuku provider: shizuku
 - Git branch: feat/connect-monitor-policy-dry-run
-- Tested head: 2c4f9b16bd29e4c92da643c1ffcbffee1ef4a638
+- Tested head for the multi-sample run: 2c4f9b16bd29e4c92da643c1ffcbffee1ef4a638
 - APK installation: successful
 - Unit tests: successful
 - Debug APK assembly: successful
 
-## Runtime Observation
+## Multi-Sample Runtime Observation
 
-The application persisted the following values after startup and monitoring:
+Three persisted runtime samples were captured after restarting the application. The samples span 77,488 ms in total.
 
+| Sample | Timestamp (ms) | Interval from previous | Telemetry | Provider | System available RAM (KB) | App available RAM (MB) | Swap used (KB) | CPU utilization | Policy | Mode | Action execution |
+|---|---:|---:|---|---|---:|---:|---:|---:|---|---|---|
+| 1 | 1789875276984 | — | AVAILABLE | shizuku | 2300380 | 2313 | 1073152 | 56.736046 | device.normal | DRY_RUN | false |
+| 2 | 1789875329749 | 52,765 ms | AVAILABLE | shizuku | 2220780 | 2191 | 1075456 | 52.55924 | device.normal | DRY_RUN | false |
+| 3 | 1789875354472 | 24,723 ms | AVAILABLE | shizuku | 2201596 | 2171 | 1093120 | 53.820564 | device.normal | DRY_RUN | false |
+
+All three samples also reported:
+
+- last_system_process_count: 100
 - last_system_telemetry_status: AVAILABLE
 - last_system_telemetry_provider: shizuku
-- last_system_mem_available_kb: 2334228
-- last_system_process_count: 100
-- last_system_swap_used_kb: 1050112
-- last_system_cpu_utilization: 51.701584
-- last_total_ram_mb: 5634
-- last_available_ram_mb: 2304
 - last_policy_id: device.normal
 - last_policy_severity: INFO
 - last_policy_mode: DRY_RUN
 - last_action_execution_allowed: false
 - last_has_action_proposal: false
 - last_proposed_action_ids: empty
-- last_top_process: AI Device Optimizer (26179 KB PSS)
+
+The first-to-third sample timestamp span is 77,488 ms (~77.5 seconds).
 
 ## Interpretation
 
-The runtime evidence confirms that the application successfully obtained read-only system telemetry through Shizuku and propagated the resulting device snapshot into the local dry-run policy pipeline.
+The three physical samples consistently observed successful read-only system telemetry through Shizuku and successful propagation through the local dry-run policy pipeline.
 
-The observed policy state was device.normal, so this particular sample did not generate a proposed action.
+The policy state remained device.normal / INFO across all three samples, and no action proposal was emitted.
 
-last_action_execution_allowed=false confirms that the measurement-only safety boundary remained enforced during the physical-device test.
+last_action_execution_allowed=false remained enforced across all samples. This confirms the measurement-only boundary was preserved during the observed runtime window.
 
-This evidence does not demonstrate optimization benefit or causation. It only validates successful telemetry collection and policy evaluation for the observed runtime sample.
+CPU, available RAM, and swap usage varied between samples. These are descriptive observations of device state and are not evidence that the application caused those changes.
+
+This evidence does not demonstrate optimization benefit, performance improvement, or causation. It validates the observed runtime telemetry and dry-run policy path across three samples.
+
+Three samples are sufficient for this runtime observation milestone but are not sufficient to establish long-term stability or benchmark an optimization effect.
 
 ## Validation Commands
 
@@ -68,17 +76,20 @@ The persisted runtime state was inspected with:
 
 rish -c "run-as com.maouuusama.ai.device.optimizer cat shared_prefs/optimizer_agent.xml"
 
+Three persisted samples were captured at approximately 10-second observation steps after startup.
+
 ## Status
 
-Confirmed for this observation:
+Confirmed for this three-sample observation:
 
 - Build: PASS
 - Unit tests: PASS
 - APK installation: PASS
-- Shizuku telemetry: AVAILABLE
-- Read-only telemetry collection: PASS
-- Monitor-to-policy connection: PASS
-- Dry-run boundary: ENFORCED
-- Action execution: DISABLED
+- Shizuku telemetry: AVAILABLE in all samples
+- Read-only telemetry collection: PASS in all samples
+- Monitor-to-policy connection: PASS in all samples
+- Dry-run boundary: ENFORCED in all samples
+- Action execution: DISABLED in all samples
+- Action proposal: NONE in all samples
 
-Next measurement step: repeat this validation across multiple independent samples and preserve the same device identity, workload, and comparable conditions before treating the runtime path as stable.
+Next measurement step: use controlled repeated measurements if the project needs a stability claim or an optimization-effect benchmark.
