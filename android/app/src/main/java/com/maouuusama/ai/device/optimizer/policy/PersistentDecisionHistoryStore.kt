@@ -57,7 +57,7 @@ class PersistentDecisionHistoryStore private constructor(
     }
 
     companion object {
-        const val HISTORY_FILE_NAME = "decision-history.json"
+        const val HISTORY_FILE_NAME = "decision-history.bin"
         const val DEFAULT_MAX_ENTRIES = 1000
     }
 }
