@@ -39,3 +39,16 @@ jobs:
           assert p["recommendation"]["abstain"] is True
           print("local AI safety contract valid")
           PY
+      - name: Run local inference benchmark contract
+        run: |
+          python3 android/local-ai/benchmark-local-ai.py < docs/examples/local-ai-input.json > /tmp/local-ai-benchmark.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/local-ai-benchmark.json'))
+          b=p["benchmark"]
+          assert b["measurementOnly"] is True
+          assert b["inferenceWallTimeMs"] >= 0
+          assert b["childProcessMaxRssKb"] >= 0
+          assert b["childProcessMaxRssDeltaKb"] >= 0
+          print("local AI benchmark contract valid")
+          PY
