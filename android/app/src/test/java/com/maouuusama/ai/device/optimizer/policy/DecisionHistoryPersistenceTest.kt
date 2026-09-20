@@ -4,6 +4,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import kotlin.io.path.createTempDirectory
 
 class DecisionHistoryPersistenceTest {
@@ -21,7 +23,7 @@ class DecisionHistoryPersistenceTest {
     }
 
     @Test(expected = IllegalArgumentException::class) fun unsupportedSchemaIsRejected() {
-        DecisionHistoryBinaryCodec.decode(byteArrayOf(0, 1, 2, 3))
+        val bytes = ByteArrayOutputStream().also { stream -> DataOutputStream(stream).use { output -> output.writeUTF("AI_DEVICE_OPTIMIZER_HISTORY"); output.writeInt(999); output.writeInt(0) } }.toByteArray()\n        DecisionHistoryBinaryCodec.decode(bytes)
     }
 
     @Test fun persistentStoreKeepsNewestEntriesWithinBound() {
