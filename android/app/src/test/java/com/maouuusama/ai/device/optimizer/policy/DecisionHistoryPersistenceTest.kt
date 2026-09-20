@@ -21,7 +21,7 @@ class DecisionHistoryPersistenceTest {
     }
 
     @Test(expected = IllegalArgumentException::class) fun unsupportedSchemaIsRejected() {
-        DecisionHistoryJsonCodec.decode("{\"schemaVersion\":999,\"entries\":[]}"))
+        DecisionHistoryJsonCodec.decode("{\"schemaVersion\":999,\"entries\":[]}")
     }
 
     @Test fun persistentStoreKeepsNewestEntriesWithinBound() {
