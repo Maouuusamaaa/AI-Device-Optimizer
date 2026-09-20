@@ -1,0 +1,61 @@
+{
+  "datasetSchemaVersion": 1,
+  "rowCount": 3,
+  "rows": [
+    {
+      "schemaVersion": 1,
+      "rowId": "example-001",
+      "observationRef": "synthetic-001",
+      "features": {
+        "batteryPercent": 50,
+        "temperatureC": 35,
+        "availableRamMb": 1800
+      },
+      "label": {
+        "outcomeClass": "INSUFFICIENT_EVIDENCE"
+      },
+      "provenance": {
+        "source": "synthetic-fixture",
+        "split": "train"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "rowId": "example-002",
+      "observationRef": "synthetic-002",
+      "features": {
+        "batteryPercent": 40,
+        "temperatureC": 46,
+        "availableRamMb": 1500
+      },
+      "label": {
+        "outcomeClass": "INSUFFICIENT_EVIDENCE"
+      },
+      "provenance": {
+        "source": "synthetic-fixture",
+        "split": "validation"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "rowId": "example-003",
+      "observationRef": "synthetic-003",
+      "features": {
+        "batteryPercent": 70,
+        "temperatureC": 33,
+        "availableRamMb": 2200
+      },
+      "label": {
+        "outcomeClass": "INSUFFICIENT_EVIDENCE"
+      },
+      "provenance": {
+        "source": "synthetic-fixture",
+        "split": "test"
+      }
+    }
+  ],
+  "policy": {
+    "labelsAreConservative": true,
+    "privateDataMustRemainOutsideRepository": true
+  }
+}
