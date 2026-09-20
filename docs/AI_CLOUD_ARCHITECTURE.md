@@ -14,7 +14,11 @@ The cloud is advisory. The local device remains authoritative for permissions, a
 
 The observation contract contains a stable observation ID, capture timestamp, Android API level, CPU architecture, and normalized telemetry. Raw logs, credentials, tokens, private files, and unrestricted Android shell capabilities are outside the contract.
 
-The recommendation contract contains diagnosis, confidence from 0 to 1, evidence references, and a candidate action ID. It explicitly requires mode=ADVISORY_ONLY, execution.requested=false, and execution.deviceMutationAllowed=false.
+Training rows preserve an observation reference and explicit provenance. The inference contract identifies the model and observation while keeping output advisory-only. The evaluation protocol requires deterministic held-out splits and reports coverage, abstention, recommendation validity, and action-ID validity.
+
+## Model strategy
+
+The first model implementation is intentionally not fixed to a large language model. A deterministic baseline, compact classifier, ranking model, or later hosted model can implement the same adapter interface. Model selection must be driven by reproducible evaluation and resource constraints rather than model size alone.
 
 ## Local authority boundary
 
@@ -24,8 +28,6 @@ A cloud recommendation is not an authorization. Unknown action IDs, invalid evid
 
 Training data must be reproducible from versioned artifacts, retain provenance references, and use deterministic evaluation splits. Private device data must not be committed to the public repository.
 
-The first model milestone should be model-agnostic: a compact supervised/ranking model or deterministic baseline can establish the inference and evaluation contracts before larger models are considered.
-
 ## Offline fallback
 
 Cloud unavailability must leave local diagnosis and safe policies functional. Cloud availability is never a prerequisite for device safety.
@@ -33,8 +35,10 @@ Cloud unavailability must leave local diagnosis and safe policies functional. Cl
 ## Stage 3 completion criteria
 
 - versioned observation/recommendation contract
-- dependency-free validation
-- tests rejecting cloud execution requests
+- reproducible dataset row contract
+- model adapter and inference contracts
+- evaluation protocol
+- dependency-free validation and safety tests
 - documented local authority boundary
 - CI validation
 - no device mutation enabled
