@@ -38,3 +38,11 @@ jobs:
           else
             echo "No benchmark_analyzer_test.py present; skipping."
           fi
+
+      - name: Run health snapshot observation tests
+        run: |
+          python tests/health_snapshot_observation_test.py
+
+      - name: Compile health snapshot observation analyzer
+        run: |
+          python -m py_compile scripts/health-snapshot-observation.py
