@@ -1,0 +1,135 @@
+{
+  "aggregationVersion": 1,
+  "measurementOnly": true,
+  "observationCount": 3,
+  "deviceConsistency": {
+    "allMatch": true,
+    "devices": [
+      {
+        "manufacturer": "ITEL",
+        "model": "itel P661N",
+        "androidApi": 33
+      }
+    ]
+  },
+  "observations": [
+    {
+      "source": "benchmarks/results/rish-baseline-20260920-063723.txt",
+      "timestamp": "2026-09-20T06:37:23+07:00",
+      "batteryPercent": 39,
+      "temperatureC": 43.1,
+      "startupAverageMs": 651.4,
+      "startupMedianMs": 643,
+      "startupStdevMs": 40.8264620068896,
+      "startupMinMs": 601,
+      "startupMaxMs": 693,
+      "waitAverageMs": 657.6,
+      "pssKb": 55469,
+      "rssKb": 180388,
+      "swapPssKb": 77
+    },
+    {
+      "source": "benchmarks/results/rish-baseline-20260920-064229.txt",
+      "timestamp": "2026-09-20T06:42:29+07:00",
+      "batteryPercent": 43,
+      "temperatureC": 43.7,
+      "startupAverageMs": 702.4,
+      "startupMedianMs": 727,
+      "startupStdevMs": 79.38072813976954,
+      "startupMinMs": 602,
+      "startupMaxMs": 774,
+      "waitAverageMs": 709.8,
+      "pssKb": 55521,
+      "rssKb": 180248,
+      "swapPssKb": 87
+    },
+    {
+      "source": "benchmarks/results/rish-baseline-20260920-065355.txt",
+      "timestamp": "2026-09-20T06:53:55+07:00",
+      "batteryPercent": 52,
+      "temperatureC": 42.8,
+      "startupAverageMs": 662,
+      "startupMedianMs": 625,
+      "startupStdevMs": 74.5285180316904,
+      "startupMinMs": 590,
+      "startupMaxMs": 775,
+      "waitAverageMs": 668.4,
+      "pssKb": 55596,
+      "rssKb": 179768,
+      "swapPssKb": 82
+    }
+  ],
+  "crossRun": {
+    "startupAverageMs": {
+      "average": 671.9333333333333,
+      "median": 662,
+      "stdev": 26.911955212011875,
+      "min": 651.4,
+      "max": 702.4,
+      "sampleCount": 3
+    },
+    "startupMedianMs": {
+      "average": 665,
+      "median": 643,
+      "stdev": 54.4426303552648,
+      "min": 625,
+      "max": 727,
+      "sampleCount": 3
+    },
+    "waitAverageMs": {
+      "average": 678.6,
+      "median": 668.4,
+      "stdev": 27.554310007692052,
+      "min": 657.6,
+      "max": 709.8,
+      "sampleCount": 3
+    },
+    "pssKb": {
+      "average": 55528.666666666664,
+      "median": 55521,
+      "stdev": 63.846169292552965,
+      "min": 55469,
+      "max": 55596,
+      "sampleCount": 3
+    },
+    "rssKb": {
+      "average": 180134.66666666666,
+      "median": 180248,
+      "stdev": 325.1666239535253,
+      "min": 179768,
+      "max": 180388,
+      "sampleCount": 3
+    },
+    "swapPssKb": {
+      "average": 82,
+      "median": 82,
+      "stdev": 5,
+      "min": 77,
+      "max": 87,
+      "sampleCount": 3
+    },
+    "batteryPercent": {
+      "average": 44.666666666666664,
+      "median": 43,
+      "stdev": 6.6583281184793925,
+      "min": 39,
+      "max": 52,
+      "sampleCount": 3
+    },
+    "temperatureC": {
+      "average": 43.2,
+      "median": 43.1,
+      "stdev": 0.45825756949558666,
+      "min": 42.8,
+      "max": 43.7,
+      "sampleCount": 3
+    }
+  },
+  "notes": [
+    "These are descriptive statistics across three independent Rish runs on the same physical device.",
+    "Battery state varied from 39% to 52% and temperature from 42.8C to 43.7C; these conditions were not fully controlled.",
+    "Cross-run variation does not establish that an optimizer caused any observed change.",
+    "External Rish startup and memory measurements remain separate from internal monitor benchmarks because the measurement methods differ.",
+    "This artifact is a baseline reference only; no optimization action was enabled or evaluated."
+  ]
+}
