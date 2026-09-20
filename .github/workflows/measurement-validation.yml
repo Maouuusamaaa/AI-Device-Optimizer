@@ -16,21 +16,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Compile measurement scripts
         run: |
           python -m py_compile scripts/controlled-observation-analyzer.py
           python -m py_compile scripts/benchmark-analyzer.py
-
+          python -m py_compile scripts/health-snapshot-observation.py
+          python -m py_compile scripts/descriptive-evaluation-report.py
       - name: Run controlled observation analyzer tests
-        run: |
-          python tests/controlled_observation_analyzer_test.py
-
+        run: python tests/controlled_observation_analyzer_test.py
       - name: Run benchmark analyzer tests
         run: |
           if [ -f tests/benchmark_analyzer_test.py ]; then
@@ -38,11 +35,7 @@ jobs:
           else
             echo "No benchmark_analyzer_test.py present; skipping."
           fi
-
       - name: Run health snapshot observation tests
-        run: |
-          python tests/health_snapshot_observation_test.py
-
-      - name: Compile health snapshot observation analyzer
-        run: |
-          python -m py_compile scripts/health-snapshot-observation.py
+        run: python tests/health_snapshot_observation_test.py
+      - name: Run descriptive evaluation report tests
+        run: python tests/descriptive_evaluation_report_test.py
