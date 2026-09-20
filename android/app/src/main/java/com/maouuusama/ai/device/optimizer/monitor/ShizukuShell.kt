@@ -40,6 +40,8 @@ object ShizukuShell {
 
             val remote = method.invoke(null, arrayOf("sh", "-c", command), null, null) as Process
             val streamExecutor = Executors.newFixedThreadPool(2)
+            val deadlineNanos = System.nanoTime() +
+                TimeUnit.MILLISECONDS.toNanos(timeoutMs)
 
             try {
                 val stdoutFuture = streamExecutor.submit<String> {
@@ -49,18 +51,25 @@ object ShizukuShell {
                     remote.errorStream.bufferedReader().use { it.readText() }
                 }
 
-                if (!remote.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
+                fun remainingMillis(): Long =
+                    TimeUnit.NANOSECONDS.toMillis(deadlineNanos - System.nanoTime())
+                        .coerceAtLeast(1L)
+
+                val output = stdoutFuture.get(remainingMillis(), TimeUnit.MILLISECONDS)
+                val error = stderrFuture.get(remainingMillis(), TimeUnit.MILLISECONDS)
+
+                val waitFuture = streamExecutor.submit<Int> {
+                    remote.waitFor()
+                }
+                val exitCode = try {
+                    waitFuture.get(remainingMillis(), TimeUnit.MILLISECONDS)
+                } catch (timeout: java.util.concurrent.TimeoutException) {
                     remote.destroy()
-                    stdoutFuture.cancel(true)
-                    stderrFuture.cancel(true)
+                    waitFuture.cancel(true)
                     throw IllegalStateException(
                         "Shizuku shell command timed out after ${timeoutMs}ms"
                     )
                 }
-
-                val output = stdoutFuture.get(timeoutMs, TimeUnit.MILLISECONDS)
-                val error = stderrFuture.get(timeoutMs, TimeUnit.MILLISECONDS)
-                val exitCode = remote.exitValue()
 
                 if (exitCode != 0) {
                     val detail = error.trim().ifEmpty { "no stderr output" }
