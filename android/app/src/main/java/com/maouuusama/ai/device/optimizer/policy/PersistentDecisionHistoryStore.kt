@@ -37,7 +37,7 @@ class PersistentDecisionHistoryStore private constructor(
             mutableListOf()
         } else {
             try {
-                DecisionHistoryJsonCodec.decode(historyFile.readText()).toMutableList()
+                DecisionHistoryBinaryCodec.decode(historyFile.readBytes()).toMutableList()
             } catch (error: Exception) {
                 throw IllegalStateException("Decision history is unreadable.", error)
             }
@@ -45,7 +45,7 @@ class PersistentDecisionHistoryStore private constructor(
 
     private fun writeAtomically(entries: List<DecisionHistoryEntry>) {
         val temporary = File(historyFile.parentFile, "$HISTORY_FILE_NAME.tmp")
-        temporary.writeText(DecisionHistoryJsonCodec.encode(entries))
+        temporary.writeBytes(DecisionHistoryBinaryCodec.encode(entries))
         if (historyFile.exists() && !historyFile.delete()) {
             temporary.delete()
             throw IllegalStateException("Unable to replace decision history.")
