@@ -18,7 +18,7 @@ class PersistentDecisionHistoryStore private constructor(
         require(maxEntries > 0) { "maxEntries must be positive." }
     }
 
-    fun append(entry: DecisionHistoryEntry) {
+    override fun append(entry: DecisionHistoryEntry) {
         val entries = loadMutable().apply { add(entry) }
         val bounded = if (entries.size > maxEntries) entries.takeLast(maxEntries) else entries
         writeAtomically(bounded)
