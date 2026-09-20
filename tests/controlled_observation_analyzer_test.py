@@ -77,7 +77,7 @@ class TestAnalyzer(unittest.TestCase):
 
     def test_reported_statistics_mismatch_rejected(self):
         r = self.root()
-        path = r / "experiment" / "experiment.json"
+        path = r / "intervention" / "intervention.json"
         payload = json.loads(path.read_text())
         payload["externalRish"]["startupMs"]["average"] = 999.0
         path.write_text(json.dumps(payload))
