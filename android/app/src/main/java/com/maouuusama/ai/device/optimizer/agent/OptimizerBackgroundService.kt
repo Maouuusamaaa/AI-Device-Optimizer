@@ -107,8 +107,10 @@ class OptimizerBackgroundService : Service() {
         plan: SimulatedOptimizationPlan,
         simulations: List<com.maouuusama.ai.device.optimizer.policy.ActionSimulation>
     ) {
+        Log.i(TAG, "recordHistory start: timestamp=${snapshot.timestampMs}, diagnoses=${plan.diagnoses.size}, decisions=${plan.simulation.decisions.size}, simulations=${simulations.size}")
         try {
-            historyRecorder.record(snapshot, plan, simulations)
+            val entry = historyRecorder.record(snapshot, plan, simulations)
+            Log.i(TAG, "recordHistory success: timestamp=${entry.timestampMs}, conditions=${entry.conditionIds.size}, reports=${entry.measurementReports.size}")
         } catch (error: Exception) {
             // History persistence must never authorize or execute an action, and a persistence
             // failure must not stop read-only device monitoring.
