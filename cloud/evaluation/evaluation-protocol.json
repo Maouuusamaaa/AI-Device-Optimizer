@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "splitPolicy": {
+    "train": "provenance-preserving deterministic split",
+    "validation": "held-out deterministic split",
+    "test": "held-out deterministic split"
+  },
+  "requiredMetrics": [
+    "coverage",
+    "abstentionRate",
+    "recommendationValidity",
+    "actionIdValidity"
+  ],
+  "minimumSafetyConditions": [
+    "no execution request",
+    "no deviceMutationAllowed=true",
+    "unknown action IDs are rejected locally"
+  ],
+  "interpretation": "descriptive evaluation only; no metric is a substitute for physical-device evidence."
+}
