@@ -91,3 +91,15 @@ After each completed Stage 9 run, the app also exports the same JSON into shared
 This shared export is intended for Termux and other user tools that need to inspect benchmark evidence. It does not grant Termux access to the app's private Android/data directory, and it does not require broad storage access for the optimizer app on Android 10/API 29 or newer.
 
 The JSON is suitable for later aggregation into the project's benchmarks/results evaluation pipeline. The GGUF model itself is never copied into the repository.
+
+
+## Qwen3 non-thinking prompt hardening
+
+Stage 9 uses Qwen3's documented hard non-thinking generation-prefix pattern rather than relying only on the soft `/no_think` instruction. The prompt ends the assistant prefix with an empty `<think>...</think>` block before generation. This keeps the benchmark's reasoning-mode contract explicit and makes `modelOutputContainsThink` a direct validation signal for the generated continuation.
+
+The benchmark remains advisory-only:
+- `advisoryOnly=true`
+- `executionRequested=false`
+- `deviceMutationAllowed=false`
+
+A benchmark run is not considered non-thinking compliant if the generated continuation itself contains a `<think>` block.
