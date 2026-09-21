@@ -10,7 +10,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object LocalInferenceBenchmarkJsonWriter {
-    const val SHARED_EXPORT_RELATIVE_PATH =
+    val SHARED_EXPORT_RELATIVE_PATH =
         Environment.DIRECTORY_DOWNLOADS + "/AI-Device-Optimizer/benchmarks/"
 
     fun write(context: Context, result: LocalInferenceBenchmarkResult): File {
