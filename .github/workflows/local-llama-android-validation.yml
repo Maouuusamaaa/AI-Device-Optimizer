@@ -69,7 +69,7 @@ jobs:
           echo "$ANDROID_SIGNING_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/ai-device-optimizer-ci.jks"
           test -s "$RUNNER_TEMP/ai-device-optimizer-ci.jks"
           keytool -list -keystore "$RUNNER_TEMP/ai-device-optimizer-ci.jks" -storepass "$ANDROID_SIGNING_STORE_PASSWORD" -alias "$ANDROID_SIGNING_KEY_ALIAS" >/dev/null
-          keytool -keypasswd -keystore "$RUNNER_TEMP/ai-device-optimizer-ci.jks" -storepass "$ANDROID_SIGNING_STORE_PASSWORD" -alias "$ANDROID_SIGNING_KEY_ALIAS" -keypass "$ANDROID_SIGNING_KEY_PASSWORD" -new "$ANDROID_SIGNING_KEY_PASSWORD" >/dev/null
+          keytool -exportcert -keystore "$RUNNER_TEMP/ai-device-optimizer-ci.jks" -storepass "$ANDROID_SIGNING_STORE_PASSWORD" -alias "$ANDROID_SIGNING_KEY_ALIAS" -keypass "$ANDROID_SIGNING_KEY_PASSWORD" -rfc >/dev/null
           echo "Stable signing keystore, store password, alias, and key password validated."
 
       - name: Run Stage 8 contract test
