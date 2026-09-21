@@ -105,13 +105,13 @@ class MainActivity : Activity() {
         })
         learningText = TextView(this).apply {
             textSize = 14f
-            text = "\\nAdaptive learning: not summarized yet"
+            text = "\nAdaptive learning: not summarized yet"
         }
         root.addView(learningText)
 
         localAiText = TextView(this).apply {
             textSize = 14f
-            text = "\\nLocal AI: runtime loading..."
+            text = "\nLocal AI: runtime loading..."
         }
         root.addView(localAiText)
 
@@ -235,34 +235,34 @@ class MainActivity : Activity() {
     }
 
     private fun refreshLearningSummary() {
-        learningText.text = "\\nAdaptive learning: reading persistent history..."
+        learningText.text = "\nAdaptive learning: reading persistent history..."
         Thread {
             try {
                 val history = PersistentDecisionHistoryStore(this).snapshot()
                 val summary = AdaptiveLearningSummarizer().summarize(history)
                 val text = buildString {
-                    append("\\nAdaptive learning summary\\n")
-                    append("Observations: ").append(summary.observationCount).append("\\n")
-                    append("Conditions:\\n")
+                    append("\nAdaptive learning summary\n")
+                    append("Observations: ").append(summary.observationCount).append("\n")
+                    append("Conditions:\n")
                     if (summary.conditionCounts.isEmpty()) {
-                        append("  none\\n")
+                        append("  none\n")
                     } else {
                         summary.conditionCounts.forEach { (condition, count) ->
-                            append("  ").append(condition).append(": ").append(count).append("\\n")
+                            append("  ").append(condition).append(": ").append(count).append("\n")
                         }
                     }
-                    append("Action observations:\\n")
+                    append("Action observations:\n")
                     if (summary.actionStats.isEmpty()) {
-                        append("  none\\n")
+                        append("  none\n")
                     } else {
                         summary.actionStats.forEach { stats ->
                             append("  ").append(stats.actionId)
-                                .append(": ").append(stats.observationCount).append("\\n")
+                                .append(": ").append(stats.observationCount).append("\n")
                             stats.averageRamDeltaMb?.let {
-                                append("    avg RAM delta: ").append(String.format("%.2f MB", it)).append("\\n")
+                                append("    avg RAM delta: ").append(String.format("%.2f MB", it)).append("\n")
                             }
                             stats.averageBatteryDeltaPercent?.let {
-                                append("    avg battery delta: ").append(String.format("%.2f%%", it)).append("\\n")
+                                append("    avg battery delta: ").append(String.format("%.2f%%", it)).append("\n")
                             }
                         }
                     }
@@ -271,7 +271,7 @@ class MainActivity : Activity() {
                 runOnUiThread { learningText.text = text }
             } catch (error: Exception) {
                 runOnUiThread {
-                    learningText.text = "\\nAdaptive learning failed: " +
+                    learningText.text = "\nAdaptive learning failed: " +
                         (error.message ?: error.javaClass.simpleName)
                 }
             }
@@ -336,16 +336,16 @@ class MainActivity : Activity() {
                 val status = if (modelInstalled) "model verified" else "model not installed"
                 runOnUiThread {
                     localAiText.text =
-                        "\\nLocal AI runtime\\n" +
-                            "llama.cpp: " + version + "\\n" +
-                            "Qwen3 0.6B Q4_0: " + status + "\\n" +
+                        "\nLocal AI runtime\n" +
+                            "llama.cpp: " + version + "\n" +
+                            "Qwen3 0.6B Q4_0: " + status + "\n" +
                             "Mode: advisory-only; no device mutation."
                     localAiRunButton.isEnabled = modelInstalled
                     localAiBenchmarkButton.isEnabled = modelInstalled
                 }
             } catch (error: Exception) {
                 runOnUiThread {
-                    localAiText.text = "\\nLocal AI unavailable: " +
+                    localAiText.text = "\nLocal AI unavailable: " +
                         (error.message ?: error.javaClass.simpleName)
                     localAiRunButton.isEnabled = false
                     localAiBenchmarkButton.isEnabled = false
@@ -357,7 +357,7 @@ class MainActivity : Activity() {
     private fun downloadLocalModel() {
         localAiDownloadButton.isEnabled = false
         localAiRunButton.isEnabled = false
-        localAiText.text = "\\nQwen3 download starting...\\nRequired model size: 429 MiB.\\nThe APK does not bundle the model."
+        localAiText.text = "\nQwen3 download starting...\nRequired model size: 429 MiB.\nThe APK does not bundle the model."
         Thread {
             try {
                 val downloader = QwenModelDownloader(this)
@@ -365,19 +365,19 @@ class MainActivity : Activity() {
                 downloader.download { downloaded, total ->
                     val percent = if (total > 0L) downloaded * 100L / total else 0L
                     runOnUiThread {
-                        localAiText.text = "\\nQwen3 download: " + percent + "%\\nDownloaded: " +
+                        localAiText.text = "\nQwen3 download: " + percent + "%\nDownloaded: " +
                             (downloaded / 1024 / 1024) + " / " + (total / 1024 / 1024) + " MiB"
                     }
                 }
                 runOnUiThread {
-                    localAiText.text = "\\nQwen3 model verified successfully.\\nSHA-256 matches the pinned manifest.\\nMode: advisory-only."
+                    localAiText.text = "\nQwen3 model verified successfully.\nSHA-256 matches the pinned manifest.\nMode: advisory-only."
                     localAiDownloadButton.isEnabled = true
                     localAiRunButton.isEnabled = true
                     localAiBenchmarkButton.isEnabled = true
                 }
             } catch (error: Exception) {
                 runOnUiThread {
-                    localAiText.text = "\\nQwen3 download/verification failed: " +
+                    localAiText.text = "\nQwen3 download/verification failed: " +
                         (error.message ?: error.javaClass.simpleName)
                     localAiDownloadButton.isEnabled = true
                     localAiRunButton.isEnabled = false
@@ -391,7 +391,7 @@ class MainActivity : Activity() {
         localAiRunButton.isEnabled = false
         localAiBenchmarkButton.isEnabled = false
         localAiDownloadButton.isEnabled = false
-        localAiText.text = "\\nLocal AI inference running...\\nNo action execution is permitted."
+        localAiText.text = "\nLocal AI inference running...\nNo action execution is permitted."
         Thread {
             val started = System.currentTimeMillis()
             try {
@@ -407,16 +407,16 @@ class MainActivity : Activity() {
                 val result = runtime.generate(QwenLocalModel.file(this), prompt)
                 val elapsed = System.currentTimeMillis() - started
                 runOnUiThread {
-                    localAiText.text = "\\nLocal AI advisory result\\nInference wall time: " + elapsed +
-                        " ms\\nRaw model result:\\n" + result +
-                        "\\n\\nSafety: executionRequested=false; deviceMutationAllowed=false."
+                    localAiText.text = "\nLocal AI advisory result\nInference wall time: " + elapsed +
+                        " ms\nRaw model result:\n" + result +
+                        "\n\nSafety: executionRequested=false; deviceMutationAllowed=false."
                     localAiRunButton.isEnabled = true
                     localAiBenchmarkButton.isEnabled = true
                     localAiDownloadButton.isEnabled = true
                 }
             } catch (error: Exception) {
                 runOnUiThread {
-                    localAiText.text = "\\nLocal AI inference failed: " +
+                    localAiText.text = "\nLocal AI inference failed: " +
                         (error.message ?: error.javaClass.simpleName)
                     localAiRunButton.isEnabled = true
                     localAiBenchmarkButton.isEnabled = true
@@ -448,6 +448,9 @@ class MainActivity : Activity() {
                     }
                 }
                 val file = LocalInferenceBenchmarkJsonWriter.write(this, result)
+                val sharedExportPath = runCatching {
+                    LocalInferenceBenchmarkJsonWriter.exportToSharedDownloads(this, file)
+                }.getOrNull()
                 val summary = buildString {
                     append("\nStage 9 benchmark complete\n")
                     result.threadConfigurations.forEach { threads ->
@@ -471,7 +474,13 @@ class MainActivity : Activity() {
                         .append(result.samples.count { it.modelOutputContainsThink })
                         .append("/").append(result.samples.size).append("\n")
                     append("Safety: advisoryOnly=true; executionRequested=false; deviceMutationAllowed=false\n")
-                    append("Saved: ").append(file.name)
+                    append("App-private JSON: ").append(file.name).append("\n")
+                    if (sharedExportPath != null) {
+                        append("Termux-readable export: /storage/emulated/0/")
+                            .append(sharedExportPath)
+                    } else {
+                        append("Shared Downloads export: failed; app-private JSON remains available.")
+                    }
                 }
                 runOnUiThread {
                     localAiText.text = summary
