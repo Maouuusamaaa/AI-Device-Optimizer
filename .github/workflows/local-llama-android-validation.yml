@@ -137,3 +137,5 @@ jobs:
           name: ai-device-optimizer-stage8-stable-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+# Stable main build trigger: produces the signed APK artifact after successful validation.
