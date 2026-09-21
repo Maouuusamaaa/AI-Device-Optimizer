@@ -40,7 +40,7 @@ def main():
     assert "executionRequested" in benchmark
     assert "deviceMutationAllowed" in benchmark
     assert "/no_think" in (ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/localai/QwenLocalModel.kt").read_text(encoding="utf-8")
-    assert "At least two thread configurations are required" in benchmark
+    assert "Stage 9 hardened benchmark requires exactly two thread configurations" in benchmark
 
     assert "processCpuTime" in writer
     assert "processPss" in writer
