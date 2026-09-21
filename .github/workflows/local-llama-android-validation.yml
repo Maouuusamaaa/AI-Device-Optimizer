@@ -20,6 +20,9 @@ on:
       - "android/**"
       - "tests/stage8_android_runtime_contract_test.py"
       - "docs/STAGE8_ANDROID_LLAMA_RUNTIME.md"
+      - "docs/STAGE9_REAL_DEVICE_INFERENCE_BENCHMARK.md"
+      - "tests/stage9_local_inference_benchmark_contract_test.py"
+      - "tests/stage9_benchmark_analyzer_test.py"
       - ".github/workflows/local-llama-android-validation.yml"
 
 jobs:
@@ -63,7 +66,6 @@ jobs:
           ANDROID_SIGNING_KEYSTORE_B64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_B64 }}
           ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
-          ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           test -n "$ANDROID_SIGNING_KEYSTORE_B64" || { echo "Missing ANDROID_SIGNING_KEYSTORE_B64"; exit 1; }
@@ -102,30 +104,29 @@ jobs:
           python3 tests/stage9_local_inference_benchmark_contract_test.py
           python3 tests/stage9_benchmark_analyzer_test.py
 
-      - name: Build debug APK and unit tests
+      - name: Build release APK and unit tests
         working-directory: android
         env:
           CI_ANDROID_KEYSTORE_FILE: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && format('{0}/ai-device-optimizer-ci.jks', runner.temp) || '' }}
           CI_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           CI_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
-          # PKCS12 private-key entries use the keystore password for Android Gradle signing.
           CI_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleRelease
 
-      - name: Verify native library in APK
+      - name: Verify native library in release APK
         run: |
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -f "$APK"
           unzip -l "$APK" | grep -E 'lib/arm64-v8a/lib(ai_local_runtime|llama|ggml).*\.so'
           unzip -l "$APK" | grep -q 'lib/arm64-v8a/libai_local_runtime.so'
 
-      - name: Verify stable APK signature
+      - name: Verify stable release APK signature
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK="android/app/build/outputs/apk/release/app-release.apk"
           EXPECTED_CERT_SHA256="DC:50:BF:33:B5:7B:DA:E1:F8:00:B5:23:5B:18:E3:A0:3F:BE:FA:54:F1:EA:25:99:67:0B:86:E7:22:E9:C4:F9"
           "$APKSIGNER" verify --verbose --print-certs "$APK" | tee "$RUNNER_TEMP/apksigner-cert.txt"
           ACTUAL_CERT_SHA256="$(awk -F': ' '/Signer #1 certificate SHA-256 digest:/ {print tolower($2); exit}' "$RUNNER_TEMP/apksigner-cert.txt" | tr -d ':')"
@@ -133,12 +134,10 @@ jobs:
           test -n "$ACTUAL_CERT_SHA256"
           test "$ACTUAL_CERT_SHA256" = "$EXPECTED_CERT_SHA256_NORMALIZED"
 
-      - name: Upload stable debug APK
+      - name: Upload stable release APK
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: ai-device-optimizer-stage9-stable-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
-
-# Stable main build trigger: produces the signed APK artifact after successful validation.
