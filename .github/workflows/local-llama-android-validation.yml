@@ -67,7 +67,25 @@ jobs:
           test -n "$ANDROID_SIGNING_STORE_PASSWORD" || { echo "Missing ANDROID_SIGNING_STORE_PASSWORD"; exit 1; }
           test -n "$ANDROID_SIGNING_KEY_ALIAS" || { echo "Missing ANDROID_SIGNING_KEY_ALIAS"; exit 1; }
           test -n "$ANDROID_SIGNING_KEY_PASSWORD" || { echo "Missing ANDROID_SIGNING_KEY_PASSWORD"; exit 1; }
-          echo "$ANDROID_SIGNING_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/ai-device-optimizer-ci.jks"
+          python3 - <<'PY'
+          import base64
+          import os
+          import re
+          from pathlib import Path
+
+          raw = os.environ["ANDROID_SIGNING_KEYSTORE_B64"]
+          normalized = "".join(raw.split())
+          if not re.fullmatch(r"[A-Za-z0-9+/]*={0,2}", normalized):
+              raise SystemExit("ANDROID_SIGNING_KEYSTORE_B64 contains non-base64 characters after whitespace normalization.")
+          try:
+              decoded = base64.b64decode(normalized, validate=True)
+          except Exception as exc:
+              raise SystemExit(f"ANDROID_SIGNING_KEYSTORE_B64 is not valid base64: {exc}")
+          if not decoded:
+              raise SystemExit("Decoded signing keystore is empty.")
+          Path(os.environ["RUNNER_TEMP"], "ai-device-optimizer-ci.jks").write_bytes(decoded)
+          print(f"Decoded stable signing keystore bytes: {len(decoded)}")
+          PY
           test -s "$RUNNER_TEMP/ai-device-optimizer-ci.jks"
           keytool -list -keystore "$RUNNER_TEMP/ai-device-optimizer-ci.jks" -storepass "$ANDROID_SIGNING_STORE_PASSWORD" -alias "$ANDROID_SIGNING_KEY_ALIAS" >/dev/null
           keytool -exportcert -keystore "$RUNNER_TEMP/ai-device-optimizer-ci.jks" -storepass "$ANDROID_SIGNING_STORE_PASSWORD" -alias "$ANDROID_SIGNING_KEY_ALIAS" -keypass "$ANDROID_SIGNING_KEY_PASSWORD" -rfc >/dev/null
