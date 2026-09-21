@@ -376,6 +376,7 @@ class MainActivity : Activity() {
                         (error.message ?: error.javaClass.simpleName)
                     localAiDownloadButton.isEnabled = true
                     localAiRunButton.isEnabled = false
+                    localAiBenchmarkButton.isEnabled = false
                 }
             }
         }.start()
@@ -383,6 +384,7 @@ class MainActivity : Activity() {
 
     private fun runLocalAiTest() {
         localAiRunButton.isEnabled = false
+        localAiBenchmarkButton.isEnabled = false
         localAiDownloadButton.isEnabled = false
         localAiText.text = "\\nLocal AI inference running...\\nNo action execution is permitted."
         Thread {
@@ -404,6 +406,7 @@ class MainActivity : Activity() {
                         " ms\\nRaw model result:\\n" + result +
                         "\\n\\nSafety: executionRequested=false; deviceMutationAllowed=false."
                     localAiRunButton.isEnabled = true
+                    localAiBenchmarkButton.isEnabled = true
                     localAiDownloadButton.isEnabled = true
                 }
             } catch (error: Exception) {
@@ -411,6 +414,7 @@ class MainActivity : Activity() {
                     localAiText.text = "\\nLocal AI inference failed: " +
                         (error.message ?: error.javaClass.simpleName)
                     localAiRunButton.isEnabled = true
+                    localAiBenchmarkButton.isEnabled = true
                     localAiDownloadButton.isEnabled = true
                 }
             }
