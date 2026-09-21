@@ -186,7 +186,7 @@ class LocalInferenceBenchmark(private val context: Context) {
         val result = runCatching { JSONObject(resultText) }
             .getOrElse { error("Native inference returned invalid JSON") }
         check(result.optBoolean("ok", false)) {
-            "Native inference failed: @{result.optString("error", "unknown_error")}"
+            "Native inference failed: " + result.optString("error", "unknown_error")
         }
         check(result.optBoolean("advisoryOnly", false))
         check(!result.optBoolean("executionRequested", true))
