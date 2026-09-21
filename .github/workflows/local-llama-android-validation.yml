@@ -66,7 +66,6 @@ jobs:
           test -n "$ANDROID_SIGNING_KEYSTORE_B64" || { echo "Missing ANDROID_SIGNING_KEYSTORE_B64"; exit 1; }
           test -n "$ANDROID_SIGNING_STORE_PASSWORD" || { echo "Missing ANDROID_SIGNING_STORE_PASSWORD"; exit 1; }
           test -n "$ANDROID_SIGNING_KEY_ALIAS" || { echo "Missing ANDROID_SIGNING_KEY_ALIAS"; exit 1; }
-          test -n "$ANDROID_SIGNING_KEY_PASSWORD" || { echo "Missing ANDROID_SIGNING_KEY_PASSWORD"; exit 1; }
           python3 - <<'PY'
           import base64
           import os
@@ -88,8 +87,8 @@ jobs:
           PY
           test -s "$RUNNER_TEMP/ai-device-optimizer-ci.jks"
           keytool -list -keystore "$RUNNER_TEMP/ai-device-optimizer-ci.jks" -storepass "$ANDROID_SIGNING_STORE_PASSWORD" -alias "$ANDROID_SIGNING_KEY_ALIAS" >/dev/null
-          keytool -exportcert -keystore "$RUNNER_TEMP/ai-device-optimizer-ci.jks" -storepass "$ANDROID_SIGNING_STORE_PASSWORD" -alias "$ANDROID_SIGNING_KEY_ALIAS" -keypass "$ANDROID_SIGNING_KEY_PASSWORD" -rfc >/dev/null
-          echo "Stable signing keystore, store password, alias, and key password validated."
+          keytool -exportcert -keystore "$RUNNER_TEMP/ai-device-optimizer-ci.jks" -storepass "$ANDROID_SIGNING_STORE_PASSWORD" -alias "$ANDROID_SIGNING_KEY_ALIAS" -rfc >/dev/null
+          echo "Stable PKCS12 signing keystore, store password, and alias validated."
 
       - name: Run Stage 8 contract test
         run: |
@@ -101,7 +100,8 @@ jobs:
           CI_ANDROID_KEYSTORE_FILE: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && format('{0}/ai-device-optimizer-ci.jks', runner.temp) || '' }}
           CI_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           CI_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
-          CI_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+          # PKCS12 private-key entries use the keystore password for Android Gradle signing.
+          CI_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
