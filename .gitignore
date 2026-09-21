@@ -11,3 +11,7 @@ captures/
 # Keep the canonical aggregated physical baseline tracked.
 benchmarks/results/*
 !benchmarks/results/rish-baseline-aggregate.json
+
+# Android signing material must never enter source control.
+*.jks
+*.keystore
