@@ -13,8 +13,8 @@ def main():
     writer = WRITER.read_text(encoding="utf-8")
     activity = ACTIVITY.read_text(encoding="utf-8")
 
-    assert 'versionName = "0.1.6"' in build
-    assert 'versionCode = 6' in build
+    assert 'versionName = "0.1.7"' in build
+    assert 'versionCode = 7' in build
     assert 'isProfileable = true' in build
     assert 'signingConfig = signingConfigs.getByName("ciStable")' in build
 
@@ -48,10 +48,15 @@ def main():
     assert '"advisoryOnly", true' in writer
     assert '"executionRequested", false' in writer
     assert '"deviceMutationAllowed", false' in writer
+    assert "MediaStore.Downloads" in writer
+    assert "SHARED_EXPORT_RELATIVE_PATH" in writer
+    assert "exportToSharedDownloads" in writer
 
     assert "Run Stage 9 inference benchmark (2 vs 4 threads)" in activity
     assert "LocalInferenceBenchmark(this)" in activity
     assert "LocalInferenceBenchmarkJsonWriter.write(this, result)" in activity
+    assert "LocalInferenceBenchmarkJsonWriter.exportToSharedDownloads(this, file)" in activity
+    assert "/storage/emulated/0/" in activity
     assert "ScrollView(this)" in activity
 
     print("Stage 9 local inference benchmark contract: PASS")
