@@ -53,12 +53,26 @@ jobs:
             exit 1
           fi
 
+      - name: Prepare stable CI signing key
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          ANDROID_SIGNING_KEYSTORE_B64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_B64 }}
+        run: |
+          test -n "$ANDROID_SIGNING_KEYSTORE_B64"
+          echo "$ANDROID_SIGNING_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/ai-device-optimizer-ci.jks"
+          test -s "$RUNNER_TEMP/ai-device-optimizer-ci.jks"
+
       - name: Run Stage 8 contract test
         run: |
           python3 tests/stage8_android_runtime_contract_test.py
 
       - name: Build debug APK and unit tests
         working-directory: android
+        env:
+          CI_ANDROID_KEYSTORE_FILE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('{0}/ai-device-optimizer-ci.jks', runner.temp) || '' }}
+          CI_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          CI_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          CI_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
@@ -70,9 +84,16 @@ jobs:
           unzip -l "$APK" | grep -E 'lib/arm64-v8a/lib(ai_local_runtime|llama|ggml).*\.so'
           unzip -l "$APK" | grep -q 'lib/arm64-v8a/libai_local_runtime.so'
 
-      - name: Upload debug APK
+      - name: Verify stable APK signature
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          "$APKSIGNER" verify --verbose --print-certs android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload stable debug APK
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
-          name: ai-device-optimizer-stage8-debug-apk
+          name: ai-device-optimizer-stage8-stable-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
