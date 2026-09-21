@@ -94,6 +94,10 @@ jobs:
         run: |
           python3 tests/stage8_android_runtime_contract_test.py
 
+      - name: Run Stage 9 benchmark contract test
+        run: |
+          python3 tests/stage9_local_inference_benchmark_contract_test.py
+
       - name: Build debug APK and unit tests
         working-directory: android
         env:
