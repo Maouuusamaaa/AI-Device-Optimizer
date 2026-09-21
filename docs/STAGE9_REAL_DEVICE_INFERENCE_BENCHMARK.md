@@ -95,7 +95,7 @@ The JSON is suitable for later aggregation into the project's benchmarks/results
 
 ## Qwen3 non-thinking prompt hardening
 
-Stage 9 uses Qwen3's documented hard non-thinking generation-prefix pattern rather than relying only on the soft `/no_think` instruction. The prompt ends the assistant prefix with an empty `<think>...</think>` block before generation. This keeps the benchmark's reasoning-mode contract explicit and makes `modelOutputContainsThink` a direct validation signal for the generated continuation.
+Stage 9 uses Qwen3's documented hard non-thinking generation-prefix pattern rather than relying only on the soft `/no_think` instruction. The prompt ends the assistant prefix with an empty `<think>...</think>` block before generation. Because this Android runtime uses raw llama.cpp completion rather than llama.cpp's Jinja chat-template path, the native sampler also applies a deterministic logit guard that suppresses the `<think>` start token. This is a runtime enforcement layer; the benchmark still validates the generated continuation with `modelOutputContainsThink`.
 
 The benchmark remains advisory-only:
 - `advisoryOnly=true`
