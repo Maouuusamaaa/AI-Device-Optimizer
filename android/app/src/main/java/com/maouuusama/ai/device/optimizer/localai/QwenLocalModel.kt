@@ -23,5 +23,6 @@ object QwenLocalModel {
             "<|im_end|>\n" +
             "<|im_start|>user\n" +
             userText.trim() +
+            " /no_think" +
             "\n<|im_end|>\n<|im_start|>assistant\n"
 }
