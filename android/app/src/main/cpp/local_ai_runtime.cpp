@@ -68,13 +68,14 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate(
         JNIEnv * env, jobject,
         jstring model_path_value, jstring prompt_value,
-        jint context_tokens_value, jint max_tokens_value) {
+        jint context_tokens_value, jint max_tokens_value, jint threads_value) {
 
     const auto total_start = Clock::now();
     const std::string model_path = jstring_to_string(env, model_path_value);
     const std::string prompt = jstring_to_string(env, prompt_value);
     const int context_tokens = std::clamp(static_cast<int>(context_tokens_value), 256, MAX_CONTEXT);
     const int max_tokens = std::clamp(static_cast<int>(max_tokens_value), 1, MAX_MAX_TOKENS);
+    const int threads = std::clamp(static_cast<int>(threads_value), 1, 8);
 
     if (model_path.empty() || prompt.empty()) {
         return make_result(env, R"({"ok":false,"error":"model_path_and_prompt_required"})");
@@ -122,8 +123,8 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
     llama_context_params context_params = llama_context_default_params();
     context_params.n_ctx = static_cast<uint32_t>(context_tokens);
     context_params.n_batch = static_cast<uint32_t>(std::min(context_tokens, std::max(n_prompt, 1)));
-    context_params.n_threads = 4;
-    context_params.n_threads_batch = 4;
+    context_params.n_threads = threads;
+    context_params.n_threads_batch = threads;
 
     const auto context_start = Clock::now();
     llama_context * context = llama_init_from_model(model, context_params);
@@ -193,7 +194,8 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
         R"(","model":"qwen3-0.6b-q4_0","promptTokens":)" +
         std::to_string(n_prompt) +
         R"(,"generatedTokens":)" + std::to_string(generated_tokens) +
-        R"(,"threads":4,"loadMs":)" + std::to_string(load_ms) +
+        R"(,"threads":)" + std::to_string(threads) +
+        R"(,"loadMs":)" + std::to_string(load_ms) +
         R"(,"tokenizationMs":)" + std::to_string(tokenization_ms) +
         R"(,"contextInitMs":)" + std::to_string(context_init_ms) +
         R"(,"promptDecodeMs":)" + std::to_string(prompt_decode_ms) +
