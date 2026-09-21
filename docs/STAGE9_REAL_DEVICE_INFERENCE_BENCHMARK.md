@@ -103,3 +103,5 @@ The benchmark remains advisory-only:
 - `deviceMutationAllowed=false`
 
 A benchmark run is not considered non-thinking compliant if the generated continuation itself contains a `<think>` block.
+
+This contract is an observable output/runtime guard. It does not by itself prove that internal model reasoning has been disabled; internal reasoning is not directly observable from the generated text.
