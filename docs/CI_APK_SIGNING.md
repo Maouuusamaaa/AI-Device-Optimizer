@@ -20,3 +20,7 @@ Pull requests still compile and validate the Android project, but stable APK art
 ## One-time migration
 
 If a device already has an APK signed with an older CI-generated debug key, a newly generated stable key cannot update that installation. Android requires the same signing certificate (or valid proof-of-rotation). Preserve any required app data before removing the old installation, then install the first stable-signed APK. All subsequent stable-signed builds can be updated normally.
+
+## Stable key fingerprint
+
+The stable CI key generated for this migration has SHA-256 certificate fingerprint `DC:50:BF:33:B5:7B:DA:E1:F8:00:B5:23:5B:18:E3:A0:3F:BE:FA:54:F1:EA:25:99:67:0B:86:E7:22:E9:C4:F9`. The private keystore and its passwords are not stored in this repository.
