@@ -1,12 +1,18 @@
 package com.maouuusama.ai.device.optimizer.benchmark
 
+import android.content.ContentValues
 import android.content.Context
 import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
 object LocalInferenceBenchmarkJsonWriter {
+    val SHARED_EXPORT_RELATIVE_PATH =
+        Environment.DIRECTORY_DOWNLOADS + "/AI-Device-Optimizer/benchmarks/"
+
     fun write(context: Context, result: LocalInferenceBenchmarkResult): File {
         val root = JSONObject()
             .put("schemaVersion", result.schemaVersion)
@@ -84,5 +90,45 @@ object LocalInferenceBenchmarkJsonWriter {
         val file = File(directory, "local-inference-${result.benchmarkId}-${result.startedAtMs}.json")
         file.writeText(root.toString(2))
         return file
+    }
+
+    /**
+     * Copies a benchmark JSON into shared Downloads so Termux and other user tools can read it.
+     * The app owns the newly-created MediaStore.Downloads item, so no broad storage permission is needed.
+     */
+    fun exportToSharedDownloads(context: Context, sourceFile: File): String {
+        check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            "Shared benchmark export requires Android 10/API 29 or newer"
+        }
+
+        val values = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, sourceFile.name)
+            put(MediaStore.Downloads.MIME_TYPE, "application/json")
+            put(MediaStore.Downloads.RELATIVE_PATH, SHARED_EXPORT_RELATIVE_PATH)
+            put(MediaStore.Downloads.IS_PENDING, 1)
+        }
+
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            ?: error("MediaStore.Downloads insert returned null")
+
+        try {
+            resolver.openOutputStream(uri, "w").use { output ->
+                checkNotNull(output) { "Unable to open shared benchmark export" }
+                sourceFile.inputStream().use { input ->
+                    input.copyTo(output)
+                }
+            }
+
+            val publishedValues = ContentValues().apply {
+                put(MediaStore.Downloads.IS_PENDING, 0)
+            }
+            resolver.update(uri, publishedValues, null, null)
+
+            return SHARED_EXPORT_RELATIVE_PATH + sourceFile.name
+        } catch (error: Exception) {
+            resolver.delete(uri, null, null)
+            throw error
+        }
     }
 }
