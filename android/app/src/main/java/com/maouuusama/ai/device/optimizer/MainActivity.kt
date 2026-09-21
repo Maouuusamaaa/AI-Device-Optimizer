@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.maouuusama.ai.device.optimizer.agent.OptimizerBackgroundService
@@ -154,7 +155,11 @@ class MainActivity : Activity() {
         }
         root.addView(statusText)
 
-        setContentView(root)
+        val scrollView = ScrollView(this).apply {
+            isFillViewport = true
+            addView(root)
+        }
+        setContentView(scrollView)
         startBackgroundAgent()
     }
 

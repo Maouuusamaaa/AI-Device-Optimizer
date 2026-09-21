@@ -46,13 +46,15 @@ Default configuration:
 - maximum generation: 64 tokens;
 - threads: 2 and 4;
 - repetitions: 2 per configuration;
-- delay between runs: 10 seconds;
+- delay between runs: 15 seconds;
+- controlled start guard: not charging, thermal status NONE, battery temperature < 39 °C;
+- maximum cooldown wait: 90 seconds;
 - fixed benchmark prompt;
 - model must pass the existing size and SHA-256 verification before execution.
 
-The benchmark alternates the configured thread counts within each repetition so one configuration is not measured only at the beginning or end of the entire experiment.
+The hardened benchmark uses a balanced schedule of 2-thread, 4-thread, 4-thread, 2-thread for the default two repetitions. This prevents one configuration from being systematically confined to hotter or cooler positions in the run sequence. Before each measured sample, the benchmark requires charging=false, thermal status NONE when available, and battery temperature below 39 °C; it waits up to 90 seconds for those conditions rather than mutating device state.
 
-The current Android runtime loads the GGUF model for every inference call. Therefore loadMs is deliberately reported separately from prompt processing and generation. The Stage 9 result is a cold-call measurement of the current implementation, not a claim about a future persistent-model service.
+The benchmark runs from a profileable, non-debuggable release build for performance measurements. Android documents that debug builds can have severe performance impacts and recommends testing on a system close to production. The current Android runtime loads the GGUF model for every inference call. Therefore loadMs is deliberately reported separately from prompt processing and generation. The Stage 9 result is a cold-call measurement of the current implementation, not a claim about a future persistent-model service.
 
 ## Safety
 
@@ -78,7 +80,7 @@ The benchmark must report measurements before any optimization change is made. I
 
 llama.cpp's performance guidance recommends measuring thread counts rather than assuming that more threads are faster. Its benchmark tooling also separates prompt processing from token generation, which is why Stage 9 keeps those phases separate.
 
-No model-admission decision is encoded in this benchmark. Physical evidence must be reviewed before changing the local AI architecture.
+Qwen3 non-thinking mode is requested with the /no_think prompt switch so the advisory path does not spend generated tokens on reasoning blocks. This is a measurement/contract choice, not a claim that non-thinking mode is universally more accurate. The Qwen3 model documentation describes /no_think as the switch for non-thinking mode.\n\nNo model-admission decision is encoded in this benchmark. Physical evidence must be reviewed before changing the local AI architecture.
 
 ## Output
 

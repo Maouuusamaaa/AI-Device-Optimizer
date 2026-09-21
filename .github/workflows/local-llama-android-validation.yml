@@ -7,6 +7,9 @@ on:
       - "android/**"
       - "tests/stage8_android_runtime_contract_test.py"
       - "docs/STAGE8_ANDROID_LLAMA_RUNTIME.md"
+      - "docs/STAGE9_REAL_DEVICE_INFERENCE_BENCHMARK.md"
+      - "tests/stage9_local_inference_benchmark_contract_test.py"
+      - "tests/stage9_benchmark_analyzer_test.py"
       - ".github/workflows/local-llama-android-validation.yml"
   push:
     branches:
@@ -109,11 +112,11 @@ jobs:
           CI_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
+          ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleRelease
 
       - name: Verify native library in APK
         run: |
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK="android/app/build/outputs/apk/release/app-release.apk"
           test -f "$APK"
           unzip -l "$APK" | grep -E 'lib/arm64-v8a/lib(ai_local_runtime|llama|ggml).*\.so'
           unzip -l "$APK" | grep -q 'lib/arm64-v8a/libai_local_runtime.so'
@@ -134,7 +137,7 @@ jobs:
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
-          name: ai-device-optimizer-stage8-stable-apk
+          name: ai-device-optimizer-stage9-stable-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 

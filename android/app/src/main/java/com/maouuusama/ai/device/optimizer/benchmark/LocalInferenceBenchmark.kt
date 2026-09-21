@@ -63,7 +63,10 @@ class LocalInferenceBenchmark(private val context: Context) {
         const val DEFAULT_REPETITIONS = 2
         const val DEFAULT_CONTEXT_TOKENS = 4096
         const val DEFAULT_MAX_TOKENS = 64
-        const val DEFAULT_DELAY_BETWEEN_RUNS_MS = 10_000L
+        const val DEFAULT_DELAY_BETWEEN_RUNS_MS = 15_000L
+        const val MAX_START_TEMPERATURE_C = 39.0
+        const val COOLDOWN_POLL_MS = 5_000L
+        const val MAX_COOLDOWN_WAIT_MS = 90_000L
 
         private const val FIXED_BENCHMARK_PROMPT =
             "Analyze a fixed Android telemetry observation for the purpose of a controlled " +
@@ -79,14 +82,18 @@ class LocalInferenceBenchmark(private val context: Context) {
         delayBetweenRunsMs: Long = DEFAULT_DELAY_BETWEEN_RUNS_MS,
         onProgress: (threadCount: Int, repetition: Int, totalRuns: Int) -> Unit = { _, _, _ -> }
     ): LocalInferenceBenchmarkResult {
-        require(threadConfigurations.size >= 2) { "At least two thread configurations are required" }
+        require(threadConfigurations.size == 2) {
+            "Stage 9 hardened benchmark requires exactly two thread configurations"
+        }
         require(threadConfigurations.all { it in LocalLlamaRuntime.MIN_THREADS..LocalLlamaRuntime.MAX_THREADS }) {
             "Thread configurations must be 1..8"
         }
         require(threadConfigurations.distinct().size == threadConfigurations.size) {
             "Thread configurations must be unique"
         }
-        require(repetitions >= 1) { "repetitions must be >= 1" }
+        require(repetitions == DEFAULT_REPETITIONS) {
+            "Stage 9 hardened benchmark requires two repetitions per configuration"
+        }
         require(contextTokens in 256..8192) { "contextTokens must be 256..8192" }
         require(maxTokens in 1..256) { "maxTokens must be 1..256" }
         require(delayBetweenRunsMs >= 0L) { "delayBetweenRunsMs must be >= 0" }
@@ -100,71 +107,70 @@ class LocalInferenceBenchmark(private val context: Context) {
         val runtimeVersion = runtime.runtimeVersion()
         val benchmarkId = UUID.randomUUID().toString()
         val benchmarkStartedAt = System.currentTimeMillis()
-        val totalRuns = threadConfigurations.size * repetitions
+        val schedule = buildBalancedSchedule(threadConfigurations)
+        val totalRuns = schedule.size
         val samples = mutableListOf<LocalInferenceBenchmarkSample>()
-        var completedRuns = 0
 
-        repeat(repetitions) { repetitionIndex ->
-            threadConfigurations.forEach { threadCount ->
-                if (samples.isNotEmpty() && delayBetweenRunsMs > 0L) {
-                    SystemClock.sleep(delayBetweenRunsMs)
-                }
-                onProgress(threadCount, repetitionIndex + 1, totalRuns)
-
-                val before = DeviceMonitor(context).collectSnapshot(includeSystemTelemetry = false)
-                val pssBeforeKb = Debug.getPss()
-                val cpuBeforeMs = Process.getElapsedCpuTime()
-                val startedAtMs = System.currentTimeMillis()
-                val startedElapsed = SystemClock.elapsedRealtime()
-
-                val resultText = runtime.generate(
-                    modelFile = modelFile,
-                    prompt = QwenLocalModel.prompt(FIXED_BENCHMARK_PROMPT),
-                    contextTokens = contextTokens,
-                    maxTokens = maxTokens,
-                    threads = threadCount
-                )
-
-                val finishedElapsed = SystemClock.elapsedRealtime()
-                val finishedAtMs = System.currentTimeMillis()
-                val cpuAfterMs = Process.getElapsedCpuTime()
-                val pssAfterKb = Debug.getPss()
-                val after = DeviceMonitor(context).collectSnapshot(includeSystemTelemetry = false)
-                val native = parseSuccessfulNativeResult(resultText)
-
-                samples += LocalInferenceBenchmarkSample(
-                    observationId = UUID.randomUUID().toString(),
-                    threadCount = threadCount,
-                    repetition = repetitionIndex + 1,
-                    startedAtMs = startedAtMs,
-                    finishedAtMs = finishedAtMs,
-                    wallTimeMs = (finishedElapsed - startedElapsed).coerceAtLeast(0L),
-                    processCpuTimeMs = (cpuAfterMs - cpuBeforeMs).coerceAtLeast(0L),
-                    processPssBeforeKb = pssBeforeKb,
-                    processPssAfterKb = pssAfterKb,
-                    processPssDeltaKb = pssAfterKb - pssBeforeKb,
-                    availableRamBeforeMb = before.availableRamMb,
-                    availableRamAfterMb = after.availableRamMb,
-                    batteryBeforePercent = before.batteryPercent,
-                    batteryAfterPercent = after.batteryPercent,
-                    temperatureBeforeC = before.batteryTemperatureC,
-                    temperatureAfterC = after.batteryTemperatureC,
-                    thermalStatusBefore = before.thermalStatus,
-                    thermalStatusAfter = after.thermalStatus,
-                    promptTokens = native.getInt("promptTokens"),
-                    generatedTokens = native.getInt("generatedTokens"),
-                    loadMs = native.getLong("loadMs"),
-                    tokenizationMs = native.getLong("tokenizationMs"),
-                    contextInitMs = native.getLong("contextInitMs"),
-                    promptDecodeMs = native.getLong("promptDecodeMs"),
-                    generationMs = native.getLong("generationMs"),
-                    generationTokensPerSecond = native.getDouble("generationTokensPerSecond"),
-                    totalNativeMs = native.getLong("totalNativeMs"),
-                    modelOutputContainsThink = native.getBoolean("modelOutputContainsThink")
-                )
-                completedRuns++
-                check(completedRuns <= totalRuns)
+        schedule.forEachIndexed { scheduleIndex, threadCount ->
+            if (samples.isNotEmpty() && delayBetweenRunsMs > 0L) {
+                SystemClock.sleep(delayBetweenRunsMs)
             }
+
+            awaitControlledStart()
+            val repetition = if (scheduleIndex == 0 || scheduleIndex == 3) 1 else 2
+            onProgress(threadCount, repetition, totalRuns)
+
+            val before = DeviceMonitor(context).collectSnapshot(includeSystemTelemetry = false)
+            val pssBeforeKb = Debug.getPss()
+            val cpuBeforeMs = Process.getElapsedCpuTime()
+            val startedAtMs = System.currentTimeMillis()
+            val startedElapsed = SystemClock.elapsedRealtime()
+
+            val resultText = runtime.generate(
+                modelFile = modelFile,
+                prompt = QwenLocalModel.prompt(FIXED_BENCHMARK_PROMPT),
+                contextTokens = contextTokens,
+                maxTokens = maxTokens,
+                threads = threadCount
+            )
+
+            val finishedElapsed = SystemClock.elapsedRealtime()
+            val finishedAtMs = System.currentTimeMillis()
+            val cpuAfterMs = Process.getElapsedCpuTime()
+            val pssAfterKb = Debug.getPss()
+            val after = DeviceMonitor(context).collectSnapshot(includeSystemTelemetry = false)
+            val native = parseSuccessfulNativeResult(resultText)
+
+            samples += LocalInferenceBenchmarkSample(
+                observationId = UUID.randomUUID().toString(),
+                threadCount = threadCount,
+                repetition = repetition,
+                startedAtMs = startedAtMs,
+                finishedAtMs = finishedAtMs,
+                wallTimeMs = (finishedElapsed - startedElapsed).coerceAtLeast(0L),
+                processCpuTimeMs = (cpuAfterMs - cpuBeforeMs).coerceAtLeast(0L),
+                processPssBeforeKb = pssBeforeKb,
+                processPssAfterKb = pssAfterKb,
+                processPssDeltaKb = pssAfterKb - pssBeforeKb,
+                availableRamBeforeMb = before.availableRamMb,
+                availableRamAfterMb = after.availableRamMb,
+                batteryBeforePercent = before.batteryPercent,
+                batteryAfterPercent = after.batteryPercent,
+                temperatureBeforeC = before.batteryTemperatureC,
+                temperatureAfterC = after.batteryTemperatureC,
+                thermalStatusBefore = before.thermalStatus,
+                thermalStatusAfter = after.thermalStatus,
+                promptTokens = native.getInt("promptTokens"),
+                generatedTokens = native.getInt("generatedTokens"),
+                loadMs = native.getLong("loadMs"),
+                tokenizationMs = native.getLong("tokenizationMs"),
+                contextInitMs = native.getLong("contextInitMs"),
+                promptDecodeMs = native.getLong("promptDecodeMs"),
+                generationMs = native.getLong("generationMs"),
+                generationTokensPerSecond = native.getDouble("generationTokensPerSecond"),
+                totalNativeMs = native.getLong("totalNativeMs"),
+                modelOutputContainsThink = native.getBoolean("modelOutputContainsThink")
+            )
         }
 
         return LocalInferenceBenchmarkResult(
@@ -180,6 +186,39 @@ class LocalInferenceBenchmark(private val context: Context) {
             repetitionsPerConfiguration = repetitions,
             samples = samples.toList()
         )
+    }
+
+    private fun buildBalancedSchedule(threadConfigurations: List<Int>): List<Int> {
+        return listOf(
+            threadConfigurations[0],
+            threadConfigurations[1],
+            threadConfigurations[1],
+            threadConfigurations[0]
+        )
+    }
+
+    private fun awaitControlledStart() {
+        val deadline = SystemClock.elapsedRealtime() + MAX_COOLDOWN_WAIT_MS
+        while (true) {
+            val snapshot = DeviceMonitor(context).collectSnapshot(includeSystemTelemetry = false)
+            val temperature = snapshot.batteryTemperatureC
+            val thermalOk = snapshot.thermalStatus == null || snapshot.thermalStatus == 0
+            val chargingOk = !snapshot.isCharging
+            val temperatureOk = temperature == null || temperature < MAX_START_TEMPERATURE_C
+
+            if (thermalOk && chargingOk && temperatureOk) {
+                return
+            }
+
+            if (SystemClock.elapsedRealtime() >= deadline) {
+                error(
+                    "Controlled benchmark start conditions not reached: " +
+                        "charging=${snapshot.isCharging}, thermalStatus=${snapshot.thermalStatus}, " +
+                        "temperatureC=$temperature"
+                )
+            }
+            SystemClock.sleep(COOLDOWN_POLL_MS)
+        }
     }
 
     private fun parseSuccessfulNativeResult(resultText: String): JSONObject {
