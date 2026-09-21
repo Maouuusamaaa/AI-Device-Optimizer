@@ -1,6 +1,7 @@
 name: Local Llama Android Validation
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "android/**"
