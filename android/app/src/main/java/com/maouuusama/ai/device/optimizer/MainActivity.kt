@@ -15,6 +15,8 @@ import com.maouuusama.ai.device.optimizer.benchmark.BenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.benchmark.BenchmarkReport
 import com.maouuusama.ai.device.optimizer.benchmark.ReadOnlyBaselineBenchmark
 import com.maouuusama.ai.device.optimizer.benchmark.WorkloadBenchmark
+import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmark
+import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
 import com.maouuusama.ai.device.optimizer.monitor.ShizukuShell
 import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetrySnapshot
@@ -36,6 +38,7 @@ class MainActivity : Activity() {
     private lateinit var localAiText: TextView
     private lateinit var localAiDownloadButton: Button
     private lateinit var localAiRunButton: Button
+    private lateinit var localAiBenchmarkButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,6 +126,13 @@ class MainActivity : Activity() {
             setOnClickListener { runLocalAiTest() }
         }
         root.addView(localAiRunButton)
+
+        localAiBenchmarkButton = Button(this).apply {
+            text = "Run Stage 9 inference benchmark (2 vs 4 threads)"
+            isEnabled = false
+            setOnClickListener { runLocalAiBenchmark() }
+        }
+        root.addView(localAiBenchmarkButton)
 
         refreshLocalAiStatus()
 
@@ -326,12 +336,14 @@ class MainActivity : Activity() {
                             "Qwen3 0.6B Q4_0: " + status + "\\n" +
                             "Mode: advisory-only; no device mutation."
                     localAiRunButton.isEnabled = modelInstalled
+                    localAiBenchmarkButton.isEnabled = modelInstalled
                 }
             } catch (error: Exception) {
                 runOnUiThread {
                     localAiText.text = "\\nLocal AI unavailable: " +
                         (error.message ?: error.javaClass.simpleName)
                     localAiRunButton.isEnabled = false
+                    localAiBenchmarkButton.isEnabled = false
                 }
             }
         }.start()
@@ -356,6 +368,7 @@ class MainActivity : Activity() {
                     localAiText.text = "\\nQwen3 model verified successfully.\\nSHA-256 matches the pinned manifest.\\nMode: advisory-only."
                     localAiDownloadButton.isEnabled = true
                     localAiRunButton.isEnabled = true
+                    localAiBenchmarkButton.isEnabled = true
                 }
             } catch (error: Exception) {
                 runOnUiThread {
@@ -399,6 +412,72 @@ class MainActivity : Activity() {
                         (error.message ?: error.javaClass.simpleName)
                     localAiRunButton.isEnabled = true
                     localAiDownloadButton.isEnabled = true
+                }
+            }
+        }.start()
+    }
+
+    private fun runLocalAiBenchmark() {
+        localAiBenchmarkButton.isEnabled = false
+        localAiRunButton.isEnabled = false
+        localAiDownloadButton.isEnabled = false
+        localAiText.text =
+            "\nStage 9 benchmark starting...\n" +
+                "Controlled configurations: 2 threads and 4 threads; 2 repetitions each.\n" +
+                "Expected duration can be several minutes because every run loads the model."
+        Thread {
+            try {
+                val benchmark = LocalInferenceBenchmark(this)
+                val result = benchmark.run { threads, repetition, totalRuns ->
+                    runOnUiThread {
+                        localAiText.text =
+                            "\nStage 9 benchmark running\n" +
+                                "Run " + ((repetition - 1) * 2 + if (threads == 2) 1 else 2) +
+                                "/" + totalRuns + "\n" +
+                                "Threads: " + threads + "\n" +
+                                "No device mutations are permitted."
+                    }
+                }
+                val file = LocalInferenceBenchmarkJsonWriter.write(this, result)
+                val summary = buildString {
+                    append("\nStage 9 benchmark complete\n")
+                    result.threadConfigurations.forEach { threads ->
+                        val group = result.samples.filter { it.threadCount == threads }
+                        append(threads).append(" threads: ")
+                            .append(group.size).append(" samples\n")
+                        append("  avg wall: ")
+                            .append(String.format("%.1f s", group.map { it.wallTimeMs }.average() / 1000.0))
+                            .append("\n")
+                        append("  avg generation: ")
+                            .append(String.format("%.3f tok/s", group.map { it.generationTokensPerSecond }.average()))
+                            .append("\n")
+                        append("  avg load: ")
+                            .append(String.format("%.1f s", group.map { it.loadMs }.average() / 1000.0))
+                            .append("\n")
+                        append("  avg PSS delta: ")
+                            .append(String.format("%.1f MB", group.map { it.processPssDeltaKb }.average() / 1024.0))
+                            .append("\n")
+                    }
+                    append("Model output contained <think>: ")
+                        .append(result.samples.count { it.modelOutputContainsThink })
+                        .append("/").append(result.samples.size).append("\n")
+                    append("Safety: advisoryOnly=true; executionRequested=false; deviceMutationAllowed=false\n")
+                    append("Saved: ").append(file.name)
+                }
+                runOnUiThread {
+                    localAiText.text = summary
+                    localAiRunButton.isEnabled = true
+                    localAiDownloadButton.isEnabled = true
+                    localAiBenchmarkButton.isEnabled = true
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    localAiText.text =
+                        "\nStage 9 benchmark failed: " +
+                            (error.message ?: error.javaClass.simpleName)
+                    localAiRunButton.isEnabled = true
+                    localAiDownloadButton.isEnabled = true
+                    localAiBenchmarkButton.isEnabled = true
                 }
             }
         }.start()
