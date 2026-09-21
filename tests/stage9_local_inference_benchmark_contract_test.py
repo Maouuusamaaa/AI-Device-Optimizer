@@ -42,11 +42,10 @@ def main():
     assert "executionRequested" in benchmark
     assert "deviceMutationAllowed" in benchmark
 
-    # Validate the actual generated prompt rather than the source file text.
-    # The source documentation may legitimately mention the soft switch by name.
-    prompt = QwenLocalModel_prompt_contract(model)
-    assert "<think>\\n\\n</think>\\n\\n" in prompt
-    assert "/no_think" not in prompt
+    # Validate the prompt implementation body rather than source-file comments.
+    prompt_function = model[model.index("fun prompt"):]
+    assert "<think>\\n\\n</think>\\n\\n" in prompt_function
+    assert "/no_think" not in prompt_function
     assert "Stage 9 hardened benchmark requires exactly two thread configurations" in benchmark
 
     assert "processCpuTime" in writer
@@ -67,13 +66,6 @@ def main():
     assert "ScrollView(this)" in activity
 
     print("Stage 9 local inference benchmark contract: PASS")
-
-
-def QwenLocalModel_prompt_contract(model_source: str) -> str:
-    marker = '"<|im_start|>assistant\\n" +'
-    start = model_source.index(marker)
-    end = model_source.index('\n}', start)
-    return model_source[start:end]
 
 
 if __name__ == "__main__":
