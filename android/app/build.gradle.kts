@@ -33,8 +33,8 @@ android {
         applicationId = "com.maouuusama.ai.device.optimizer"
         minSdk = 29
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.1.5"
+        versionCode = 6
+        versionName = "0.1.6"
 
         externalNativeBuild {
             cmake {
@@ -54,6 +54,15 @@ android {
         getByName("debug") {
             if (ciSigningConfigured) {
                 signingConfig = signingConfigs.getByName("ciStable")
+            }
+        }
+        getByName("release") {
+            isDebuggable = false
+            isProfileable = true
+            if (ciSigningConfigured) {
+                signingConfig = signingConfigs.getByName("ciStable")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
             }
         }
     }
