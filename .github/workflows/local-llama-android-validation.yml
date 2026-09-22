@@ -132,8 +132,8 @@ jobs:
           import re
           from pathlib import Path
           text = Path("android/app/build.gradle.kts").read_text(encoding="utf-8")
-          m_code = re.search(r"versionCode\\s*=\\s*(\\d+)", text)
-          m_name = re.search(r'versionName\\s*=\\s*"([^"]+)"', text)
+          m_code = re.search(r"versionCode\s*=\s*(\d+)", text)
+          m_name = re.search(r'versionName\s*=\s*"([^"]+)"', text)
           if not m_code or not m_name:
               raise SystemExit("Unable to read application version from build.gradle.kts")
           print(m_code.group(1))
@@ -143,7 +143,7 @@ jobs:
           import re
           from pathlib import Path
           text = Path("android/app/build.gradle.kts").read_text(encoding="utf-8")
-          m = re.search(r'versionName\\s*=\\s*"([^"]+)"', text)
+          m = re.search(r'versionName\s*=\s*"([^"]+)"', text)
           if not m:
               raise SystemExit("Unable to read versionName from build.gradle.kts")
           print(m.group(1))
