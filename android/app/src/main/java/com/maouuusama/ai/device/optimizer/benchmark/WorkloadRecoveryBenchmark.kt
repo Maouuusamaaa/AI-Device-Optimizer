@@ -20,6 +20,7 @@ class WorkloadRecoveryBenchmark(private val context: Context) {
         const val DEFAULT_WORKLOAD_DURATION_MS = 5 * 60_000L
         const val DEFAULT_RECOVERY_DURATION_MS = 2 * 60_000L
         const val DEFAULT_INTERVAL_MS = 2_000L
+        const val WORKLOAD_SWITCH_DELAY_MS = 5_000L
     }
 
     fun run(
@@ -38,6 +39,7 @@ class WorkloadRecoveryBenchmark(private val context: Context) {
         onPhase("baseline")
         collectPhase("baseline", baselineDurationMs, intervalMs, all, onSample)
         onPhase("workload")
+        Thread.sleep(WORKLOAD_SWITCH_DELAY_MS)
         collectPhase("workload", workloadDurationMs, intervalMs, all, onSample)
         onPhase("recovery")
         collectPhase("recovery", recoveryDurationMs, intervalMs, all, onSample)
