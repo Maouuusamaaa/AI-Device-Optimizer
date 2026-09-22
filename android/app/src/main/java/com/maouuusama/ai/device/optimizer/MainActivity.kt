@@ -16,6 +16,8 @@ import com.maouuusama.ai.device.optimizer.benchmark.BenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.benchmark.BenchmarkReport
 import com.maouuusama.ai.device.optimizer.benchmark.ReadOnlyBaselineBenchmark
 import com.maouuusama.ai.device.optimizer.benchmark.WorkloadBenchmark
+import com.maouuusama.ai.device.optimizer.benchmark.WorkloadRecoveryBenchmark
+import com.maouuusama.ai.device.optimizer.benchmark.WorkloadRecoveryBenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmark
 import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
@@ -32,6 +34,7 @@ class MainActivity : Activity() {
     private lateinit var statusText: TextView
     private lateinit var benchmarkButton: Button
     private lateinit var workloadButton: Button
+    private lateinit var recoveryButton: Button
     private lateinit var agentStatusText: TextView
     private lateinit var processText: TextView
     private lateinit var systemText: TextView
@@ -148,6 +151,12 @@ class MainActivity : Activity() {
             setOnClickListener { runWorkloadBenchmark() }
         }
         root.addView(workloadButton)
+
+        recoveryButton = Button(this).apply {
+            text = "Run workload → recovery memory benchmark"
+            setOnClickListener { runWorkloadRecoveryBenchmark() }
+        }
+        root.addView(recoveryButton)
 
         statusText = TextView(this).apply {
             textSize = 16f
@@ -531,6 +540,87 @@ class MainActivity : Activity() {
                     statusText.text = "\nBaseline failed: " + (error.message ?: error.javaClass.simpleName)
                     benchmarkButton.isEnabled = true
                     workloadButton.isEnabled = true
+                }
+            }
+        }.start()
+    }
+
+    private fun runWorkloadRecoveryBenchmark() {
+        benchmarkButton.isEnabled = false
+        workloadButton.isEnabled = false
+        recoveryButton.isEnabled = false
+        statusText.text =
+            "\nRecovery benchmark preparing...\nBaseline 60s → workload 5min → recovery 2min.\n" +
+                "After workload, stop the workload and return to the optimizer app if practical.\n" +
+                "No system mutations are performed."
+        Thread {
+            try {
+                val samples = WorkloadRecoveryBenchmark(this).run(
+                    onPhase = { phase ->
+                        runOnUiThread {
+                            statusText.text = when (phase) {
+                                "baseline" -> "\nRecovery protocol: baseline 60s\nKeep the device idle."
+                                "workload" -> "\nRecovery protocol: workload 5min\nSwitch to your normal app/game and use it normally."
+                                else -> "\nRecovery protocol: recovery 2min\nStop the workload and return to the optimizer app if practical.\nRead-only monitoring continues."
+                            }
+                        }
+                    },
+                    onSample = { sample ->
+                        runOnUiThread {
+                            val pss = sample.sample.processes
+                                .firstOrNull { it.packageNames.any { pkg -> pkg == packageName } }
+                                ?.pssKb
+                            statusText.text =
+                                "\nRecovery benchmark: " + sample.phase +
+                                    "\nSample: " + sample.phaseSampleIndex +
+                                    "\nRAM available: " + sample.sample.availableRamMb + " MB" +
+                                    "\nOptimizer PSS: " + (pss ?: -1L) + " KiB" +
+                                    "\nTemperature: " +
+                                    (sample.sample.temperatureC?.let { String.format("%.1f°C", it) } ?: "unknown")
+                        }
+                    }
+                )
+                val file = WorkloadRecoveryBenchmarkJsonWriter.write(this, samples)
+                val shared = WorkloadRecoveryBenchmarkJsonWriter.exportToSharedDownloads(this, file)
+                val byPhase = samples.groupBy { it.phase }
+                val summary = buildString {
+                    append("\nWorkload → recovery benchmark complete\n")
+                    listOf("baseline", "workload", "recovery").forEach { phase ->
+                        val group = byPhase[phase].orEmpty()
+                        val pss = group.flatMap { s ->
+                            s.sample.processes
+                                .filter { it.packageNames.any { pkg -> pkg == packageName } }
+                                .map { it.pssKb }
+                        }
+                        append(phase).append(": ").append(group.size).append(" samples")
+                        if (pss.isNotEmpty()) {
+                            append("; PSS ").append(pss.first()).append(" → ").append(pss.last()).append(" KiB")
+                        }
+                        append("\n")
+                    }
+                    append("Raw JSON: ").append(file.name).append("\n")
+                    append(
+                        if (shared != null) {
+                            "Shared export: /storage/emulated/0/$shared"
+                        } else {
+                            "Shared export failed; app-private JSON remains available."
+                        }
+                    )
+                }
+                runOnUiThread {
+                    statusText.text = summary
+                    benchmarkButton.isEnabled = true
+                    workloadButton.isEnabled = true
+                    recoveryButton.isEnabled = true
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    statusText.text =
+                        "\nRecovery benchmark failed: " +
+                            (error.message ?: error.javaClass.simpleName)
+                    benchmarkButton.isEnabled = true
+                    workloadButton.isEnabled = true
+                    recoveryButton.isEnabled = true
                 }
             }
         }.start()
