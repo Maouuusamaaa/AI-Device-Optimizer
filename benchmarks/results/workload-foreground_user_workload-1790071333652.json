@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 2,
+  "timestampMs": 1790071333652,
+  "workload": "foreground_user_workload",
+  "device": {
+    "androidApi": 33,
+    "manufacturer": "ITEL",
+    "model": "itel P661N"
+  },
+  "note": "Raw JSON preserved from the physical-device benchmark export. Full source file was validated locally with python -m json.tool before archival."
+}
