@@ -1,11 +1,6 @@
 # Benchmark Analyzer
 
-The benchmark analyzer normalizes the two current baseline sources:
-
-1. Internal app baseline JSON from the physical-device read-only benchmark.
-2. External Termux/Shizuku/Rish baseline TXT from `scripts/rish-baseline.sh`.
-
-It does not change device state and does not perform optimization actions.
+The benchmark analyzer normalizes internal app baseline observations and external Termux/Shizuku/Rish measurements. It does not change device state and does not perform optimization actions.
 
 ## Termux usage
 
@@ -31,6 +26,19 @@ python3 scripts/benchmark-analyzer.py \
   --out benchmarks/results/baseline-analysis.json
 ```
 
+## Baseline vs workload
+
+For two valid internal JSON observations:
+
+```bash
+python3 scripts/compare-internal-benchmarks.py \
+  /path/to/read-only-baseline.json \
+  /path/to/workload.json \
+  --out benchmarks/results/baseline-vs-workload.json
+```
+
+The comparison reports descriptive deltas for duration, sample count, available RAM, telemetry collection time, battery, temperature, and optimizer-process CPU time. It does not rank or recommend optimization actions.
+
 ## Metrics
 
 The external analyzer extracts:
@@ -49,15 +57,14 @@ The internal analyzer extracts:
 - battery start/end
 - temperature start/end
 - cumulative process CPU time start/end/delta
+- process PSS/RSS/swap PSS summaries when process telemetry is available
 
 ## Interpretation
 
-This analyzer produces measurements, not optimization decisions.
+These tools produce measurements, not optimization decisions.
 
-A later before/after analyzer should compare matched workloads and device conditions. A change should only be considered useful when the measured effect is reproducible and the action's own overhead is accounted for.
+Baseline and workload observations should be matched by workload and device conditions before causal conclusions are made. A change should only be considered useful when the measured effect is reproducible and the action's own overhead is accounted for.
 
-The next planned layer is:
+The current 2026-09-22 workload evidence is recorded in `benchmarks/results/2026-09-22-workload-benchmark-evidence.md`.
 
-`baseline → dry-run action → after measurement → normalized comparison → policy candidate`
-
-No system mutation is performed by this analyzer.
+No system mutation is performed by either analyzer.
