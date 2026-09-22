@@ -21,8 +21,18 @@ class ReadOnlyBaselineBenchmark(private val context: Context) {
 
         val samples = ArrayList<BenchmarkSample>(sampleCount)
         val monitor = DeviceMonitor(context)
+        var nextSampleNs = System.nanoTime()
 
         repeat(sampleCount) { index ->
+            val waitNs = nextSampleNs - System.nanoTime()
+            if (waitNs > 0) {
+                val sleepMs = waitNs / 1_000_000L
+                val sleepNs = (waitNs % 1_000_000L).toInt()
+                if (sleepMs > 0 || sleepNs > 0) {
+                    Thread.sleep(sleepMs, sleepNs)
+                }
+            }
+
             val startedNs = System.nanoTime()
             val snapshot = monitor.collectSnapshot()
             val battery = context.registerReceiver(
@@ -55,8 +65,8 @@ class ReadOnlyBaselineBenchmark(private val context: Context) {
             samples += sample
             onSample?.invoke(sample)
 
-            if (index < sampleCount - 1 && intervalMs > 0) {
-                Thread.sleep(intervalMs)
+            if (intervalMs > 0) {
+                nextSampleNs = startedNs + intervalMs * 1_000_000L
             }
         }
 
