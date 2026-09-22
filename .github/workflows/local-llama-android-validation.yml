@@ -10,7 +10,7 @@ on:
       - "docs/STAGE9_REAL_DEVICE_INFERENCE_BENCHMARK.md"
       - "tests/stage9_local_inference_benchmark_contract_test.py"
       - "tests/stage9_benchmark_analyzer_test.py"
-      - ".github/workflows/local-llama-android-validation.yml"
+      - ".github/workflows/**"
   push:
     branches:
       - main
@@ -23,7 +23,7 @@ on:
       - "docs/STAGE9_REAL_DEVICE_INFERENCE_BENCHMARK.md"
       - "tests/stage9_local_inference_benchmark_contract_test.py"
       - "tests/stage9_benchmark_analyzer_test.py"
-      - ".github/workflows/local-llama-android-validation.yml"
+      - ".github/workflows/**"
 
 jobs:
   android-native-runtime:
@@ -121,6 +121,40 @@ jobs:
           test -f "$APK"
           unzip -l "$APK" | grep -E 'lib/arm64-v8a/lib(ai_local_runtime|llama|ggml).*\.so'
           unzip -l "$APK" | grep -q 'lib/arm64-v8a/libai_local_runtime.so'
+
+      - name: Verify release APK metadata
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          test -f "$APK"
+          EXPECTED_VERSION_CODE="$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+          text = Path("android/app/build.gradle.kts").read_text(encoding="utf-8")
+          m_code = re.search(r"versionCode\s*=\s*(\d+)", text)
+          m_name = re.search(r'versionName\s*=\s*"([^"]+)"', text)
+          if not m_code or not m_name:
+              raise SystemExit("Unable to read application version from build.gradle.kts")
+          print(m_code.group(1))
+          PY
+          )"
+          EXPECTED_VERSION_NAME="$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+          text = Path("android/app/build.gradle.kts").read_text(encoding="utf-8")
+          m = re.search(r'versionName\s*=\s*"([^"]+)"', text)
+          if not m:
+              raise SystemExit("Unable to read versionName from build.gradle.kts")
+          print(m.group(1))
+          PY
+          )"
+          PACKAGE_LINE="$("$AAPT" dump badging "$APK" | grep '^package:' | head -n 1)"
+          echo "$PACKAGE_LINE"
+          echo "$PACKAGE_LINE" | grep -Fq "name='com.maouuusama.ai.device.optimizer'"
+          echo "$PACKAGE_LINE" | grep -Fq "versionCode='$EXPECTED_VERSION_CODE'"
+          echo "$PACKAGE_LINE" | grep -Fq "versionName='$EXPECTED_VERSION_NAME'"
+          echo "Release APK metadata matches Gradle: versionCode=$EXPECTED_VERSION_CODE versionName=$EXPECTED_VERSION_NAME"
 
       - name: Verify stable release APK signature
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
