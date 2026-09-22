@@ -2,6 +2,7 @@
 #include <android/log.h>
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <string>
 #include <vector>
 #include "llama.h"
@@ -10,6 +11,7 @@ namespace {
 constexpr const char * TAG = "AILocalRuntime";
 constexpr int MAX_CONTEXT = 8192;
 constexpr int MAX_MAX_TOKENS = 256;
+constexpr const char * NON_THINKING_TAG = "<think>";
 
 using Clock = std::chrono::steady_clock;
 
@@ -102,6 +104,28 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
         return make_result(env, R"({"ok":false,"error":"vocab_unavailable"})");
     }
 
+    // Qwen3's documented hard switch is represented by an empty <think> block
+    // in the formatted generation prompt. The Android runtime uses raw llama
+    // completion rather than llama.cpp's chat-template/Jinja path, so add a
+    // deterministic token-level guard as a second enforcement layer. This
+    // prevents the model from starting a new <think> block even if the raw
+    // prompt path does not interpret the chat-template switch.
+    const auto think_tokenization = -llama_tokenize(
+        vocab, NON_THINKING_TAG, sizeof("<think>") - 1, nullptr, 0, true, true);
+    if (think_tokenization != 1) {
+        llama_model_free(model);
+        llama_backend_free();
+        return make_result(env, R"({"ok":false,"error":"non_thinking_guard_unavailable"})");
+    }
+    llama_token think_token = LLAMA_TOKEN_NULL;
+    if (llama_tokenize(
+            vocab, NON_THINKING_TAG, sizeof("<think>") - 1,
+            &think_token, 1, true, true) != 1) {
+        llama_model_free(model);
+        llama_backend_free();
+        return make_result(env, R"({"ok":false,"error":"non_thinking_guard_tokenize_failed"})");
+    }
+
     const auto tokenization_start = Clock::now();
     const int n_prompt = -llama_tokenize(
         vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
@@ -145,6 +169,17 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
         llama_backend_free();
         return make_result(env, R"({"ok":false,"error":"sampler_init_failed"})");
     }
+
+    const llama_logit_bias non_thinking_bias{
+        think_token,
+        -INFINITY
+    };
+    llama_sampler_chain_add(
+        sampler,
+        llama_sampler_init_logit_bias(
+            llama_vocab_n_tokens(vocab),
+            1,
+            &non_thinking_bias));
     llama_sampler_chain_add(sampler, llama_sampler_init_greedy());
 
     const auto prompt_decode_start = Clock::now();
@@ -204,7 +239,7 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
         R"(,"totalNativeMs":)" + std::to_string(total_native_ms) +
         R"(,"modelOutputContainsThink":)" +
         (output.find("<think>") != std::string::npos ? "true" : "false") +
-        R"(,"advisoryOnly":true,"executionRequested":false,"deviceMutationAllowed":false})";
+        R"(,"nonThinkingGuard":true,"advisoryOnly":true,"executionRequested":false,"deviceMutationAllowed":false})";
 
     llama_sampler_free(sampler);
     llama_free(context);

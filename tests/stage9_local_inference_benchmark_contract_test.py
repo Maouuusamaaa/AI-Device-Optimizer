@@ -5,6 +5,7 @@ BUILD = ROOT / "android/app/build.gradle.kts"
 BENCHMARK = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/benchmark/LocalInferenceBenchmark.kt"
 WRITER = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/benchmark/LocalInferenceBenchmarkJsonWriter.kt"
 ACTIVITY = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/MainActivity.kt"
+MODEL = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/localai/QwenLocalModel.kt"
 
 
 def main():
@@ -12,9 +13,10 @@ def main():
     benchmark = BENCHMARK.read_text(encoding="utf-8")
     writer = WRITER.read_text(encoding="utf-8")
     activity = ACTIVITY.read_text(encoding="utf-8")
+    model = MODEL.read_text(encoding="utf-8")
 
-    assert 'versionName = "0.1.7"' in build
-    assert 'versionCode = 7' in build
+    assert 'versionName = "0.1.8"' in build
+    assert 'versionCode = 8' in build
     assert 'isProfileable = true' in build
     assert 'signingConfig = signingConfigs.getByName("ciStable")' in build
 
@@ -39,7 +41,11 @@ def main():
     assert "advisoryOnly" in benchmark
     assert "executionRequested" in benchmark
     assert "deviceMutationAllowed" in benchmark
-    assert "/no_think" in (ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/localai/QwenLocalModel.kt").read_text(encoding="utf-8")
+
+    # Validate the prompt implementation body rather than source-file comments.
+    prompt_function = model[model.index("fun prompt"):]
+    assert "<think>\\n\\n</think>\\n\\n" in prompt_function
+    assert "/no_think" not in prompt_function
     assert "Stage 9 hardened benchmark requires exactly two thread configurations" in benchmark
 
     assert "processCpuTime" in writer

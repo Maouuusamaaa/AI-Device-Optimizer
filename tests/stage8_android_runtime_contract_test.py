@@ -15,8 +15,8 @@ def main():
     runtime = RUNTIME.read_text(encoding="utf-8")
     model = MODEL.read_text(encoding="utf-8")
 
-    assert 'versionName = "0.1.7"' in build
-    assert 'versionCode = 7' in build
+    assert 'versionName = "0.1.8"' in build
+    assert 'versionCode = 8' in build
     assert 'ndkVersion = "27.2.12479018"' in build
     assert 'path = file("src/main/cpp/CMakeLists.txt")' in build
     assert 'version = "3.22.1"' in build
@@ -37,6 +37,9 @@ def main():
     assert '"generationTokensPerSecond":' in native
     assert '"totalNativeMs":' in native
     assert '"modelOutputContainsThink":' in native
+    assert '"nonThinkingGuard":true' in native
+    assert "NON_THINKING_TAG = \"<think>\"" in native
+    assert "llama_sampler_init_logit_bias" in native
     assert "jint threads_value" in native
     assert "context_params.n_threads = threads" in native
     assert "context_params.n_threads_batch = threads" in native
