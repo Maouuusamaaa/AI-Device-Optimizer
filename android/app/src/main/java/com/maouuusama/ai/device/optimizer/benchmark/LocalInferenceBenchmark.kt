@@ -110,6 +110,7 @@ class LocalInferenceBenchmark(private val context: Context) {
         val schedule = buildBalancedSchedule(threadConfigurations)
         val totalRuns = schedule.size
         val samples = mutableListOf<LocalInferenceBenchmarkSample>()
+        val repetitionsByThread = mutableMapOf<Int, Int>()
 
         schedule.forEachIndexed { scheduleIndex, threadCount ->
             if (samples.isNotEmpty() && delayBetweenRunsMs > 0L) {
@@ -117,7 +118,8 @@ class LocalInferenceBenchmark(private val context: Context) {
             }
 
             awaitControlledStart()
-            val repetition = if (scheduleIndex == 0 || scheduleIndex == 3) 1 else 2
+            val repetition = (repetitionsByThread[threadCount] ?: 0) + 1
+            repetitionsByThread[threadCount] = repetition
             onProgress(threadCount, repetition, totalRuns)
 
             val before = DeviceMonitor(context).collectSnapshot(includeSystemTelemetry = false)
