@@ -15,8 +15,8 @@ def main():
     activity = ACTIVITY.read_text(encoding="utf-8")
     model = MODEL.read_text(encoding="utf-8")
 
-    assert 'versionName = "0.1.8"' in build
-    assert 'versionCode = 8' in build
+    assert 'versionName = "0.1.9"' in build
+    assert 'versionCode = 9' in build
     assert 'isProfileable = true' in build
     assert 'signingConfig = signingConfigs.getByName("ciStable")' in build
 
