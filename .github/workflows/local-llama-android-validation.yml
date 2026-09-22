@@ -10,6 +10,8 @@ on:
       - "docs/STAGE9_REAL_DEVICE_INFERENCE_BENCHMARK.md"
       - "tests/stage9_local_inference_benchmark_contract_test.py"
       - "tests/stage9_benchmark_analyzer_test.py"
+      - "tests/workload_recovery_benchmark_contract_test.py"
+      - "docs/WORKLOAD_RECOVERY_BENCHMARK.md"
       - ".github/workflows/**"
   push:
     branches:
@@ -103,6 +105,7 @@ jobs:
         run: |
           python3 tests/stage9_local_inference_benchmark_contract_test.py
           python3 tests/stage9_benchmark_analyzer_test.py
+          python3 tests/workload_recovery_benchmark_contract_test.py
 
       - name: Build release APK and unit tests
         working-directory: android
