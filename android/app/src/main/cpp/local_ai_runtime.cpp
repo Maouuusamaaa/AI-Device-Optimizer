@@ -79,7 +79,8 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate(
         JNIEnv * env, jobject,
         jstring model_path_value, jstring prompt_value,
-        jint context_tokens_value, jint max_tokens_value, jint threads_value) {
+        jint context_tokens_value, jint max_tokens_value, jint threads_value,
+        jboolean keep_backend_alive) {
 
     const auto total_start = Clock::now();
     const std::string model_path = jstring_to_string(env, model_path_value);
@@ -93,6 +94,13 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
     }
 
     llama_backend_init();
+    // Normal generation releases backend-global state. Lifecycle diagnostics keep it
+    // alive so model/context cleanup and explicit reset can be observed separately.
+    const auto cleanup_backend = [&]() {
+        if (keep_backend_alive == JNI_FALSE) {
+            llama_backend_free();
+        }
+    };
 
     const auto load_start = Clock::now();
     llama_model_params model_params = llama_model_default_params();
@@ -102,14 +110,14 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
 
     if (model == nullptr) {
         log_error("Failed to load GGUF model");
-        llama_backend_free();
+        cleanup_backend();
         return make_result(env, R"({"ok":false,"error":"model_load_failed"})");
     }
 
     const llama_vocab * vocab = llama_model_get_vocab(model);
     if (vocab == nullptr) {
         llama_model_free(model);
-        llama_backend_free();
+        cleanup_backend();
         return make_result(env, R"({"ok":false,"error":"vocab_unavailable"})");
     }
 
@@ -123,7 +131,7 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
         vocab, NON_THINKING_TAG, sizeof("<think>") - 1, nullptr, 0, true, true);
     if (think_tokenization != 1) {
         llama_model_free(model);
-        llama_backend_free();
+        cleanup_backend();
         return make_result(env, R"({"ok":false,"error":"non_thinking_guard_unavailable"})");
     }
     llama_token think_token = LLAMA_TOKEN_NULL;
@@ -131,7 +139,7 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
             vocab, NON_THINKING_TAG, sizeof("<think>") - 1,
             &think_token, 1, true, true) != 1) {
         llama_model_free(model);
-        llama_backend_free();
+        cleanup_backend();
         return make_result(env, R"({"ok":false,"error":"non_thinking_guard_tokenize_failed"})");
     }
 
@@ -140,7 +148,7 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
         vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
     if (n_prompt <= 0 || n_prompt >= context_tokens) {
         llama_model_free(model);
-        llama_backend_free();
+        cleanup_backend();
         return make_result(env, R"({"ok":false,"error":"prompt_exceeds_context"})");
     }
 
@@ -148,7 +156,7 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
     if (llama_tokenize(vocab, prompt.c_str(), prompt.size(),
                        prompt_tokens.data(), prompt_tokens.size(), true, true) < 0) {
         llama_model_free(model);
-        llama_backend_free();
+        cleanup_backend();
         return make_result(env, R"({"ok":false,"error":"tokenization_failed"})");
     }
     const auto tokenization_end = Clock::now();
@@ -165,7 +173,7 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
 
     if (context == nullptr) {
         llama_model_free(model);
-        llama_backend_free();
+        cleanup_backend();
         return make_result(env, R"({"ok":false,"error":"context_init_failed"})");
     }
 
@@ -175,7 +183,7 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
     if (sampler == nullptr) {
         llama_free(context);
         llama_model_free(model);
-        llama_backend_free();
+        cleanup_backend();
         return make_result(env, R"({"ok":false,"error":"sampler_init_failed"})");
     }
 
@@ -198,7 +206,7 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
         llama_sampler_free(sampler);
         llama_free(context);
         llama_model_free(model);
-        llama_backend_free();
+        cleanup_backend();
         return make_result(env, R"({"ok":false,"error":"prompt_decode_failed"})");
     }
     const auto prompt_decode_end = Clock::now();
@@ -253,6 +261,6 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate
     llama_sampler_free(sampler);
     llama_free(context);
     llama_model_free(model);
-    llama_backend_free();
+    cleanup_backend();
     return make_result(env, result);
 }
