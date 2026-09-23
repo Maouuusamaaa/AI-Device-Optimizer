@@ -129,7 +129,7 @@ class EvidenceQueueStore(context: Context) {
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
-    private fun sanitizeError(error: String) = error.replace(Regex("\s+"), " ").take(300)
+    private fun sanitizeError(error: String) = error.replace(Regex("\\s+"), " ").take(300)
 
     companion object {
         private val APPROVED_FILENAME =
