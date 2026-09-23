@@ -10,14 +10,18 @@ object WorkloadRecoveryBenchmarkJsonWriter {
     fun write(context: Context, samples: List<RecoveryBenchmarkSample>): File {
         require(samples.isNotEmpty())
         val root = JSONObject()
-            .put("schemaVersion", 1)
-            .put("protocol", "workload_recovery_memory_observation")
-            .put("device", JSONObject().put("androidApi", Build.VERSION.SDK_INT).put("manufacturer", Build.MANUFACTURER).put("model", Build.MODEL))
+            .put("schemaVersion", 2)
+            .put("protocol", "repeated_workload_recovery_memory_observation")
+            .put("device", JSONObject()
+                .put("androidApi", Build.VERSION.SDK_INT)
+                .put("manufacturer", Build.MANUFACTURER)
+                .put("model", Build.MODEL))
             .put("durationsMs", JSONObject()
                 .put("baseline", WorkloadRecoveryBenchmark.DEFAULT_BASELINE_DURATION_MS)
                 .put("workload", WorkloadRecoveryBenchmark.DEFAULT_WORKLOAD_DURATION_MS)
                 .put("recovery", WorkloadRecoveryBenchmark.DEFAULT_RECOVERY_DURATION_MS)
-                .put("interval", WorkloadRecoveryBenchmark.DEFAULT_INTERVAL_MS))
+                .put("interval", WorkloadRecoveryBenchmark.DEFAULT_INTERVAL_MS)
+                .put("cycleCount", WorkloadRecoveryBenchmark.DEFAULT_CYCLE_COUNT))
         val array = JSONArray()
         samples.forEach { wrapped ->
             val sample = wrapped.sample
@@ -37,6 +41,7 @@ object WorkloadRecoveryBenchmarkJsonWriter {
             }
             array.put(JSONObject()
                 .put("phase", wrapped.phase)
+                .put("cycle", wrapped.cycle)
                 .put("phaseSampleIndex", wrapped.phaseSampleIndex)
                 .put("timestampMs", sample.timestampMs)
                 .put("availableRamMb", sample.availableRamMb)
@@ -51,7 +56,7 @@ object WorkloadRecoveryBenchmarkJsonWriter {
         }
         root.put("samples", array)
         val directory = File(context.getExternalFilesDir(null), "benchmarks").apply { mkdirs() }
-        val file = File(directory, "workload-recovery-" + samples.first().sample.timestampMs + ".json")
+        val file = File(directory, "repeated-workload-recovery-" + samples.first().sample.timestampMs + ".json")
         file.writeText(root.toString(2))
         return file
     }
