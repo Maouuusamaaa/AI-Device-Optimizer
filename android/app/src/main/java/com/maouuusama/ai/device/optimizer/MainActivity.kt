@@ -23,7 +23,7 @@ import com.maouuusama.ai.device.optimizer.benchmark.WorkloadRecoveryBenchmarkJso
 import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmark
 import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
-import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncConfig
+import com.maouuusama.ai.device.optimizer.sync.GitHubSyncConfig
 import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncManager
 import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncScheduler
 import com.maouuusama.ai.device.optimizer.sync.GitHubEvidenceClient
@@ -133,7 +133,7 @@ class MainActivity : Activity() {
         })
         evidenceSyncRepository = EditText(this).apply {
             hint = "GitHub repository (owner/name)"
-            setText(EvidenceSyncConfig(this@MainActivity).repository)
+            setText(GitHubSyncConfig(this@MainActivity).repository)
             singleLine = true
         }
         root.addView(evidenceSyncRepository)
