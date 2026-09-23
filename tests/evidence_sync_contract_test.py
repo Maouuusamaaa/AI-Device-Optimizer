@@ -17,8 +17,8 @@ def main():
     manifest = MANIFEST.read_text(encoding="utf-8")
     activity = ACTIVITY.read_text(encoding="utf-8")
 
-    assert 'versionName = "0.1.11"' in build
-    assert "versionCode = 11" in build
+    assert 'versionName = "0.1.12"' in build
+    assert "versionCode = 12" in build
     assert 'androidx.work:work-runtime-ktx:2.11.2' in build
 
     assert '<uses-permission android:name="android.permission.INTERNET" />' in manifest
