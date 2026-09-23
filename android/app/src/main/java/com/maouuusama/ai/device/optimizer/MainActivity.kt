@@ -42,6 +42,7 @@ class MainActivity : Activity() {
     private lateinit var benchmarkButton: Button
     private lateinit var workloadButton: Button
     private lateinit var recoveryButton: Button
+    private lateinit var longRecoveryButton: Button
     private lateinit var agentStatusText: TextView
     private lateinit var processText: TextView
     private lateinit var systemText: TextView
@@ -217,6 +218,12 @@ class MainActivity : Activity() {
             setOnClickListener { runWorkloadRecoveryBenchmark() }
         }
         root.addView(recoveryButton)
+
+        longRecoveryButton = Button(this).apply {
+            text = "Run 10min recovery memory benchmark"
+            setOnClickListener { runLongRecoveryBenchmark() }
+        }
+        root.addView(longRecoveryButton)
 
         statusText = TextView(this).apply {
             textSize = 16f
@@ -651,6 +658,8 @@ class MainActivity : Activity() {
     private fun runBaseline() {
         benchmarkButton.isEnabled = false
         workloadButton.isEnabled = false
+        recoveryButton.isEnabled = false
+        longRecoveryButton.isEnabled = false
         statusText.text = "\nBaseline starting...\nKeep the device in its current state."
         Thread {
             try {
@@ -672,12 +681,16 @@ class MainActivity : Activity() {
                     statusText.text = formatReport("Baseline complete", report, file.name)
                     benchmarkButton.isEnabled = true
                     workloadButton.isEnabled = true
+                    recoveryButton.isEnabled = true
+                    longRecoveryButton.isEnabled = true
                 }
             } catch (error: Exception) {
                 runOnUiThread {
                     statusText.text = "\nBaseline failed: " + (error.message ?: error.javaClass.simpleName)
                     benchmarkButton.isEnabled = true
                     workloadButton.isEnabled = true
+                    recoveryButton.isEnabled = true
+                    longRecoveryButton.isEnabled = true
                 }
             }
         }.start()
@@ -687,6 +700,7 @@ class MainActivity : Activity() {
         benchmarkButton.isEnabled = false
         workloadButton.isEnabled = false
         recoveryButton.isEnabled = false
+        longRecoveryButton.isEnabled = false
         statusText.text =
             "\nRecovery benchmark preparing...\nBaseline 60s → workload 5min → recovery 2min.\n" +
                 "After workload, stop the workload and return to the optimizer app if practical.\n" +
@@ -750,6 +764,7 @@ class MainActivity : Activity() {
                     benchmarkButton.isEnabled = true
                     workloadButton.isEnabled = true
                     recoveryButton.isEnabled = true
+                    longRecoveryButton.isEnabled = true
                 }
             } catch (error: Exception) {
                 runOnUiThread {
@@ -759,6 +774,100 @@ class MainActivity : Activity() {
                     benchmarkButton.isEnabled = true
                     workloadButton.isEnabled = true
                     recoveryButton.isEnabled = true
+                    longRecoveryButton.isEnabled = true
+                }
+            }
+        }.start()
+    }
+
+    private fun runLongRecoveryBenchmark() {
+        benchmarkButton.isEnabled = false
+        workloadButton.isEnabled = false
+        recoveryButton.isEnabled = false
+        longRecoveryButton.isEnabled = false
+        statusText.text =
+            "\nLong recovery benchmark preparing...\nBaseline 60s → workload 5min → recovery 10min.\n" +
+                "After workload, stop the workload and return to the optimizer app.\n" +
+                "No system mutations are performed."
+        Thread {
+            try {
+                val samples = WorkloadRecoveryBenchmark(this).run(
+                    recoveryDurationMs = 10 * 60_000L,
+                    cycleCount = 1,
+                    onPhase = { phase ->
+                        runOnUiThread {
+                            statusText.text = when (phase) {
+                                "baseline" -> "\nLong recovery protocol: baseline 60s\nKeep the device idle."
+                                "workload" -> "\nLong recovery protocol: workload 5min\nUse your normal app/game."
+                                else -> "\nLong recovery protocol: recovery 10min\nStop the workload and return to the optimizer app.\nRead-only monitoring continues."
+                            }
+                        }
+                    },
+                    onSample = { sample ->
+                        runOnUiThread {
+                            val pss = sample.sample.processes
+                                .firstOrNull { it.packageNames.any { pkg -> pkg == packageName } }
+                                ?.pssKb
+                            statusText.text =
+                                "\nLong recovery benchmark: " + sample.phase +
+                                    "\nSample: " + sample.phaseSampleIndex +
+                                    "\nRAM available: " + sample.sample.availableRamMb + " MB" +
+                                    "\nOptimizer PSS: " + (pss ?: -1L) + " KiB" +
+                                    "\nTemperature: " +
+                                    (sample.sample.temperatureC?.let { String.format("%.1f°C", it) } ?: "unknown")
+                        }
+                    }
+                )
+                val file = WorkloadRecoveryBenchmarkJsonWriter.write(
+                    this,
+                    samples,
+                    protocol = "long_recovery_memory_observation",
+                    recoveryDurationMs = 10 * 60_000L,
+                    cycleCount = 1,
+                    filenamePrefix = "long-recovery-memory"
+                )
+                val shared = WorkloadRecoveryBenchmarkJsonWriter.exportToSharedDownloads(this, file)
+                val byPhase = samples.groupBy { it.phase }
+                val summary = buildString {
+                    append("\nLong recovery benchmark complete\n")
+                    listOf("baseline", "workload", "recovery").forEach { phase ->
+                        val group = byPhase[phase].orEmpty()
+                        val pss = group.flatMap { item ->
+                            item.sample.processes
+                                .filter { it.packageNames.any { pkg -> pkg == packageName } }
+                                .map { it.pssKb }
+                        }
+                        append(phase).append(": ").append(group.size).append(" samples")
+                        if (pss.isNotEmpty()) {
+                            append("; PSS ").append(pss.first()).append(" → ").append(pss.last()).append(" KiB")
+                        }
+                        append("\n")
+                    }
+                    append("Raw JSON: ").append(file.name).append("\n")
+                    append(
+                        if (shared != null) {
+                            "Shared export: /storage/emulated/0/$shared"
+                        } else {
+                            "Shared export failed; app-private JSON remains available."
+                        }
+                    )
+                }
+                runOnUiThread {
+                    statusText.text = summary
+                    benchmarkButton.isEnabled = true
+                    workloadButton.isEnabled = true
+                    recoveryButton.isEnabled = true
+                    longRecoveryButton.isEnabled = true
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    statusText.text =
+                        "\nLong recovery benchmark failed: " +
+                            (error.message ?: error.javaClass.simpleName)
+                    benchmarkButton.isEnabled = true
+                    workloadButton.isEnabled = true
+                    recoveryButton.isEnabled = true
+                    longRecoveryButton.isEnabled = true
                 }
             }
         }.start()
@@ -767,6 +876,8 @@ class MainActivity : Activity() {
     private fun runWorkloadBenchmark() {
         benchmarkButton.isEnabled = false
         workloadButton.isEnabled = false
+        recoveryButton.isEnabled = false
+        longRecoveryButton.isEnabled = false
         statusText.text =
             "\nWorkload benchmark preparing...\nYou have 3 seconds to switch to your game/app.\n" +
                 "Run it normally for 5 minutes.\nNo system mutations; policy remains DRY_RUN."
