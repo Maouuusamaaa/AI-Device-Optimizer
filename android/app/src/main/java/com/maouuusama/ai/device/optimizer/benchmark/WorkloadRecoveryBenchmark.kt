@@ -10,6 +10,7 @@ import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
 
 data class RecoveryBenchmarkSample(
     val phase: String,
+    val cycle: Int,
     val phaseSampleIndex: Int,
     val sample: BenchmarkSample
 )
@@ -20,6 +21,7 @@ class WorkloadRecoveryBenchmark(private val context: Context) {
         const val DEFAULT_WORKLOAD_DURATION_MS = 5 * 60_000L
         const val DEFAULT_RECOVERY_DURATION_MS = 2 * 60_000L
         const val DEFAULT_INTERVAL_MS = 2_000L
+        const val DEFAULT_CYCLE_COUNT = 2
         const val WORKLOAD_SWITCH_DELAY_MS = 5_000L
     }
 
@@ -28,6 +30,7 @@ class WorkloadRecoveryBenchmark(private val context: Context) {
         workloadDurationMs: Long = DEFAULT_WORKLOAD_DURATION_MS,
         recoveryDurationMs: Long = DEFAULT_RECOVERY_DURATION_MS,
         intervalMs: Long = DEFAULT_INTERVAL_MS,
+        cycleCount: Int = DEFAULT_CYCLE_COUNT,
         onPhase: (phase: String) -> Unit = {},
         onSample: (RecoveryBenchmarkSample) -> Unit = {}
     ): List<RecoveryBenchmarkSample> {
@@ -35,19 +38,26 @@ class WorkloadRecoveryBenchmark(private val context: Context) {
         require(workloadDurationMs > 0L)
         require(recoveryDurationMs > 0L)
         require(intervalMs > 0L)
+        require(cycleCount > 0)
         val all = mutableListOf<RecoveryBenchmarkSample>()
+
         onPhase("baseline")
-        collectPhase("baseline", baselineDurationMs, intervalMs, all, onSample)
-        onPhase("workload")
-        Thread.sleep(WORKLOAD_SWITCH_DELAY_MS)
-        collectPhase("workload", workloadDurationMs, intervalMs, all, onSample)
-        onPhase("recovery")
-        collectPhase("recovery", recoveryDurationMs, intervalMs, all, onSample)
+        collectPhase("baseline", 0, baselineDurationMs, intervalMs, all, onSample)
+
+        repeat(cycleCount) {
+            onPhase("workload")
+            Thread.sleep(WORKLOAD_SWITCH_DELAY_MS)
+            collectPhase("workload", it + 1, workloadDurationMs, intervalMs, all, onSample)
+
+            onPhase("recovery")
+            collectPhase("recovery", it + 1, recoveryDurationMs, intervalMs, all, onSample)
+        }
         return all
     }
 
     private fun collectPhase(
         phase: String,
+        cycle: Int,
         durationMs: Long,
         intervalMs: Long,
         output: MutableList<RecoveryBenchmarkSample>,
@@ -89,7 +99,7 @@ class WorkloadRecoveryBenchmark(private val context: Context) {
                 processes = snapshot.processes
             )
             index += 1
-            val wrapped = RecoveryBenchmarkSample(phase, index, sample)
+            val wrapped = RecoveryBenchmarkSample(phase, cycle, index, sample)
             output += wrapped
             onSample(wrapped)
             nextSampleNs = sampleStartedNs + intervalMs * 1_000_000L
