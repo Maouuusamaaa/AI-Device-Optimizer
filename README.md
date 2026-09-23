@@ -44,6 +44,16 @@ Monitor → Local Policy → Action Engine → Benchmark → Cloud API → Cloud
 9. Cloud reasoning must never bypass local safety and permission constraints.
 10. Offline operation must remain useful without requiring cloud connectivity.
 
+## Versioning and Release Milestones
+
+The project separates ongoing engineering work from validated release milestones.
+
+A commit, experiment, diagnostic, benchmark fix, documentation change, or CI repair does not automatically require a new `versionName`. The exact implementation state is tracked by Git commit and PR, while `versionName` identifies a milestone that has been explicitly accepted.
+
+Android `versionCode` remains monotonic for installable updates because Android uses it to determine update ordering. It is not used as an experiment counter.
+
+See [docs/VERSIONING.md](docs/VERSIONING.md) for the complete policy.
+
 ## Benchmark Targets
 
 Every optimization should be evaluated against measurable device behavior, including RAM usage, CPU utilization, battery drain, device temperature, application launch time, FPS where measurable, frame-time stability, network latency where relevant, storage usage, and optimizer CPU/RAM overhead.
