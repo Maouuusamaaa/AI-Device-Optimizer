@@ -1,5 +1,7 @@
 package com.maouuusama.ai.device.optimizer.benchmark
 
+import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncManager
+
 import android.content.ContentValues
 import android.content.Context
 import android.os.Build
@@ -89,6 +91,7 @@ object LocalInferenceBenchmarkJsonWriter {
         val directory = File(context.getExternalFilesDir(null), "benchmarks").apply { mkdirs() }
         val file = File(directory, "local-inference-${result.benchmarkId}-${result.startedAtMs}.json")
         file.writeText(root.toString(2))
+        EvidenceSyncManager.enqueue(context, file)
         return file
     }
 
