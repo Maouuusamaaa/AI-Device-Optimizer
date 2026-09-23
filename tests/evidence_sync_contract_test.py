@@ -56,6 +56,8 @@ def main():
     assert "benchmarks/results/" in queue
     assert "APPROVED_FILENAME" in queue
     assert "APPROVED_WORKLOADS" in queue
+    assert "long-recovery-memory" in queue
+    assert "long_recovery_memory_observation" in queue
     assert "NetworkType.CONNECTED" in scheduler
     assert "BackoffPolicy.EXPONENTIAL" in scheduler
     assert "ExistingWorkPolicy.KEEP" in scheduler
