@@ -1,5 +1,7 @@
 package com.maouuusama.ai.device.optimizer.benchmark
 
+import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncManager
+
 import android.content.Context
 import android.os.Build
 import org.json.JSONArray
@@ -58,6 +60,7 @@ object WorkloadRecoveryBenchmarkJsonWriter {
         val directory = File(context.getExternalFilesDir(null), "benchmarks").apply { mkdirs() }
         val file = File(directory, "repeated-workload-recovery-" + samples.first().sample.timestampMs + ".json")
         file.writeText(root.toString(2))
+        EvidenceSyncManager.enqueue(context, file)
         return file
     }
 

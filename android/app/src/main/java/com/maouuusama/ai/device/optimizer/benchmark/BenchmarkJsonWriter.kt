@@ -1,5 +1,7 @@
 package com.maouuusama.ai.device.optimizer.benchmark
 
+import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncManager
+
 import android.content.Context
 import android.os.Build
 import org.json.JSONArray
@@ -77,6 +79,7 @@ object BenchmarkJsonWriter {
             filePrefix + "-" + workload + "-" + samples.first().timestampMs + ".json"
         )
         file.writeText(root.toString(2))
+        EvidenceSyncManager.enqueue(context, file)
         return file
     }
 }

@@ -6,7 +6,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -21,6 +23,11 @@ import com.maouuusama.ai.device.optimizer.benchmark.WorkloadRecoveryBenchmarkJso
 import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmark
 import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
+import com.maouuusama.ai.device.optimizer.sync.GitHubSyncConfig
+import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncManager
+import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncScheduler
+import com.maouuusama.ai.device.optimizer.sync.GitHubEvidenceClient
+import com.maouuusama.ai.device.optimizer.sync.GitHubTokenStore
 import com.maouuusama.ai.device.optimizer.monitor.ShizukuShell
 import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetrySnapshot
 import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetryStatus
@@ -43,6 +50,10 @@ class MainActivity : Activity() {
     private lateinit var localAiDownloadButton: Button
     private lateinit var localAiRunButton: Button
     private lateinit var localAiBenchmarkButton: Button
+    private lateinit var evidenceSyncText: TextView
+    private lateinit var evidenceSyncRepository: EditText
+    private lateinit var evidenceSyncBranch: EditText
+    private lateinit var evidenceSyncToken: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,6 +123,55 @@ class MainActivity : Activity() {
         }
         root.addView(learningText)
 
+        root.addView(TextView(this).apply {
+            textSize = 18f
+            text = "\nGitHub evidence sync"
+        })
+        root.addView(TextView(this).apply {
+            textSize = 13f
+            text = "Benchmark JSON is validated, hashed, queued locally, and uploaded serially when network access is available. The token is stored encrypted with Android Keystore."
+        })
+        evidenceSyncRepository = EditText(this).apply {
+            hint = "GitHub repository (owner/name)"
+            setText(GitHubSyncConfig(this@MainActivity).repository)
+            setSingleLine(true)
+        }
+        root.addView(evidenceSyncRepository)
+        evidenceSyncBranch = EditText(this).apply {
+            hint = "Branch"
+            setText(GitHubSyncConfig(this@MainActivity).branch)
+            setSingleLine(true)
+        }
+        root.addView(evidenceSyncBranch)
+        evidenceSyncToken = EditText(this).apply {
+            hint = "Fine-grained GitHub token (leave blank to keep stored token)"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setSingleLine(true)
+        }
+        root.addView(evidenceSyncToken)
+
+        root.addView(Button(this).apply {
+            text = "Save GitHub sync settings"
+            setOnClickListener { saveEvidenceSyncSettings() }
+        })
+        root.addView(Button(this).apply {
+            text = "Test GitHub connection + enable sync"
+            setOnClickListener { testEvidenceSyncConnection() }
+        })
+        root.addView(Button(this).apply {
+            text = "Retry pending evidence uploads"
+            setOnClickListener {
+                EvidenceSyncScheduler.enqueue(this@MainActivity)
+                refreshEvidenceSyncStatus()
+            }
+        })
+        evidenceSyncText = TextView(this).apply {
+            textSize = 14f
+            text = "\nGitHub sync: checking queue..."
+        }
+        root.addView(evidenceSyncText)
+        refreshEvidenceSyncStatus()
+
         localAiText = TextView(this).apply {
             textSize = 14f
             text = "\nLocal AI: runtime loading..."
@@ -169,6 +229,7 @@ class MainActivity : Activity() {
             addView(root)
         }
         setContentView(scrollView)
+        EvidenceSyncScheduler.enqueue(this)
         startBackgroundAgent()
     }
 
@@ -393,6 +454,83 @@ class MainActivity : Activity() {
                     localAiBenchmarkButton.isEnabled = false
                 }
             }
+        }.start()
+    }
+
+    private fun saveEvidenceSyncSettings() {
+        val config = GitHubSyncConfig(this)
+        val repository = evidenceSyncRepository.text.toString().trim()
+        val branch = evidenceSyncBranch.text.toString().trim()
+        if (!repository.matches(Regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"))) {
+            evidenceSyncText.text = "\nGitHub sync: invalid repository. Use owner/name."
+            return
+        }
+        if (!branch.matches(Regex("^[A-Za-z0-9._/-]+$"))) {
+            evidenceSyncText.text = "\nGitHub sync: invalid branch."
+            return
+        }
+        config.repository = repository
+        config.branch = branch
+        val token = evidenceSyncToken.text.toString().trim()
+        if (token.isNotBlank()) {
+            GitHubTokenStore(this).save(token)
+            evidenceSyncToken.text?.clear()
+        }
+        config.enabled = GitHubTokenStore(this).hasToken()
+        EvidenceSyncScheduler.enqueue(this)
+        refreshEvidenceSyncStatus()
+    }
+
+    private fun testEvidenceSyncConnection() {
+        val config = GitHubSyncConfig(this)
+        val repository = evidenceSyncRepository.text.toString().trim()
+        val branch = evidenceSyncBranch.text.toString().trim()
+        val enteredToken = evidenceSyncToken.text.toString().trim()
+        val storedToken = GitHubTokenStore(this).read()
+        val token = if (enteredToken.isNotBlank()) enteredToken else storedToken
+        if (token.isNullOrBlank()) {
+            evidenceSyncText.text = "\nGitHub sync: token required for the first connection test."
+            return
+        }
+        if (!repository.matches(Regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"))) {
+            evidenceSyncText.text = "\nGitHub sync: invalid repository."
+            return
+        }
+        if (!branch.matches(Regex("^[A-Za-z0-9._/-]+$"))) {
+            evidenceSyncText.text = "\nGitHub sync: invalid branch."
+            return
+        }
+
+        evidenceSyncText.text = "\nGitHub sync: testing authenticated repository access..."
+        Thread {
+            try {
+                GitHubEvidenceClient(token, repository, branch).verifyRepository()
+                if (enteredToken.isNotBlank()) {
+                    GitHubTokenStore(this).save(enteredToken)
+                    runOnUiThread { evidenceSyncToken.text?.clear() }
+                }
+                config.repository = repository
+                config.branch = branch
+                config.enabled = true
+                EvidenceSyncScheduler.enqueue(this)
+                runOnUiThread {
+                    evidenceSyncText.text =
+                        "\nGitHub sync: CONNECTED and enabled. Pending evidence will upload automatically when network is available.\n" +
+                            EvidenceSyncManager.status(this)
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    evidenceSyncText.text = "\nGitHub sync connection failed: " +
+                        (error.message ?: error.javaClass.simpleName)
+                }
+            }
+        }.start()
+    }
+
+    private fun refreshEvidenceSyncStatus() {
+        Thread {
+            val status = EvidenceSyncManager.status(this)
+            runOnUiThread { evidenceSyncText.text = "\n" + status }
         }.start()
     }
 

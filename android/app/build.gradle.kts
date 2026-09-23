@@ -33,8 +33,8 @@ android {
         applicationId = "com.maouuusama.ai.device.optimizer"
         minSdk = 29
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.1.10"
+        versionCode = 11
+        versionName = "0.1.11"
 
         externalNativeBuild {
             cmake {
@@ -71,6 +71,7 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.activity:activity-ktx:1.12.0")
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
     testImplementation("junit:junit:4.13.2")
