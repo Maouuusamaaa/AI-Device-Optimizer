@@ -139,7 +139,7 @@ class MainActivity : Activity() {
         root.addView(evidenceSyncRepository)
         evidenceSyncBranch = EditText(this).apply {
             hint = "Branch"
-            setText(EvidenceSyncConfig(this@MainActivity).branch)
+            setText(GitHubSyncConfig(this@MainActivity).branch)
             singleLine = true
         }
         root.addView(evidenceSyncBranch)
@@ -458,7 +458,7 @@ class MainActivity : Activity() {
     }
 
     private fun saveEvidenceSyncSettings() {
-        val config = EvidenceSyncConfig(this)
+        val config = GitHubSyncConfig(this)
         val repository = evidenceSyncRepository.text.toString().trim()
         val branch = evidenceSyncBranch.text.toString().trim()
         if (!repository.matches(Regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"))) {
@@ -482,7 +482,7 @@ class MainActivity : Activity() {
     }
 
     private fun testEvidenceSyncConnection() {
-        val config = EvidenceSyncConfig(this)
+        val config = GitHubSyncConfig(this)
         val repository = evidenceSyncRepository.text.toString().trim()
         val branch = evidenceSyncBranch.text.toString().trim()
         val enteredToken = evidenceSyncToken.text.toString().trim()
