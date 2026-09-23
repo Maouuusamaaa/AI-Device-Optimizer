@@ -15,6 +15,7 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
     companion object {
         const val BASELINE_DURATION_MS = 60_000L
         const val POST_INFERENCE_DURATION_MS = 60_000L
+        const val POST_CLEANUP_DURATION_MS = 60_000L
         const val POST_RESET_DURATION_MS = 300_000L
         const val INTERVAL_MS = 2_000L
         const val MAX_TOKENS = 64
@@ -34,8 +35,8 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
             "Perform one advisory-only diagnostic inference. " +
                 "Do not request or execute device mutations."
         )
-        runtime.generate(model, prompt, maxTokens = MAX_TOKENS, threads = THREADS)
-        collect("post_inference", POST_INFERENCE_DURATION_MS, all)
+        runtime.generateForLifecycleDiagnostic(model, prompt, maxTokens = MAX_TOKENS, threads = THREADS)
+        collect("post_cleanup", POST_CLEANUP_DURATION_MS, all)
         onPhase("runtime_reset")
         runtime.resetRuntime()
         onPhase("post_reset")
