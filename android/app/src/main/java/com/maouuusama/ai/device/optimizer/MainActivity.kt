@@ -22,6 +22,8 @@ import com.maouuusama.ai.device.optimizer.benchmark.WorkloadRecoveryBenchmark
 import com.maouuusama.ai.device.optimizer.benchmark.WorkloadRecoveryBenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmark
 import com.maouuusama.ai.device.optimizer.benchmark.LocalInferenceBenchmarkJsonWriter
+import com.maouuusama.ai.device.optimizer.benchmark.RuntimeLifecycleMemoryBenchmark
+import com.maouuusama.ai.device.optimizer.benchmark.RuntimeLifecycleMemoryBenchmarkJsonWriter
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
 import com.maouuusama.ai.device.optimizer.sync.GitHubSyncConfig
 import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncManager
@@ -43,6 +45,7 @@ class MainActivity : Activity() {
     private lateinit var workloadButton: Button
     private lateinit var recoveryButton: Button
     private lateinit var longRecoveryButton: Button
+    private lateinit var runtimeLifecycleButton: Button
     private lateinit var agentStatusText: TextView
     private lateinit var processText: TextView
     private lateinit var systemText: TextView
@@ -224,6 +227,12 @@ class MainActivity : Activity() {
             setOnClickListener { runLongRecoveryBenchmark() }
         }
         root.addView(longRecoveryButton)
+
+        runtimeLifecycleButton = Button(this).apply {
+            text = "Run runtime lifecycle memory diagnostic"
+            setOnClickListener { runRuntimeLifecycleMemoryDiagnostic() }
+        }
+        root.addView(runtimeLifecycleButton)
 
         statusText = TextView(this).apply {
             textSize = 16f
@@ -653,6 +662,60 @@ class MainActivity : Activity() {
                 }
             }
         }.start()
+    }
+
+    private fun runRuntimeLifecycleMemoryDiagnostic() {
+        setBenchmarkControlsEnabled(false)
+        statusText.text =
+            "\nRuntime lifecycle diagnostic starting...\n" +
+            "60s baseline → one local Qwen inference → 60s post-inference → explicit native reset → 5min post-reset.\n" +
+            "Read-only; no device mutation."
+        Thread {
+            try {
+                val benchmark = RuntimeLifecycleMemoryBenchmark(this)
+                val samples = benchmark.run { phase ->
+                    runOnUiThread {
+                        statusText.text =
+                            "\nRuntime lifecycle diagnostic\nPhase: " + phase +
+                            "\nNo device mutations are permitted."
+                    }
+                }
+                val file = RuntimeLifecycleMemoryBenchmarkJsonWriter.write(this, samples)
+                val shared = RuntimeLifecycleMemoryBenchmarkJsonWriter.exportToSharedDownloads(this, file)
+                val byPhase = samples.groupBy { it.phase }
+                val pss = { phase: String ->
+                    byPhase[phase].orEmpty().lastOrNull()?.sample?.processes
+                        ?.firstOrNull { it.packageNames.contains(packageName) }?.pssKb
+                }
+                val summary = "\nRuntime lifecycle diagnostic complete\n" +
+                    "Baseline PSS: " + (pss("baseline") ?: "unknown") + " KiB\n" +
+                    "Post-inference PSS: " + (pss("post_inference") ?: "unknown") + " KiB\n" +
+                    "Post-reset PSS: " + (pss("post_reset") ?: "unknown") + " KiB\n" +
+                    "App-private JSON: " + file.name + "\n" +
+                    (if (shared != null) "Shared export: /storage/emulated/0/" + shared
+                     else "Shared export: unavailable")
+                runOnUiThread {
+                    statusText.text = summary
+                    setBenchmarkControlsEnabled(true)
+                    refreshEvidenceSyncStatus()
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    statusText.text =
+                        "\nRuntime lifecycle diagnostic failed: " +
+                        (error.message ?: error.javaClass.simpleName)
+                    setBenchmarkControlsEnabled(true)
+                }
+            }
+        }.start()
+    }
+
+    private fun setBenchmarkControlsEnabled(enabled: Boolean) {
+        benchmarkButton.isEnabled = enabled
+        workloadButton.isEnabled = enabled
+        recoveryButton.isEnabled = enabled
+        longRecoveryButton.isEnabled = enabled
+        runtimeLifecycleButton.isEnabled = enabled
     }
 
     private fun runBaseline() {
