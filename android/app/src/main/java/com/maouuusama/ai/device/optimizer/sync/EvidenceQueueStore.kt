@@ -133,10 +133,11 @@ class EvidenceQueueStore(context: Context) {
 
     companion object {
         private val APPROVED_FILENAME =
-            Regex("""^(baseline|workload|repeated-workload-recovery|long-recovery-memory|local-inference)-[A-Za-z0-9_-]+[.]json$""")
+            Regex("""^(baseline|workload|repeated-workload-recovery|long-recovery-memory|runtime-lifecycle-memory|local-inference)-[A-Za-z0-9_-]+[.]json$""")
         private val APPROVED_PROTOCOLS = setOf(
             "repeated_workload_recovery_memory_observation",
-            "long_recovery_memory_observation"
+            "long_recovery_memory_observation",
+            "runtime_lifecycle_memory_observation"
         )
         private val APPROVED_WORKLOADS = setOf(
             "monitor_foreground_idle", "foreground_user_workload", "local_qwen3_0_6b_inference"

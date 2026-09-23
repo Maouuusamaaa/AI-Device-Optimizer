@@ -17,8 +17,8 @@ def main():
     manifest = MANIFEST.read_text(encoding="utf-8")
     activity = ACTIVITY.read_text(encoding="utf-8")
 
-    assert 'versionName = "0.1.12"' in build
-    assert "versionCode = 12" in build
+    assert 'versionName = "0.1.13"' in build
+    assert "versionCode = 13" in build
     assert 'androidx.work:work-runtime-ktx:2.11.2' in build
 
     assert '<uses-permission android:name="android.permission.INTERNET" />' in manifest
@@ -58,6 +58,8 @@ def main():
     assert "APPROVED_WORKLOADS" in queue
     assert "long-recovery-memory" in queue
     assert "long_recovery_memory_observation" in queue
+    assert "runtime_lifecycle_memory_observation" in queue
+    assert "runtime-lifecycle-memory" in queue
     assert "NetworkType.CONNECTED" in scheduler
     assert "BackoffPolicy.EXPONENTIAL" in scheduler
     assert "ExistingWorkPolicy.KEEP" in scheduler
@@ -70,6 +72,7 @@ def main():
         assert "EvidenceSyncManager.enqueue(context, file)" in content
 
     assert "GitHub evidence sync" in activity
+    assert "Run runtime lifecycle memory diagnostic" in activity
     assert "Test GitHub connection + enable sync" in activity
     assert "Retry pending evidence uploads" in activity
     assert "GitHubTokenStore(this).save" in activity
