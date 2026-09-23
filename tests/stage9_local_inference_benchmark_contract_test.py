@@ -15,8 +15,8 @@ def main():
     activity = ACTIVITY.read_text(encoding="utf-8")
     model = MODEL.read_text(encoding="utf-8")
 
-    assert 'versionName = "0.1.9"' in build
-    assert 'versionCode = 9' in build
+    assert 'versionName = "0.1.10"' in build
+    assert 'versionCode = 10' in build
     assert 'isProfileable = true' in build
     assert 'signingConfig = signingConfigs.getByName("ciStable")' in build
 
@@ -42,7 +42,6 @@ def main():
     assert "executionRequested" in benchmark
     assert "deviceMutationAllowed" in benchmark
 
-    # Validate the prompt implementation body rather than source-file comments.
     prompt_function = model[model.index("fun prompt"):]
     assert "<think>\\n\\n</think>\\n\\n" in prompt_function
     assert "/no_think" not in prompt_function
