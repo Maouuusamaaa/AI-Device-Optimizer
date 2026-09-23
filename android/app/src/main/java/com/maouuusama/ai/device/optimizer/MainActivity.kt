@@ -140,13 +140,13 @@ class MainActivity : Activity() {
         evidenceSyncBranch = EditText(this).apply {
             hint = "Branch"
             setText(GitHubSyncConfig(this@MainActivity).branch)
-            singleLine = true
+            setSingleLine(true)
         }
         root.addView(evidenceSyncBranch)
         evidenceSyncToken = EditText(this).apply {
             hint = "Fine-grained GitHub token (leave blank to keep stored token)"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            singleLine = true
+            setSingleLine(true)
         }
         root.addView(evidenceSyncToken)
 
