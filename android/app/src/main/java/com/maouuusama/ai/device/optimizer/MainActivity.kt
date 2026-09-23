@@ -689,6 +689,8 @@ class MainActivity : Activity() {
                     statusText.text = "\nBaseline failed: " + (error.message ?: error.javaClass.simpleName)
                     benchmarkButton.isEnabled = true
                     workloadButton.isEnabled = true
+                    recoveryButton.isEnabled = true
+                    longRecoveryButton.isEnabled = true
                 }
             }
         }.start()
@@ -874,6 +876,8 @@ class MainActivity : Activity() {
     private fun runWorkloadBenchmark() {
         benchmarkButton.isEnabled = false
         workloadButton.isEnabled = false
+        recoveryButton.isEnabled = false
+        longRecoveryButton.isEnabled = false
         statusText.text =
             "\nWorkload benchmark preparing...\nYou have 3 seconds to switch to your game/app.\n" +
                 "Run it normally for 5 minutes.\nNo system mutations; policy remains DRY_RUN."
