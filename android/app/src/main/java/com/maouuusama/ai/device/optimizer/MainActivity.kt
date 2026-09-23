@@ -134,7 +134,7 @@ class MainActivity : Activity() {
         evidenceSyncRepository = EditText(this).apply {
             hint = "GitHub repository (owner/name)"
             setText(GitHubSyncConfig(this@MainActivity).repository)
-            singleLine = true
+            setSingleLine(true)
         }
         root.addView(evidenceSyncRepository)
         evidenceSyncBranch = EditText(this).apply {
