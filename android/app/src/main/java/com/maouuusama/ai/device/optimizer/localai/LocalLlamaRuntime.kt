@@ -21,8 +21,10 @@ class LocalLlamaRuntime {
         threads: Int
     ): String
     private external fun nativeIsAvailable(): Boolean
+    private external fun nativeResetRuntime()
 
     fun isAvailable(): Boolean = nativeIsAvailable()
+    fun resetRuntime() = nativeResetRuntime()
     fun runtimeVersion(): String = nativeVersion()
 
     fun generate(
