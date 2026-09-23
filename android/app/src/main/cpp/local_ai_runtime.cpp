@@ -66,6 +66,15 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeIsAvaila
     return JNI_TRUE;
 }
 
+extern "C" JNIEXPORT void JNICALL
+Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeResetRuntime(
+        JNIEnv *, jobject) {
+    // Generation already releases model/context/backend state after each call.
+    // This explicit boundary is a diagnostic hook so the benchmark can verify
+    // that an additional runtime cleanup does not leave a persistent native handle.
+    llama_backend_free();
+}
+
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeGenerate(
         JNIEnv * env, jobject,
