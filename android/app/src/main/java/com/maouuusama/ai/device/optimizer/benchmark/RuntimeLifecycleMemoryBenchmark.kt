@@ -61,9 +61,19 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
             val nowNs = System.nanoTime()
             if (index > 0 && nowNs >= deadlineNs) break
             val sampleStartedNs = System.nanoTime()
-            val snapshot = monitor.collectSnapshot()
-            val sample = snapshot.copy(
-                collectionDurationMs = (System.nanoTime() - sampleStartedNs) / 1_000_000L
+            val snapshot = monitor.collectSnapshot(includeSystemTelemetry = false)
+            val storage = android.os.StatFs(context.filesDir.absolutePath)
+            val sample = BenchmarkSample(
+                timestampMs = snapshot.timestampMs,
+                availableRamMb = snapshot.availableRamMb,
+                totalRamMb = snapshot.totalRamMb,
+                batteryPercent = snapshot.batteryPercent,
+                isCharging = snapshot.isCharging,
+                temperatureC = snapshot.batteryTemperatureC,
+                storageAvailableMb = (storage.availableBytes / 1024L / 1024L).coerceAtLeast(0L),
+                processCpuTimeMs = android.os.Process.getElapsedCpuTime(),
+                collectionDurationMs = (System.nanoTime() - sampleStartedNs) / 1_000_000L,
+                processes = snapshot.processes
             )
             index += 1
             output += RuntimeLifecycleSample(phase, index, sample)
