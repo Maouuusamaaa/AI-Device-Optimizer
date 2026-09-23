@@ -28,7 +28,9 @@ class WorkloadRecoveryBenchmarkContractTest(unittest.TestCase):
         self.assertIn('.put("cycle", wrapped.cycle)', text)
         self.assertIn('.put("pssKb", process.pssKb)', text)
         self.assertIn('protocol", "repeated_workload_recovery_memory_observation"', text)
-        self.assertIn('.put("cycleCount", WorkloadRecoveryBenchmark.DEFAULT_CYCLE_COUNT)', text)
+        self.assertIn('.put("cycleCount", cycleCount)', text)
+        self.assertIn('protocol: String = "repeated_workload_recovery_memory_observation"', text)
+        self.assertIn('filenamePrefix: String = "repeated-workload-recovery"', text)
 
 if __name__ == "__main__":
     unittest.main()
