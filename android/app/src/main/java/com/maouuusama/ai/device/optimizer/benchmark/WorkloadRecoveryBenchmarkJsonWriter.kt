@@ -9,21 +9,31 @@ import org.json.JSONObject
 import java.io.File
 
 object WorkloadRecoveryBenchmarkJsonWriter {
-    fun write(context: Context, samples: List<RecoveryBenchmarkSample>): File {
+    fun write(
+        context: Context,
+        samples: List<RecoveryBenchmarkSample>,
+        protocol: String = "repeated_workload_recovery_memory_observation",
+        baselineDurationMs: Long = WorkloadRecoveryBenchmark.DEFAULT_BASELINE_DURATION_MS,
+        workloadDurationMs: Long = WorkloadRecoveryBenchmark.DEFAULT_WORKLOAD_DURATION_MS,
+        recoveryDurationMs: Long = WorkloadRecoveryBenchmark.DEFAULT_RECOVERY_DURATION_MS,
+        intervalMs: Long = WorkloadRecoveryBenchmark.DEFAULT_INTERVAL_MS,
+        cycleCount: Int = WorkloadRecoveryBenchmark.DEFAULT_CYCLE_COUNT,
+        filenamePrefix: String = "repeated-workload-recovery"
+    ): File {
         require(samples.isNotEmpty())
         val root = JSONObject()
             .put("schemaVersion", 2)
-            .put("protocol", "repeated_workload_recovery_memory_observation")
+            .put("protocol", protocol)
             .put("device", JSONObject()
                 .put("androidApi", Build.VERSION.SDK_INT)
                 .put("manufacturer", Build.MANUFACTURER)
                 .put("model", Build.MODEL))
             .put("durationsMs", JSONObject()
-                .put("baseline", WorkloadRecoveryBenchmark.DEFAULT_BASELINE_DURATION_MS)
-                .put("workload", WorkloadRecoveryBenchmark.DEFAULT_WORKLOAD_DURATION_MS)
-                .put("recovery", WorkloadRecoveryBenchmark.DEFAULT_RECOVERY_DURATION_MS)
-                .put("interval", WorkloadRecoveryBenchmark.DEFAULT_INTERVAL_MS)
-                .put("cycleCount", WorkloadRecoveryBenchmark.DEFAULT_CYCLE_COUNT))
+                .put("baseline", baselineDurationMs)
+                .put("workload", workloadDurationMs)
+                .put("recovery", recoveryDurationMs)
+                .put("interval", intervalMs)
+                .put("cycleCount", cycleCount))
         val array = JSONArray()
         samples.forEach { wrapped ->
             val sample = wrapped.sample
@@ -58,7 +68,7 @@ object WorkloadRecoveryBenchmarkJsonWriter {
         }
         root.put("samples", array)
         val directory = File(context.getExternalFilesDir(null), "benchmarks").apply { mkdirs() }
-        val file = File(directory, "repeated-workload-recovery-" + samples.first().sample.timestampMs + ".json")
+        val file = File(directory, filenamePrefix + "-" + samples.first().sample.timestampMs + ".json")
         file.writeText(root.toString(2))
         EvidenceSyncManager.enqueue(context, file)
         return file
