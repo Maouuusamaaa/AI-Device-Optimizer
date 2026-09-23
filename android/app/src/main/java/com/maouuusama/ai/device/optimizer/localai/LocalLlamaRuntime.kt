@@ -18,7 +18,8 @@ class LocalLlamaRuntime {
         prompt: String,
         contextTokens: Int,
         maxTokens: Int,
-        threads: Int
+        threads: Int,
+        keepBackendAlive: Boolean
     ): String
     private external fun nativeIsAvailable(): Boolean
     private external fun nativeResetRuntime()
@@ -33,13 +34,37 @@ class LocalLlamaRuntime {
         contextTokens: Int = DEFAULT_CONTEXT_TOKENS,
         maxTokens: Int = DEFAULT_MAX_TOKENS,
         threads: Int = DEFAULT_THREADS
+    ): String = generateInternal(
+        modelFile, prompt, contextTokens, maxTokens, threads, keepBackendAlive = false
+    )
+
+    /** Diagnostic-only mode: model/context are freed, backend state remains until resetRuntime(). */
+    fun generateForLifecycleDiagnostic(
+        modelFile: File,
+        prompt: String,
+        contextTokens: Int = DEFAULT_CONTEXT_TOKENS,
+        maxTokens: Int = DEFAULT_MAX_TOKENS,
+        threads: Int = DEFAULT_THREADS
+    ): String = generateInternal(
+        modelFile, prompt, contextTokens, maxTokens, threads, keepBackendAlive = true
+    )
+
+    private fun generateInternal(
+        modelFile: File,
+        prompt: String,
+        contextTokens: Int,
+        maxTokens: Int,
+        threads: Int,
+        keepBackendAlive: Boolean
     ): String {
         require(modelFile.isFile) { "Model file does not exist: ${modelFile.absolutePath}" }
         require(modelFile.length() > 0L) { "Model file is empty" }
         require(prompt.isNotBlank()) { "Prompt must not be blank" }
         require(contextTokens in 256..8192) { "contextTokens must be 256..8192" }
         require(maxTokens in 1..256) { "maxTokens must be 1..256" }
-        require(threads in MIN_THREADS..MAX_THREADS) { "threads must be $MIN_THREADS..$MAX_THREADS" }
-        return nativeGenerate(modelFile.absolutePath, prompt, contextTokens, maxTokens, threads)
+        require(threads in MIN_THREADS..MAX_THREADS) { "threads must be ${MIN_THREADS}..${MAX_THREADS}" }
+        return nativeGenerate(
+            modelFile.absolutePath, prompt, contextTokens, maxTokens, threads, keepBackendAlive
+        )
     }
 }
