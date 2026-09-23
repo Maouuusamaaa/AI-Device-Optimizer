@@ -23,6 +23,7 @@ object EvidenceSyncManager {
         return buildString {
             append("GitHub evidence sync\n")
             append("Enabled: ").append(config.enabled).append("\n")
+            append("Token configured: ").append(GitHubTokenStore(context).hasToken()).append("\n")
             append("Repository: ").append(config.repository).append("\n")
             append("Branch: ").append(config.branch).append("\n")
             append("Pending: ").append(pending).append("\n")
