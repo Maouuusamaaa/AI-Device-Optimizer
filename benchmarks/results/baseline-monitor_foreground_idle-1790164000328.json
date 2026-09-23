@@ -1,0 +1,882 @@
+{
+  "schemaVersion": 2,
+  "timestampMs": 1790164000328,
+  "workload": "monitor_foreground_idle",
+  "device": {
+    "androidApi": 33,
+    "manufacturer": "ITEL",
+    "model": "itel P661N"
+  },
+  "samples": [
+    {
+      "timestampMs": 1790164000328,
+      "availableRamMb": 1585,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 17727,
+      "collectionDurationMs": 3875,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 126400,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164004205,
+      "availableRamMb": 1562,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 18424,
+      "collectionDurationMs": 2526,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 125608,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164006731,
+      "availableRamMb": 1547,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 18725,
+      "collectionDurationMs": 3197,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 133748,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164009929,
+      "availableRamMb": 1559,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 18781,
+      "collectionDurationMs": 2421,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 133440,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164012350,
+      "availableRamMb": 1551,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 18985,
+      "collectionDurationMs": 2195,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 134080,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164014545,
+      "availableRamMb": 1541,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 19031,
+      "collectionDurationMs": 1904,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 135672,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164016548,
+      "availableRamMb": 1539,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 19087,
+      "collectionDurationMs": 1840,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 136252,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164018550,
+      "availableRamMb": 1534,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 19148,
+      "collectionDurationMs": 1846,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 136980,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164020552,
+      "availableRamMb": 1619,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 19197,
+      "collectionDurationMs": 1952,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 136568,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164022549,
+      "availableRamMb": 1635,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 19270,
+      "collectionDurationMs": 1813,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 136888,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164024549,
+      "availableRamMb": 1627,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 19441,
+      "collectionDurationMs": 1940,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 135892,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164026549,
+      "availableRamMb": 1629,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 19711,
+      "collectionDurationMs": 3362,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 133328,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164029912,
+      "availableRamMb": 1622,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 19750,
+      "collectionDurationMs": 2399,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 133244,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164032314,
+      "availableRamMb": 1618,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 19790,
+      "collectionDurationMs": 1784,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 133804,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164034313,
+      "availableRamMb": 1619,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 19845,
+      "collectionDurationMs": 2078,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 135100,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164036391,
+      "availableRamMb": 1627,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20041,
+      "collectionDurationMs": 2209,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 134968,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164038601,
+      "availableRamMb": 1621,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20126,
+      "collectionDurationMs": 3490,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 136004,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164042091,
+      "availableRamMb": 1553,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20177,
+      "collectionDurationMs": 1814,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 136804,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164044093,
+      "availableRamMb": 1542,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20232,
+      "collectionDurationMs": 1779,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 137692,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164046091,
+      "availableRamMb": 1556,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20285,
+      "collectionDurationMs": 1782,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 138028,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164048091,
+      "availableRamMb": 1552,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.5,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20379,
+      "collectionDurationMs": 1801,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 138380,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164050090,
+      "availableRamMb": 1550,
+      "totalRamMb": 5634,
+      "batteryPercent": 44,
+      "isCharging": false,
+      "temperatureC": 39.2,
+      "storageAvailableMb": 32305,
+      "processCpuTimeMs": 20550,
+      "collectionDurationMs": 3044,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 40733,
+          "rssKb": 136772,
+          "swapPssKb": 37556
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164053136,
+      "availableRamMb": 1557,
+      "totalRamMb": 5634,
+      "batteryPercent": 43,
+      "isCharging": false,
+      "temperatureC": 39.2,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20619,
+      "collectionDurationMs": 2503,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 48477,
+          "rssKb": 133820,
+          "swapPssKb": 34684
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164055638,
+      "availableRamMb": 1585,
+      "totalRamMb": 5634,
+      "batteryPercent": 43,
+      "isCharging": false,
+      "temperatureC": 39.2,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20659,
+      "collectionDurationMs": 2580,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 48477,
+          "rssKb": 134304,
+          "swapPssKb": 34684
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164058221,
+      "availableRamMb": 1584,
+      "totalRamMb": 5634,
+      "batteryPercent": 43,
+      "isCharging": false,
+      "temperatureC": 39.2,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20708,
+      "collectionDurationMs": 1791,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 48477,
+          "rssKb": 134072,
+          "swapPssKb": 34684
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164060220,
+      "availableRamMb": 1594,
+      "totalRamMb": 5634,
+      "batteryPercent": 43,
+      "isCharging": false,
+      "temperatureC": 39.2,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20765,
+      "collectionDurationMs": 1804,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 48477,
+          "rssKb": 135400,
+          "swapPssKb": 34684
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164062219,
+      "availableRamMb": 1586,
+      "totalRamMb": 5634,
+      "batteryPercent": 43,
+      "isCharging": false,
+      "temperatureC": 39.2,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20914,
+      "collectionDurationMs": 2237,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 48477,
+          "rssKb": 136032,
+          "swapPssKb": 34684
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164064458,
+      "availableRamMb": 1594,
+      "totalRamMb": 5634,
+      "batteryPercent": 43,
+      "isCharging": false,
+      "temperatureC": 39.2,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 20960,
+      "collectionDurationMs": 1876,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 48477,
+          "rssKb": 135052,
+          "swapPssKb": 34684
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164066460,
+      "availableRamMb": 1595,
+      "totalRamMb": 5634,
+      "batteryPercent": 43,
+      "isCharging": false,
+      "temperatureC": 39.2,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 21002,
+      "collectionDurationMs": 1770,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 48477,
+          "rssKb": 135512,
+          "swapPssKb": 34684
+        }
+      ]
+    },
+    {
+      "timestampMs": 1790164068459,
+      "availableRamMb": 1591,
+      "totalRamMb": 5634,
+      "batteryPercent": 43,
+      "isCharging": false,
+      "temperatureC": 39.2,
+      "storageAvailableMb": 32306,
+      "processCpuTimeMs": 21045,
+      "collectionDurationMs": 1770,
+      "processes": [
+        {
+          "pid": 10656,
+          "processName": "com.maouuusama.ai.device.optimizer",
+          "packageNames": [
+            "com.maouuusama.ai.device.optimizer"
+          ],
+          "appLabels": [
+            "AI Device Optimizer"
+          ],
+          "importance": 100,
+          "importanceLabel": "FOREGROUND",
+          "isForeground": true,
+          "pssKb": 48477,
+          "rssKb": 135828,
+          "swapPssKb": 34684
+        }
+      ]
+    }
+  ]
+}
