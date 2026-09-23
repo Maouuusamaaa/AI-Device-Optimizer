@@ -52,7 +52,7 @@ def main():
     assert "X-GitHub-Api-Version" in client
     assert "PUT" in client
     assert "Base64" in client
-    assert "MessageDigest.getInstance("SHA-256")" in queue
+    assert 'MessageDigest.getInstance("SHA-256")' in queue
     assert "benchmarks/results/" in queue
     assert "APPROVED_FILENAME" in queue
     assert "APPROVED_WORKLOADS" in queue
