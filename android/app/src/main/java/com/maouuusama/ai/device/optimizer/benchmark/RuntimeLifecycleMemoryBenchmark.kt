@@ -14,8 +14,7 @@ data class RuntimeLifecycleSample(
 class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
     companion object {
         const val BASELINE_DURATION_MS = 60_000L
-        const val POST_INFERENCE_DURATION_MS = 60_000L
-        const val POST_CLEANUP_DURATION_MS = 60_000L
+                const val POST_CLEANUP_DURATION_MS = 60_000L
         const val POST_RESET_DURATION_MS = 300_000L
         const val INTERVAL_MS = 2_000L
         const val MAX_TOKENS = 64
