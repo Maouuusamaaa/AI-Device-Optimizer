@@ -28,3 +28,18 @@ Safety:
 - The benchmark does not change Android system settings.
 
 Evidence is automatically queued and synchronized through the existing GitHub Evidence Sync mechanism.
+
+## Current real-device evidence
+
+The run `benchmarks/results/runtime-lifecycle-memory-1790261009934.json` was collected on an itel P661N running Android API 33 with the separated cleanup/reset protocol (schema v2).
+
+Observed phase-level PSS:
+- Baseline: 35,765 KiB → 49,412 KiB (+13,647 KiB at the final baseline sample).
+- Post-cleanup: 49,412 KiB → 49,412 KiB (stable across the phase).
+- Post-reset: 49,412 KiB → 72,779 KiB (+23,367 KiB). The jump occurred at sample 118, approximately 234 seconds into the 300-second post-reset phase, and remained stable through the final sample.
+
+The post-cleanup stability supports the intended lifecycle separation. However, the post-reset PSS change was delayed rather than immediate at the reset boundary, so this run does not establish that the reset call caused the elevation. RSS decreased overall during post-reset, available RAM increased, and temperature decreased; therefore the observation should not be labeled as a confirmed runaway memory leak.
+
+The investigation remains open pending at least one additional controlled run on the same device/build. VersionName remains 0.1.13 while this evidence is being reproduced and interpreted.
+
+Tracking issue: #71 — reproduce post-reset PSS elevation on itel P661N.
