@@ -11,7 +11,7 @@ object RuntimeLifecycleMemoryBenchmarkJsonWriter {
     fun write(context: Context, samples: List<RuntimeLifecycleSample>): File {
         require(samples.isNotEmpty())
         val root = JSONObject()
-            .put("schemaVersion", 1)
+            .put("schemaVersion", 2)
             .put("protocol", "runtime_lifecycle_memory_observation")
             .put("device", JSONObject()
                 .put("androidApi", Build.VERSION.SDK_INT)
@@ -19,7 +19,8 @@ object RuntimeLifecycleMemoryBenchmarkJsonWriter {
                 .put("model", Build.MODEL))
             .put("durationsMs", JSONObject()
                 .put("baseline", RuntimeLifecycleMemoryBenchmark.BASELINE_DURATION_MS)
-                .put("postInference", RuntimeLifecycleMemoryBenchmark.POST_INFERENCE_DURATION_MS)
+                .put("postCleanup", RuntimeLifecycleMemoryBenchmark.POST_CLEANUP_DURATION_MS)
+                .put("postReset", RuntimeLifecycleMemoryBenchmark.POST_CLEANUP_DURATION_MS)
                 .put("postReset", RuntimeLifecycleMemoryBenchmark.POST_RESET_DURATION_MS)
                 .put("interval", RuntimeLifecycleMemoryBenchmark.INTERVAL_MS)
                 .put("inferenceMaxTokens", RuntimeLifecycleMemoryBenchmark.MAX_TOKENS)

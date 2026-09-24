@@ -49,7 +49,9 @@ def main():
 
     assert "DEFAULT_THREADS = 4" in runtime
     assert "threads: Int = DEFAULT_THREADS" in runtime
-    assert "nativeGenerate(modelFile.absolutePath, prompt, contextTokens, maxTokens, threads)" in runtime
+    assert "nativeGenerate(" in runtime
+    assert "keepBackendAlive" in runtime
+    assert "generateForLifecycleDiagnostic" in runtime
 
     assert 'MODEL_ID = "qwen3-0.6b-q4_0"' in model
     assert "EXPECTED_SIZE_BYTES = 428970080L" in model

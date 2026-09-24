@@ -22,18 +22,22 @@ def main():
     assert 'versionName = "0.1.13"' in build
     assert "versionCode = 13" in build
     assert "BASELINE_DURATION_MS = 60_000L" in bench
-    assert "POST_INFERENCE_DURATION_MS = 60_000L" in bench
+    assert "POST_CLEANUP_DURATION_MS = 60_000L" in bench
     assert "POST_RESET_DURATION_MS = 300_000L" in bench
     assert 'collect("baseline"' in bench
-    assert 'collect("post_inference"' in bench
-    assert "runtime.generate" in bench
+    assert 'collect("post_cleanup"' in bench
+    assert "generateForLifecycleDiagnostic" in bench
     assert "runtime.resetRuntime()" in bench
+    assert "post_cleanup" in bench
     assert 'collect("post_reset"' in bench
     assert "runtime_lifecycle_memory_observation" in writer
     assert "runtime-lifecycle-memory-" in writer
     assert "EvidenceSyncManager.enqueue(context, file)" in writer
     assert "nativeResetRuntime" in runtime
+    assert "generateForLifecycleDiagnostic" in runtime
     assert "nativeResetRuntime" in native
+    assert "keep_backend_alive" in native
+    assert "cleanup_backend" in native
     assert "llama_backend_free()" in native
     assert "runtime_lifecycle_memory_observation" in queue
     assert "runtime-lifecycle-memory" in queue
