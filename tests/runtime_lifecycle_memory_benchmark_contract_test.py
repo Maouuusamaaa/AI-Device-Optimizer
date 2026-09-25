@@ -29,18 +29,26 @@ def main():
     assert "generateForLifecycleDiagnostic" in bench
     assert "runtime.resetRuntime()" in bench
     assert "resetEnabled: Boolean" in bench
+    assert "RuntimeLifecycleProcessMetadata" in bench
+    assert "Process.myPid()" in bench
+    assert "processStartTimeTicks" in bench
+    assert "System.nanoTime()" in bench
     assert "no_reset_control" in bench
     assert "post_no_reset" in bench
     assert "reset_before" in bench
     assert "reset_native_completed" in bench
     assert "post_reset_start" in bench
     assert "post_cleanup" in bench
+    assert "monotonicElapsedMs" in bench
     assert 'collect("post_reset"' in bench
     assert "runtime_lifecycle_memory_observation" in writer
-    assert '.put("schemaVersion", 4)' in writer
+    assert '.put("schemaVersion", 5)' in writer
     assert '"resetEnabled"' in writer
     assert '"no_reset_control"' in writer
     assert '.put("events", events)' in writer
+    assert '.put("process", JSONObject())' in writer
+    assert '.put("pssTransitions", transitions)' in writer
+    assert "monotonicElapsedMs" in writer
     assert "runtime-lifecycle-memory-" in writer
     assert "EvidenceSyncManager.enqueue(context, file)" in writer
     assert "nativeResetRuntime" in runtime

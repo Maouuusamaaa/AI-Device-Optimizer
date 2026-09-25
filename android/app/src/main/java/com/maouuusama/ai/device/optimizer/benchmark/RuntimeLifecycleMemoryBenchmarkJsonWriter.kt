@@ -12,7 +12,7 @@ object RuntimeLifecycleMemoryBenchmarkJsonWriter {
         val samples = result.samples
         require(samples.isNotEmpty())
         val root = JSONObject()
-            .put("schemaVersion", 4)
+            .put("schemaVersion", 5)
             .put("protocol", "runtime_lifecycle_memory_observation")
             .put("experiment", JSONObject()
                 .put("mode", if (result.resetEnabled) "reset_enabled" else "no_reset_control")
@@ -21,6 +21,16 @@ object RuntimeLifecycleMemoryBenchmarkJsonWriter {
                 .put("androidApi", Build.VERSION.SDK_INT)
                 .put("manufacturer", Build.MANUFACTURER)
                 .put("model", Build.MODEL))
+            .put("process", JSONObject()
+                .put("pid", result.processMetadata.pid)
+                .put(
+                    "processStartTimeTicks",
+                    result.processMetadata.processStartTimeTicks ?: JSONObject.NULL
+                )
+                .put(
+                    "processStartMetadataAvailable",
+                    result.processMetadata.processStartMetadataAvailable
+                ))
             .put("durationsMs", JSONObject()
                 .put("baseline", RuntimeLifecycleMemoryBenchmark.BASELINE_DURATION_MS)
                 .put("postCleanup", RuntimeLifecycleMemoryBenchmark.POST_CLEANUP_DURATION_MS)
@@ -50,6 +60,7 @@ object RuntimeLifecycleMemoryBenchmarkJsonWriter {
                 .put("phase", wrapped.phase)
                 .put("phaseSampleIndex", wrapped.phaseSampleIndex)
                 .put("timestampMs", s.timestampMs)
+                .put("monotonicElapsedMs", wrapped.monotonicElapsedMs)
                 .put("availableRamMb", s.availableRamMb)
                 .put("totalRamMb", s.totalRamMb)
                 .put("batteryPercent", s.batteryPercent ?: JSONObject.NULL)
@@ -68,6 +79,26 @@ object RuntimeLifecycleMemoryBenchmarkJsonWriter {
                 .put("timestampMs", event.timestampMs))
         }
         root.put("events", events)
+
+        val transitions = JSONArray()
+        var previousPssKb: Long? = null
+        samples.forEach { wrapped ->
+            val currentPssKb = wrapped.sample.processes
+                .firstOrNull { it.pid == result.processMetadata.pid }
+                ?.pssKb
+            if (currentPssKb != null && previousPssKb != null && currentPssKb != previousPssKb) {
+                transitions.put(JSONObject()
+                    .put("phase", wrapped.phase)
+                    .put("timestampMs", wrapped.sample.timestampMs)
+                    .put("monotonicElapsedMs", wrapped.monotonicElapsedMs)
+                    .put("beforePssKb", previousPssKb)
+                    .put("afterPssKb", currentPssKb)
+                    .put("deltaPssKb", currentPssKb - previousPssKb!!))
+            }
+            if (currentPssKb != null) previousPssKb = currentPssKb
+        }
+        root.put("pssTransitions", transitions)
+
         val dir = File(context.getExternalFilesDir(null), "benchmarks").apply { mkdirs() }
         val file = File(dir, "runtime-lifecycle-memory-" + samples.first().sample.timestampMs + ".json")
         file.writeText(root.toString(2))
