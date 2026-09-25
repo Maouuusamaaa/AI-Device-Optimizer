@@ -46,6 +46,7 @@ class MainActivity : Activity() {
     private lateinit var recoveryButton: Button
     private lateinit var longRecoveryButton: Button
     private lateinit var runtimeLifecycleButton: Button
+    private lateinit var runtimeLifecycleControlButton: Button
     private lateinit var agentStatusText: TextView
     private lateinit var processText: TextView
     private lateinit var systemText: TextView
@@ -229,10 +230,16 @@ class MainActivity : Activity() {
         root.addView(longRecoveryButton)
 
         runtimeLifecycleButton = Button(this).apply {
-            text = "Run runtime lifecycle memory diagnostic"
-            setOnClickListener { runRuntimeLifecycleMemoryDiagnostic() }
+            text = "Run lifecycle diagnostic (with reset)"
+            setOnClickListener { runRuntimeLifecycleMemoryDiagnostic(resetEnabled = true) }
         }
         root.addView(runtimeLifecycleButton)
+
+        runtimeLifecycleControlButton = Button(this).apply {
+            text = "Run lifecycle control (without reset)"
+            setOnClickListener { runRuntimeLifecycleMemoryDiagnostic(resetEnabled = false) }
+        }
+        root.addView(runtimeLifecycleControlButton)
 
         statusText = TextView(this).apply {
             textSize = 16f
@@ -664,19 +671,24 @@ class MainActivity : Activity() {
         }.start()
     }
 
-    private fun runRuntimeLifecycleMemoryDiagnostic() {
+    private fun runRuntimeLifecycleMemoryDiagnostic(resetEnabled: Boolean) {
         setBenchmarkControlsEnabled(false)
+        val modeLabel = if (resetEnabled) "reset-enabled" else "no-reset control"
+        val observationLabel = if (resetEnabled) "post-reset" else "post-no-reset"
         statusText.text =
             "\nRuntime lifecycle diagnostic starting...\n" +
-            "60s baseline → one local Qwen inference → 60s post-inference → explicit native reset → 5min post-reset.\n" +
-            "Read-only; no device mutation."
+            "Mode: " + modeLabel + "\n" +
+            "60s baseline → one local Qwen inference → 60s post-cleanup → " +
+            (if (resetEnabled) "explicit native reset → 5min post-reset." else "5min no-reset control observation.") +
+            "\nRead-only; no device mutation."
         Thread {
             try {
                 val benchmark = RuntimeLifecycleMemoryBenchmark(this)
-                val result = benchmark.run { phase ->
+                val result = benchmark.run(resetEnabled = resetEnabled) { phase ->
                     runOnUiThread {
                         statusText.text =
-                            "\nRuntime lifecycle diagnostic\nPhase: " + phase +
+                            "\nRuntime lifecycle diagnostic\nMode: " + modeLabel +
+                            "\nPhase: " + phase +
                             "\nNo device mutations are permitted."
                     }
                 }
@@ -688,10 +700,14 @@ class MainActivity : Activity() {
                     byPhase[phase].orEmpty().lastOrNull()?.sample?.processes
                         ?.firstOrNull { it.packageNames.contains(packageName) }?.pssKb
                 }
+                val resetEvent = result.events.firstOrNull { it.name == "reset_native_completed" }
                 val summary = "\nRuntime lifecycle diagnostic complete\n" +
+                    "Mode: " + modeLabel + "\n" +
                     "Baseline PSS: " + (pss("baseline") ?: "unknown") + " KiB\n" +
-                    "Post-inference PSS: " + (pss("post_inference") ?: "unknown") + " KiB\n" +
-                    "Post-reset PSS: " + (pss("post_reset") ?: "unknown") + " KiB\n" +
+                    "Post-cleanup PSS: " + (pss("post_cleanup") ?: "unknown") + " KiB\n" +
+                    observationLabel.replaceFirstChar { it.uppercase() } + " PSS: " +
+                    (pss(observationLabel) ?: "unknown") + " KiB\n" +
+                    (if (resetEvent != null) "Native reset completed: " + resetEvent.timestampMs + "\n" else "") +
                     "App-private JSON: " + file.name + "\n" +
                     (if (shared != null) "Shared export: /storage/emulated/0/" + shared
                      else "Shared export: unavailable")
@@ -704,7 +720,7 @@ class MainActivity : Activity() {
                 runOnUiThread {
                     statusText.text =
                         "\nRuntime lifecycle diagnostic failed: " +
-                        (error.message ?: error.javaClass.simpleName)
+                            (error.message ?: error.javaClass.simpleName)
                     setBenchmarkControlsEnabled(true)
                 }
             }
@@ -717,6 +733,7 @@ class MainActivity : Activity() {
         recoveryButton.isEnabled = enabled
         longRecoveryButton.isEnabled = enabled
         runtimeLifecycleButton.isEnabled = enabled
+        runtimeLifecycleControlButton.isEnabled = enabled
     }
 
     private fun runBaseline() {
