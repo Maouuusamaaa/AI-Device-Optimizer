@@ -10,6 +10,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import com.maouuusama.ai.device.optimizer.benchmark.FreshProcessPairedLifecycleCoordinator
 import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshotJsonWriter
@@ -179,14 +180,27 @@ class OptimizerBackgroundService : Service() {
         getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification(text))
     }
 
-    private fun buildNotification(text: String): Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-        .setSmallIcon(android.R.drawable.ic_menu_info_details)
-        .setContentTitle("AI Device Optimizer")
-        .setContentText(text)
-        .setOngoing(true)
-        .setCategory(NotificationCompat.CATEGORY_SERVICE)
-        .setPriority(NotificationCompat.PRIORITY_LOW)
-        .build()
+    private fun buildNotification(text: String): Notification {
+        val pairedIntent = FreshProcessPairedLifecycleCoordinator.createActionPendingIntent(
+            this,
+            FreshProcessPairedLifecycleCoordinator.ACTION_START
+        )
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_menu_info_details)
+            .setContentTitle("AI Device Optimizer")
+            .setContentText(text)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .addAction(
+                NotificationCompat.Action.Builder(
+                    android.R.drawable.ic_menu_manage,
+                    "Run fresh-process pair",
+                    pairedIntent
+                ).build()
+            )
+            .build()
+    }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -203,7 +217,16 @@ class OptimizerBackgroundService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            FreshProcessPairedLifecycleCoordinator.ACTION_START ->
+                FreshProcessPairedLifecycleCoordinator.start(this)
+            FreshProcessPairedLifecycleCoordinator.ACTION_CONTINUE ->
+                FreshProcessPairedLifecycleCoordinator.continueAfterFreshProcess(this)
+        }
+        return START_STICKY
+    }
 
     companion object {
         private const val TAG = "OptimizerAgent"
