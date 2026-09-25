@@ -18,7 +18,8 @@ data class RuntimeLifecycleEvent(
 
 data class RuntimeLifecycleDiagnosticResult(
     val samples: List<RuntimeLifecycleSample>,
-    val events: List<RuntimeLifecycleEvent>
+    val events: List<RuntimeLifecycleEvent>,
+    val resetEnabled: Boolean
 )
 
 class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
@@ -31,7 +32,7 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
         const val THREADS = 4
     }
 
-    fun run(onPhase: (String) -> Unit = {}): RuntimeLifecycleDiagnosticResult {
+    fun run(resetEnabled: Boolean = true, onPhase: (String) -> Unit = {}): RuntimeLifecycleDiagnosticResult {
         val all = mutableListOf<RuntimeLifecycleSample>()
         val events = mutableListOf<RuntimeLifecycleEvent>()
         fun event(name: String) { events += RuntimeLifecycleEvent(name, System.currentTimeMillis()) }
@@ -54,14 +55,22 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
         event("post_cleanup_start")
         collect("post_cleanup", POST_CLEANUP_DURATION_MS, all)
         event("post_cleanup_end")
-        onPhase("runtime_reset")
-        event("reset_before")
-        val resetCompletedAtMs = runtime.resetRuntime()
-        events += RuntimeLifecycleEvent("reset_native_completed", resetCompletedAtMs)
-        event("post_reset_start")
-        collect("post_reset", POST_RESET_DURATION_MS, all)
-        event("post_reset_end")
-        return RuntimeLifecycleDiagnosticResult(all, events)
+        if (resetEnabled) {
+            onPhase("runtime_reset")
+            event("reset_before")
+            val resetCompletedAtMs = runtime.resetRuntime()
+            events += RuntimeLifecycleEvent("reset_native_completed", resetCompletedAtMs)
+            event("post_reset_start")
+            collect("post_reset", POST_RESET_DURATION_MS, all)
+            event("post_reset_end")
+        } else {
+            onPhase("no_reset_control")
+            event("reset_skipped")
+            event("post_no_reset_start")
+            collect("post_no_reset", POST_RESET_DURATION_MS, all)
+            event("post_no_reset_end")
+        }
+        return RuntimeLifecycleDiagnosticResult(all, events, resetEnabled)
     }
 
     private fun collect(
