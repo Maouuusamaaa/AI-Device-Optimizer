@@ -28,14 +28,22 @@ def main():
     assert 'collect("post_cleanup"' in bench
     assert "generateForLifecycleDiagnostic" in bench
     assert "runtime.resetRuntime()" in bench
+    assert "reset_before" in bench
+    assert "reset_native_completed" in bench
+    assert "post_reset_start" in bench
     assert "post_cleanup" in bench
     assert 'collect("post_reset"' in bench
     assert "runtime_lifecycle_memory_observation" in writer
+    assert '.put("schemaVersion", 3)' in writer
+    assert '.put("events", events)' in writer
     assert "runtime-lifecycle-memory-" in writer
     assert "EvidenceSyncManager.enqueue(context, file)" in writer
     assert "nativeResetRuntime" in runtime
+    assert "nativeResetRuntime(): Long" in runtime
     assert "generateForLifecycleDiagnostic" in runtime
     assert "nativeResetRuntime" in native
+    assert "JNIEXPORT jlong" in native
+    assert "system_clock" in native
     assert "keep_backend_alive" in native
     assert "cleanup_backend" in native
     assert "llama_backend_free()" in native
