@@ -11,6 +11,16 @@ data class RuntimeLifecycleSample(
     val sample: BenchmarkSample
 )
 
+data class RuntimeLifecycleEvent(
+    val name: String,
+    val timestampMs: Long
+)
+
+data class RuntimeLifecycleDiagnosticResult(
+    val samples: List<RuntimeLifecycleSample>,
+    val events: List<RuntimeLifecycleEvent>
+)
+
 class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
     companion object {
         const val BASELINE_DURATION_MS = 60_000L
@@ -21,11 +31,16 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
         const val THREADS = 4
     }
 
-    fun run(onPhase: (String) -> Unit = {}): List<RuntimeLifecycleSample> {
+    fun run(onPhase: (String) -> Unit = {}): RuntimeLifecycleDiagnosticResult {
         val all = mutableListOf<RuntimeLifecycleSample>()
+        val events = mutableListOf<RuntimeLifecycleEvent>()
+        fun event(name: String) { events += RuntimeLifecycleEvent(name, System.currentTimeMillis()) }
         onPhase("baseline")
+        event("baseline_start")
         collect("baseline", BASELINE_DURATION_MS, all)
+        event("baseline_end")
         onPhase("inference")
+        event("inference_start")
         val runtime = LocalLlamaRuntime()
         check(runtime.isAvailable()) { "Local AI runtime unavailable" }
         val model = QwenLocalModel.file(context)
@@ -35,12 +50,18 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
                 "Do not request or execute device mutations."
         )
         runtime.generateForLifecycleDiagnostic(model, prompt, maxTokens = MAX_TOKENS, threads = THREADS)
+        event("inference_end")
+        event("post_cleanup_start")
         collect("post_cleanup", POST_CLEANUP_DURATION_MS, all)
+        event("post_cleanup_end")
         onPhase("runtime_reset")
-        runtime.resetRuntime()
-        onPhase("post_reset")
+        event("reset_before")
+        val resetCompletedAtMs = runtime.resetRuntime()
+        events += RuntimeLifecycleEvent("reset_native_completed", resetCompletedAtMs)
+        event("post_reset_start")
         collect("post_reset", POST_RESET_DURATION_MS, all)
-        return all
+        event("post_reset_end")
+        return RuntimeLifecycleDiagnosticResult(all, events)
     }
 
     private fun collect(
