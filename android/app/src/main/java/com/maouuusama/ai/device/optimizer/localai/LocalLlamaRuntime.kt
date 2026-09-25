@@ -22,10 +22,10 @@ class LocalLlamaRuntime {
         keepBackendAlive: Boolean
     ): String
     private external fun nativeIsAvailable(): Boolean
-    private external fun nativeResetRuntime()
+    private external fun nativeResetRuntime(): Long
 
     fun isAvailable(): Boolean = nativeIsAvailable()
-    fun resetRuntime() = nativeResetRuntime()
+    fun resetRuntime(): Long = nativeResetRuntime()
     fun runtimeVersion(): String = nativeVersion()
 
     fun generate(
