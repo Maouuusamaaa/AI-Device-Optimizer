@@ -21,7 +21,6 @@ object RuntimeLifecycleMemoryBenchmarkJsonWriter {
             .put("durationsMs", JSONObject()
                 .put("baseline", RuntimeLifecycleMemoryBenchmark.BASELINE_DURATION_MS)
                 .put("postCleanup", RuntimeLifecycleMemoryBenchmark.POST_CLEANUP_DURATION_MS)
-                .put("postReset", RuntimeLifecycleMemoryBenchmark.POST_CLEANUP_DURATION_MS)
                 .put("postReset", RuntimeLifecycleMemoryBenchmark.POST_RESET_DURATION_MS)
                 .put("interval", RuntimeLifecycleMemoryBenchmark.INTERVAL_MS)
                 .put("inferenceMaxTokens", RuntimeLifecycleMemoryBenchmark.MAX_TOKENS)
