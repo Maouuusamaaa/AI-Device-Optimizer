@@ -50,3 +50,19 @@ Tracking issue: #71 — reproduce post-reset PSS elevation on itel P661N.
 Schema version 3 records an `events` array alongside the memory samples. The lifecycle diagnostic emits explicit wall-clock events for the baseline, inference, cleanup-observation, reset, and post-reset boundaries. In particular, `reset_before` is captured immediately before the Kotlin-to-JNI reset call, while `reset_native_completed` is returned by the native `nativeResetRuntime()` after `llama_backend_free()` completes. `post_reset_start` is captured immediately after the JNI call returns.
 
 This makes the next real-device run capable of placing every PSS sample relative to the native reset completion instead of inferring the reset boundary only from phase order. The reset completion timestamp is observational metadata only and does not change production generation behavior.
+
+
+## Reset vs no-reset control experiment
+
+The lifecycle diagnostic now supports two explicitly labeled modes without changing the production runtime path:
+
+- `reset_enabled`: baseline → advisory inference → post-cleanup → `llama_backend_free()` through the native reset boundary → 5-minute post-reset observation.
+- `no_reset_control`: baseline → the same advisory inference → post-cleanup → 5-minute observation with the explicit reset call skipped.
+
+Both modes use the same inference parameters and observation durations. Schema version 4 records `experiment.mode` and `experiment.resetEnabled`, while samples use `post_reset` or `post_no_reset` respectively.
+
+Interpretation:
+- A persistent PSS transition present in reset-enabled runs but absent in no-reset controls strengthens the association with the explicit reset boundary.
+- A similar transition in both modes indicates that reset is not sufficient to explain the observation.
+- Absence of the transition in repeated runs means the earlier observation was not reproduced under the same controlled conditions.
+- None of these outcomes alone establishes a memory leak; RSS, Swap PSS, available RAM, temperature, and the complete time series remain part of the evidence.
