@@ -28,13 +28,18 @@ def main():
     assert 'collect("post_cleanup"' in bench
     assert "generateForLifecycleDiagnostic" in bench
     assert "runtime.resetRuntime()" in bench
+    assert "resetEnabled: Boolean" in bench
+    assert "no_reset_control" in bench
+    assert "post_no_reset" in bench
     assert "reset_before" in bench
     assert "reset_native_completed" in bench
     assert "post_reset_start" in bench
     assert "post_cleanup" in bench
     assert 'collect("post_reset"' in bench
     assert "runtime_lifecycle_memory_observation" in writer
-    assert '.put("schemaVersion", 3)' in writer
+    assert '.put("schemaVersion", 4)' in writer
+    assert '"resetEnabled"' in writer
+    assert '"no_reset_control"' in writer
     assert '.put("events", events)' in writer
     assert "runtime-lifecycle-memory-" in writer
     assert "EvidenceSyncManager.enqueue(context, file)" in writer
@@ -49,7 +54,9 @@ def main():
     assert "llama_backend_free()" in native
     assert "runtime_lifecycle_memory_observation" in queue
     assert "runtime-lifecycle-memory" in queue
-    assert "Run runtime lifecycle memory diagnostic" in activity
+    assert "Run lifecycle diagnostic (with reset)" in activity
+    assert "Run lifecycle control (without reset)" in activity
+    assert "resetEnabled = false" in activity
     assert "RuntimeLifecycleMemoryBenchmark(this)" in activity
     print("Runtime lifecycle memory diagnostic contract: PASS")
 
