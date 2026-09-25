@@ -66,13 +66,15 @@ Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeIsAvaila
     return JNI_TRUE;
 }
 
-extern "C" JNIEXPORT void JNICALL
+extern "C" JNIEXPORT jlong JNICALL
 Java_com_maouuusama_ai_device_optimizer_localai_LocalLlamaRuntime_nativeResetRuntime(
         JNIEnv *, jobject) {
-    // Generation already releases model/context/backend state after each call.
-    // This explicit boundary is a diagnostic hook so the benchmark can verify
-    // that an additional runtime cleanup does not leave a persistent native handle.
+    // Return a wall-clock completion timestamp so lifecycle evidence can place
+    // post-reset memory changes relative to the actual native reset boundary.
     llama_backend_free();
+    const auto completed = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        completed.time_since_epoch()).count();
 }
 
 extern "C" JNIEXPORT jstring JNICALL

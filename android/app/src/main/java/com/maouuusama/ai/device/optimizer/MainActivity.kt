@@ -673,14 +673,15 @@ class MainActivity : Activity() {
         Thread {
             try {
                 val benchmark = RuntimeLifecycleMemoryBenchmark(this)
-                val samples = benchmark.run { phase ->
+                val result = benchmark.run { phase ->
                     runOnUiThread {
                         statusText.text =
                             "\nRuntime lifecycle diagnostic\nPhase: " + phase +
                             "\nNo device mutations are permitted."
                     }
                 }
-                val file = RuntimeLifecycleMemoryBenchmarkJsonWriter.write(this, samples)
+                val file = RuntimeLifecycleMemoryBenchmarkJsonWriter.write(this, result)
+                val samples = result.samples
                 val shared = RuntimeLifecycleMemoryBenchmarkJsonWriter.exportToSharedDownloads(this, file)
                 val byPhase = samples.groupBy { it.phase }
                 val pss = { phase: String ->

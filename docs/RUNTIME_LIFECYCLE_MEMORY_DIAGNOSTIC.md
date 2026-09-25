@@ -43,3 +43,10 @@ The post-cleanup stability supports the intended lifecycle separation. However, 
 The investigation remains open pending at least one additional controlled run on the same device/build. VersionName remains 0.1.13 while this evidence is being reproduced and interpreted.
 
 Tracking issue: #71 — reproduce post-reset PSS elevation on itel P661N.
+
+
+## Reset-boundary timestamp instrumentation
+
+Schema version 3 records an `events` array alongside the memory samples. The lifecycle diagnostic emits explicit wall-clock events for the baseline, inference, cleanup-observation, reset, and post-reset boundaries. In particular, `reset_before` is captured immediately before the Kotlin-to-JNI reset call, while `reset_native_completed` is returned by the native `nativeResetRuntime()` after `llama_backend_free()` completes. `post_reset_start` is captured immediately after the JNI call returns.
+
+This makes the next real-device run capable of placing every PSS sample relative to the native reset completion instead of inferring the reset boundary only from phase order. The reset completion timestamp is observational metadata only and does not change production generation behavior.
