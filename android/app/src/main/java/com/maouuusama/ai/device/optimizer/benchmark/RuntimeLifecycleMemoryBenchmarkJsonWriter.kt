@@ -8,10 +8,11 @@ import org.json.JSONObject
 import java.io.File
 
 object RuntimeLifecycleMemoryBenchmarkJsonWriter {
-    fun write(context: Context, samples: List<RuntimeLifecycleSample>): File {
+    fun write(context: Context, result: RuntimeLifecycleDiagnosticResult): File {
+        val samples = result.samples
         require(samples.isNotEmpty())
         val root = JSONObject()
-            .put("schemaVersion", 2)
+            .put("schemaVersion", 3)
             .put("protocol", "runtime_lifecycle_memory_observation")
             .put("device", JSONObject()
                 .put("androidApi", Build.VERSION.SDK_INT)
@@ -57,6 +58,13 @@ object RuntimeLifecycleMemoryBenchmarkJsonWriter {
                 .put("processes", processes))
         }
         root.put("samples", array)
+        val events = JSONArray()
+        result.events.forEach { event ->
+            events.put(JSONObject()
+                .put("name", event.name)
+                .put("timestampMs", event.timestampMs))
+        }
+        root.put("events", events)
         val dir = File(context.getExternalFilesDir(null), "benchmarks").apply { mkdirs() }
         val file = File(dir, "runtime-lifecycle-memory-" + samples.first().sample.timestampMs + ".json")
         file.writeText(root.toString(2))
