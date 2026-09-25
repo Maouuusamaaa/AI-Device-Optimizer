@@ -66,3 +66,23 @@ Interpretation:
 - A similar transition in both modes indicates that reset is not sufficient to explain the observation.
 - Absence of the transition in repeated runs means the earlier observation was not reproduced under the same controlled conditions.
 - None of these outcomes alone establishes a memory leak; RSS, Swap PSS, available RAM, temperature, and the complete time series remain part of the evidence.
+
+
+## Fresh-process paired control experiment
+
+The next controlled experiment uses the same lifecycle in two modes while recording process identity and monotonic timing. The benchmark records the current PID and, when readable from Android, the Linux process start-time tick from /proc/<pid>/stat. If the start-time metadata cannot be read, the result explicitly records that limitation rather than claiming process freshness.
+
+Each run remains:
+
+1. 60-second baseline.
+2. One Qwen3 0.6B Q4_0 advisory inference with 4 threads and 64 maximum output tokens.
+3. 60-second post-cleanup observation.
+4. Either the explicit native reset followed by 5 minutes of post-reset observation, or a 5-minute no-reset control observation.
+
+Every lifecycle event and sample has a monotonic elapsed timestamp in addition to the existing wall-clock timestamp. Schema version 5 also records process metadata and a pssTransitions array containing every observed change in the benchmark process PSS, including phase, timestamps, before/after PSS, and delta.
+
+The purpose is to compare paired runs that begin from separate application process instances. The benchmark does not terminate or force-stop the process itself. A reset-specific association requires repeated transitions in reset-enabled runs without comparable transitions in no-reset controls. Similar transitions in both modes argue against reset as a sufficient explanation. Mixed results remain inconclusive.
+
+At least two comparable reset/control pairs are required before treating the experiment as reproducibly informative. PSS transitions remain observational evidence and must be interpreted together with RSS, Swap PSS, available RAM, temperature, process lifetime, and the raw time series. A memory leak is not diagnosed from PSS alone.
+
+VersionName remains 0.1.13 while this investigation is open.
