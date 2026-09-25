@@ -5,6 +5,8 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "android/app/build.gradle.kts"
 BENCH = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/benchmark/RuntimeLifecycleMemoryBenchmark.kt"
 WRITER = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/benchmark/RuntimeLifecycleMemoryBenchmarkJsonWriter.kt"
+COORDINATOR = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/benchmark/FreshProcessPairedLifecycleCoordinator.kt"
+SERVICE = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/agent/OptimizerBackgroundService.kt"
 RUNTIME = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/localai/LocalLlamaRuntime.kt"
 NATIVE = ROOT / "android/app/src/main/cpp/local_ai_runtime.cpp"
 QUEUE = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/sync/EvidenceQueueStore.kt"
@@ -14,6 +16,8 @@ def main():
     build = BUILD.read_text()
     bench = BENCH.read_text()
     writer = WRITER.read_text()
+    coordinator = COORDINATOR.read_text()
+    service = SERVICE.read_text()
     runtime = RUNTIME.read_text()
     native = NATIVE.read_text()
     queue = QUEUE.read_text()
@@ -51,6 +55,24 @@ def main():
     assert "monotonicElapsedMs" in writer
     assert "runtime-lifecycle-memory-" in writer
     assert "EvidenceSyncManager.enqueue(context, file)" in writer
+
+    assert "FreshProcessPairedLifecycleCoordinator" in coordinator
+    assert "ACTION_START" in coordinator
+    assert "ACTION_CONTINUE" in coordinator
+    assert "RuntimeLifecycleMemoryBenchmark(appContext)" in coordinator
+    assert ".run(resetEnabled = true)" in coordinator
+    assert ".run(resetEnabled = false)" in coordinator
+    assert "AlarmManager.ELAPSED_REALTIME_WAKEUP" in coordinator
+    assert "PendingIntent.getForegroundService" in coordinator
+    assert "Process.killProcess" in coordinator
+    assert "processSeparatedByPidAndStartTime" in coordinator
+    assert "runtime-lifecycle-pair-" in coordinator
+
+    assert "FreshProcessPairedLifecycleCoordinator.ACTION_START" in service
+    assert "FreshProcessPairedLifecycleCoordinator.ACTION_CONTINUE" in service
+    assert '"Run fresh-process pair"' in service
+    assert ".addAction(" in service
+
     assert "nativeResetRuntime" in runtime
     assert "nativeResetRuntime(): Long" in runtime
     assert "generateForLifecycleDiagnostic" in runtime
