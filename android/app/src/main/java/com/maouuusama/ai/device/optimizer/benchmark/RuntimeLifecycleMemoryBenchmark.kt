@@ -8,6 +8,7 @@ import com.maouuusama.ai.device.optimizer.monitor.DeviceMonitor
 data class RuntimeLifecycleSample(
     val phase: String,
     val phaseSampleIndex: Int,
+    val monotonicElapsedMs: Long,
     val sample: BenchmarkSample
 )
 
@@ -54,7 +55,7 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
         }
         onPhase("baseline")
         event("baseline_start")
-        collect("baseline", BASELINE_DURATION_MS, all)
+        collect("baseline", BASELINE_DURATION_MS, all, benchmarkStartedNs)
         event("baseline_end")
         onPhase("inference")
         event("inference_start")
@@ -69,7 +70,7 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
         runtime.generateForLifecycleDiagnostic(model, prompt, maxTokens = MAX_TOKENS, threads = THREADS)
         event("inference_end")
         event("post_cleanup_start")
-        collect("post_cleanup", POST_CLEANUP_DURATION_MS, all)
+        collect("post_cleanup", POST_CLEANUP_DURATION_MS, all, benchmarkStartedNs)
         event("post_cleanup_end")
         if (resetEnabled) {
             onPhase("runtime_reset")
@@ -81,13 +82,13 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
                 monotonicElapsedMs = (System.nanoTime() - benchmarkStartedNs) / 1_000_000L
             )
             event("post_reset_start")
-            collect("post_reset", POST_RESET_DURATION_MS, all)
+            collect("post_reset", POST_RESET_DURATION_MS, all, benchmarkStartedNs)
             event("post_reset_end")
         } else {
             onPhase("no_reset_control")
             event("reset_skipped")
             event("post_no_reset_start")
-            collect("post_no_reset", POST_RESET_DURATION_MS, all)
+            collect("post_no_reset", POST_RESET_DURATION_MS, all, benchmarkStartedNs)
             event("post_no_reset_end")
         }
         return RuntimeLifecycleDiagnosticResult(
@@ -117,7 +118,8 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
     private fun collect(
         phase: String,
         durationMs: Long,
-        output: MutableList<RuntimeLifecycleSample>
+        output: MutableList<RuntimeLifecycleSample>,
+        benchmarkStartedNs: Long
     ) {
         val monitor = DeviceMonitor(context.applicationContext)
         val startedNs = System.nanoTime()
@@ -147,7 +149,12 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
                 processes = snapshot.processes
             )
             index += 1
-            output += RuntimeLifecycleSample(phase, index, sample)
+            output += RuntimeLifecycleSample(
+                phase = phase,
+                phaseSampleIndex = index,
+                monotonicElapsedMs = (System.nanoTime() - benchmarkStartedNs) / 1_000_000L,
+                sample = sample
+            )
             nextSampleNs = sampleStartedNs + INTERVAL_MS * 1_000_000L
             if (System.nanoTime() >= deadlineNs) break
         }
