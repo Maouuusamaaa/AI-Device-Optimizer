@@ -70,18 +70,41 @@ Interpretation:
 
 ## Fresh-process paired control experiment
 
-The next controlled experiment uses the same lifecycle in two modes while recording process identity and monotonic timing. The benchmark records the current PID and, when readable from Android, the Linux process start-time tick from /proc/<pid>/stat. If the start-time metadata cannot be read, the result explicitly records that limitation rather than claiming process freshness.
+The controlled experiment uses the same lifecycle in two modes while recording process identity and monotonic timing. The benchmark records the current PID and, when readable from Android, the Linux process start-time tick from /proc/<pid>/stat. If the start-time metadata cannot be read, the result explicitly records that limitation rather than claiming process freshness.
 
-Each run remains:
+Each arm remains:
 
 1. 60-second baseline.
 2. One Qwen3 0.6B Q4_0 advisory inference with 4 threads and 64 maximum output tokens.
 3. 60-second post-cleanup observation.
 4. Either the explicit native reset followed by 5 minutes of post-reset observation, or a 5-minute no-reset control observation.
 
-Every lifecycle event and sample has a monotonic elapsed timestamp in addition to the existing wall-clock timestamp. Schema version 5 also records process metadata and a pssTransitions array containing every observed change in the benchmark process PSS, including phase, timestamps, before/after PSS, and delta.
+Every lifecycle event and sample has a monotonic elapsed timestamp in addition to the existing wall-clock timestamp. Schema version 5 also records process metadata and a `pssTransitions` array containing every observed change in the benchmark process PSS, including phase, timestamps, before/after PSS, and delta.
 
-The purpose is to compare paired runs that begin from separate application process instances. The benchmark does not terminate or force-stop the process itself. A reset-specific association requires repeated transitions in reset-enabled runs without comparable transitions in no-reset controls. Similar transitions in both modes argue against reset as a sufficient explanation. Mixed results remain inconclusive.
+The purpose is to compare paired arms that begin from separate application process instances. The benchmark itself does not force-stop the process.
+
+### Automated paired runner
+
+The latest implementation adds a fresh-process pair runner to the existing foreground-service notification. The action is:
+
+`Run fresh-process pair`
+
+The runner performs the following sequence automatically:
+
+1. Generate a new `pairId`.
+2. Run the reset-enabled arm in the current application process.
+3. Persist the reset arm filename, PID, and Linux process start-time ticks.
+4. Schedule the continuation through Android `AlarmManager`.
+5. Terminate the current application process.
+6. Android starts the foreground service for the continuation action in a new application process.
+7. Run the no-reset control arm in that new process.
+8. Write a pair manifest linking both JSON files and recording both process identities.
+9. Set `freshProcessVerified=true` only when both PID and process-start ticks differ.
+10. Queue the manifest through the existing evidence synchronization mechanism.
+
+The pair manifest is named `runtime-lifecycle-pair-<pairId>.json` and uses protocol `fresh_process_paired_runtime_lifecycle`.
+
+This deliberately uses an explicit Android system `PendingIntent`/alarm boundary rather than assuming that an Activity recreation creates a new process. Android can keep an application process alive after Activity lifecycle changes, so process identity must be measured rather than inferred. The runner therefore treats PID plus process-start ticks as the freshness evidence.
 
 At least two comparable reset/control pairs are required before treating the experiment as reproducibly informative. PSS transitions remain observational evidence and must be interpreted together with RSS, Swap PSS, available RAM, temperature, process lifetime, and the raw time series. A memory leak is not diagnosed from PSS alone.
 
