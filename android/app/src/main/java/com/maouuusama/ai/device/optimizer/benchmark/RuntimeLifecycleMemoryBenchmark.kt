@@ -13,13 +13,21 @@ data class RuntimeLifecycleSample(
 
 data class RuntimeLifecycleEvent(
     val name: String,
-    val timestampMs: Long
+    val timestampMs: Long,
+    val monotonicElapsedMs: Long
+)
+
+data class RuntimeLifecycleProcessMetadata(
+    val pid: Int,
+    val processStartTimeTicks: Long?,
+    val processStartMetadataAvailable: Boolean
 )
 
 data class RuntimeLifecycleDiagnosticResult(
     val samples: List<RuntimeLifecycleSample>,
     val events: List<RuntimeLifecycleEvent>,
-    val resetEnabled: Boolean
+    val resetEnabled: Boolean,
+    val processMetadata: RuntimeLifecycleProcessMetadata
 )
 
 class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
@@ -35,7 +43,15 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
     fun run(resetEnabled: Boolean = true, onPhase: (String) -> Unit = {}): RuntimeLifecycleDiagnosticResult {
         val all = mutableListOf<RuntimeLifecycleSample>()
         val events = mutableListOf<RuntimeLifecycleEvent>()
-        fun event(name: String) { events += RuntimeLifecycleEvent(name, System.currentTimeMillis()) }
+        val benchmarkStartedNs = System.nanoTime()
+        val processMetadata = readProcessMetadata()
+        fun event(name: String) {
+            events += RuntimeLifecycleEvent(
+                name = name,
+                timestampMs = System.currentTimeMillis(),
+                monotonicElapsedMs = (System.nanoTime() - benchmarkStartedNs) / 1_000_000L
+            )
+        }
         onPhase("baseline")
         event("baseline_start")
         collect("baseline", BASELINE_DURATION_MS, all)
@@ -59,7 +75,11 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
             onPhase("runtime_reset")
             event("reset_before")
             val resetCompletedAtMs = runtime.resetRuntime()
-            events += RuntimeLifecycleEvent("reset_native_completed", resetCompletedAtMs)
+            events += RuntimeLifecycleEvent(
+                name = "reset_native_completed",
+                timestampMs = resetCompletedAtMs,
+                monotonicElapsedMs = (System.nanoTime() - benchmarkStartedNs) / 1_000_000L
+            )
             event("post_reset_start")
             collect("post_reset", POST_RESET_DURATION_MS, all)
             event("post_reset_end")
@@ -70,7 +90,28 @@ class RuntimeLifecycleMemoryBenchmark(private val context: Context) {
             collect("post_no_reset", POST_RESET_DURATION_MS, all)
             event("post_no_reset_end")
         }
-        return RuntimeLifecycleDiagnosticResult(all, events, resetEnabled)
+        return RuntimeLifecycleDiagnosticResult(
+            samples = all,
+            events = events,
+            resetEnabled = resetEnabled,
+            processMetadata = processMetadata
+        )
+    }
+
+    private fun readProcessMetadata(): RuntimeLifecycleProcessMetadata {
+        val pid = android.os.Process.myPid()
+        val stat = java.io.File("/proc/$pid/stat")
+        val startTimeTicks = runCatching {
+            val content = stat.readText()
+            val afterComm = content.substringAfterLast(") ")
+            val fields = afterComm.trim().split(Regex("\\s+"))
+            fields.getOrNull(19)?.toLongOrNull()
+        }.getOrNull()
+        return RuntimeLifecycleProcessMetadata(
+            pid = pid,
+            processStartTimeTicks = startTimeTicks,
+            processStartMetadataAvailable = startTimeTicks != null
+        )
     }
 
     private fun collect(
