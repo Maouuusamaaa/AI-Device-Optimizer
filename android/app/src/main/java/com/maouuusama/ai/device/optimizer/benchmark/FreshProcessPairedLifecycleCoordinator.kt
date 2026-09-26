@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.SystemClock
-import com.maouuusama.ai.device.optimizer.agent.OptimizerBackgroundService
 import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncManager
 import org.json.JSONObject
 import java.io.File
@@ -106,7 +105,7 @@ object FreshProcessPairedLifecycleCoordinator {
     }
 
     fun createActionPendingIntent(context: Context, action: String): PendingIntent {
-        val intent = Intent(context, OptimizerBackgroundService::class.java).setAction(action)
+        val intent = Intent().setClassName(context, "com.maouuusama.ai.device.optimizer.agent.OptimizerBackgroundService").setAction(action)
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             PendingIntent.getForegroundService(context, action.hashCode(), intent, flags)
@@ -163,7 +162,7 @@ object FreshProcessPairedLifecycleCoordinator {
     }
 
     private fun stopServiceAndProcess(context: Context) {
-        context.stopService(Intent(context, OptimizerBackgroundService::class.java))
+        context.stopService(Intent().setClassName(context, "com.maouuusama.ai.device.optimizer.agent.OptimizerBackgroundService"))
         android.os.Process.killProcess(android.os.Process.myPid())
     }
 }
