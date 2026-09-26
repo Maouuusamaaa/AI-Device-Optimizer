@@ -76,12 +76,21 @@ object FreshProcessPairedLifecycleCoordinator {
                     .run(resetEnabled = true)
                 val file = RuntimeLifecycleMemoryBenchmarkJsonWriter.write(appContext, result)
                 notifyStatus(appContext, "Reset arm complete", "Evidence saved. Preparing a fresh-process continuation.")
-                prefs.edit()
+                val resetStatePersisted = prefs.edit()
                     .putString(KEY_RESET_FILE, file.name)
                     .putInt(KEY_RESET_PID, result.processMetadata.pid)
                     .putLong(KEY_RESET_START_TICKS, result.processMetadata.processStartTimeTicks ?: -1L)
                     .putLong(KEY_RESET_TIMESTAMP, System.currentTimeMillis())
-                    .apply()
+                    .commit()
+                if (!resetStatePersisted) {
+                    notifyStatus(
+                        appContext,
+                        "Paired lifecycle stopped",
+                        "Reset evidence was saved, but durable continuation state could not be committed; the process was not killed."
+                    )
+                    android.util.Log.e("FreshLifecyclePair", "Could not durably commit reset continuation state")
+                    return@Thread
+                }
 
                 if (!scheduleContinuation(appContext)) {
                     notifyStatus(appContext, "Paired lifecycle stopped", "Continuation could not be scheduled; the process was not killed.")
@@ -107,7 +116,14 @@ object FreshProcessPairedLifecycleCoordinator {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
         if (!prefs.getBoolean(KEY_NEXT_PAIR_PENDING, false)) return false
-        prefs.edit().putBoolean(KEY_NEXT_PAIR_PENDING, false).apply()
+        if (!prefs.edit().putBoolean(KEY_NEXT_PAIR_PENDING, false).commit()) {
+            notifyStatus(
+                appContext,
+                "Paired lifecycle recovery failed",
+                "The next-pair state could not be durably cleared before starting the next pair."
+            )
+            return false
+        }
         notifyStatus(appContext, "Fresh process detected", "Starting the next independent lifecycle pair.")
         start(appContext)
         return true
@@ -125,6 +141,12 @@ object FreshProcessPairedLifecycleCoordinator {
             return
         }
         val resetFile = prefs.getString(KEY_RESET_FILE, null) ?: run {
+            notifyStatus(
+                appContext,
+                "Paired lifecycle recovery required",
+                "Continuation resumed without durable reset-arm state. Start a new paired lifecycle after the stale run is cleared."
+            )
+            android.util.Log.e("FreshLifecyclePair", "Continuation triggered without KEY_RESET_FILE")
             onFinished?.invoke()
             return
         }
@@ -168,7 +190,7 @@ object FreshProcessPairedLifecycleCoordinator {
                 )
                 val completedPairs = pairIndex
                 if (processSeparated && completedPairs < REQUIRED_PAIRS) {
-                    prefs.edit()
+                    val nextPairStatePersisted = prefs.edit()
                         .remove(KEY_PAIR_ID)
                         .remove(KEY_RESET_FILE)
                         .remove(KEY_RESET_PID)
@@ -179,7 +201,17 @@ object FreshProcessPairedLifecycleCoordinator {
                         .putString(KEY_BATCH_ID, batchId)
                         .putInt(KEY_COMPLETED_PAIRS, completedPairs)
                         .putBoolean(KEY_NEXT_PAIR_PENDING, true)
-                        .apply()
+                        .commit()
+                    if (!nextPairStatePersisted) {
+                        notifyStatus(
+                            appContext,
+                            "Paired lifecycle failed",
+                            "Pair $completedPairs/$REQUIRED_PAIRS was saved, but the next-pair state could not be durably committed."
+                        )
+                        android.util.Log.e("FreshLifecyclePair", "Could not durably commit next-pair continuation state")
+                        onFinished?.invoke()
+                        return@Thread
+                    }
                     appContext.getSystemService(JobScheduler::class.java)?.apply {
                         cancel(CONTINUE_JOB_ID)
                         cancel(CONTINUE_FALLBACK_JOB_ID)
