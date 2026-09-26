@@ -12,6 +12,10 @@ class FreshProcessPairedLifecycleJobService : JobService() {
             "The system resumed the paired lifecycle after the original process ended."
         )
         getSystemService(JobScheduler::class.java)?.cancel(0xA1D1)
+        if (FreshProcessPairedLifecycleCoordinator.startPendingNextPair(this)) {
+            jobFinished(params, false)
+            return true
+        }
         FreshProcessPairedLifecycleCoordinator.continueAfterFreshProcess(this) {
             jobFinished(params, false)
         }

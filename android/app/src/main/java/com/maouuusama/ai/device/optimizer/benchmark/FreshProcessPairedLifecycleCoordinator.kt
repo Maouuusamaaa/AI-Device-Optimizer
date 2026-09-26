@@ -25,6 +25,11 @@ object FreshProcessPairedLifecycleCoordinator {
     private const val KEY_RESET_START_TICKS = "reset_start_ticks"
     private const val KEY_RESET_TIMESTAMP = "reset_timestamp"
     private const val KEY_STARTED_TIMESTAMP = "started_timestamp"
+    private const val KEY_BATCH_ID = "batch_id"
+    private const val KEY_COMPLETED_PAIRS = "completed_pairs"
+    private const val KEY_NEXT_PAIR_PENDING = "next_pair_pending"
+    private const val KEY_PAIR_INDEX = "pair_index"
+    private const val REQUIRED_PAIRS = 2
     private const val CONTINUE_DELAY_MS = 3_000L
     private const val CONTINUE_DEADLINE_MS = 30_000L
     private const val CONTINUE_JOB_ID = 0xA1D0
@@ -46,10 +51,16 @@ object FreshProcessPairedLifecycleCoordinator {
             return
         }
 
+        val batchId = prefs.getString(KEY_BATCH_ID, null) ?: UUID.randomUUID().toString()
+        val completedPairs = prefs.getInt(KEY_COMPLETED_PAIRS, 0)
+        val pairIndex = completedPairs + 1
         val pairId = UUID.randomUUID().toString()
         prefs.edit()
+            .putString(KEY_BATCH_ID, batchId)
+            .putInt(KEY_PAIR_INDEX, pairIndex)
             .putString(KEY_PAIR_ID, pairId)
             .putLong(KEY_STARTED_TIMESTAMP, System.currentTimeMillis())
+            .putBoolean(KEY_NEXT_PAIR_PENDING, false)
             .remove(KEY_RESET_FILE)
             .remove(KEY_RESET_PID)
             .remove(KEY_RESET_START_TICKS)
@@ -92,6 +103,17 @@ object FreshProcessPairedLifecycleCoordinator {
     }
 
     @Synchronized
+    fun startPendingNextPair(context: Context): Boolean {
+        val appContext = context.applicationContext
+        val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_NEXT_PAIR_PENDING, false)) return false
+        prefs.edit().putBoolean(KEY_NEXT_PAIR_PENDING, false).apply()
+        notifyStatus(appContext, "Fresh process detected", "Starting the next independent lifecycle pair.")
+        start(appContext)
+        return true
+    }
+
+    @Synchronized
     fun continueAfterFreshProcess(
         context: Context,
         onFinished: (() -> Unit)? = null
@@ -119,6 +141,8 @@ object FreshProcessPairedLifecycleCoordinator {
                 val resetPid = prefs.getInt(KEY_RESET_PID, -1)
                 val resetStartTicks = prefs.getLong(KEY_RESET_START_TICKS, -1L)
                 val resetTimestamp = prefs.getLong(KEY_RESET_TIMESTAMP, -1L)
+                val pairIndex = prefs.getInt(KEY_PAIR_INDEX, 1)
+                val batchId = prefs.getString(KEY_BATCH_ID, pairId) ?: pairId
                 val controlPid = result.processMetadata.pid
                 val controlStartTicks = result.processMetadata.processStartTimeTicks ?: -1L
                 val processSeparated = resetPid > 0 &&
@@ -130,6 +154,8 @@ object FreshProcessPairedLifecycleCoordinator {
 
                 writePairManifest(
                     context = appContext,
+                    batchId = batchId,
+                    pairIndex = pairIndex,
                     pairId = pairId,
                     resetFile = resetFile,
                     controlFile = controlFile.name,
@@ -140,14 +166,52 @@ object FreshProcessPairedLifecycleCoordinator {
                     controlStartTicks = controlStartTicks,
                     processSeparated = processSeparated
                 )
-                prefs.edit().clear().apply()
-                appContext.getSystemService(JobScheduler::class.java)?.apply {
-                    cancel(CONTINUE_JOB_ID)
-                    cancel(CONTINUE_FALLBACK_JOB_ID)
+                val completedPairs = pairIndex
+                if (processSeparated && completedPairs < REQUIRED_PAIRS) {
+                    prefs.edit()
+                        .remove(KEY_PAIR_ID)
+                        .remove(KEY_RESET_FILE)
+                        .remove(KEY_RESET_PID)
+                        .remove(KEY_RESET_START_TICKS)
+                        .remove(KEY_RESET_TIMESTAMP)
+                        .remove(KEY_STARTED_TIMESTAMP)
+                        .remove(KEY_PAIR_INDEX)
+                        .putString(KEY_BATCH_ID, batchId)
+                        .putInt(KEY_COMPLETED_PAIRS, completedPairs)
+                        .putBoolean(KEY_NEXT_PAIR_PENDING, true)
+                        .apply()
+                    appContext.getSystemService(JobScheduler::class.java)?.apply {
+                        cancel(CONTINUE_JOB_ID)
+                        cancel(CONTINUE_FALLBACK_JOB_ID)
+                    }
+                    if (scheduleContinuation(appContext)) {
+                        notifyStatus(
+                            appContext,
+                            "Pair $completedPairs/$REQUIRED_PAIRS complete",
+                            "Fresh-process separation verified. The next independent pair is scheduled."
+                        )
+                        onFinished?.invoke()
+                        stopServiceAndProcess(appContext)
+                    } else {
+                        prefs.edit().clear().apply()
+                        notifyStatus(appContext, "Paired lifecycle stopped", "Pair $completedPairs completed, but the next pair could not be scheduled.")
+                        onFinished?.invoke()
+                        stopServiceAndProcess(appContext)
+                    }
+                } else {
+                    prefs.edit().clear().apply()
+                    appContext.getSystemService(JobScheduler::class.java)?.apply {
+                        cancel(CONTINUE_JOB_ID)
+                        cancel(CONTINUE_FALLBACK_JOB_ID)
+                    }
+                    notifyStatus(
+                        appContext,
+                        if (processSeparated) "Paired lifecycle complete" else "Pair complete — freshness check failed",
+                        if (processSeparated) "All $REQUIRED_PAIRS independent pairs are saved. PID and process-start time differ within each pair." else "Both arms saved, but fresh-process separation was not verified."
+                    )
+                    onFinished?.invoke()
+                    stopServiceAndProcess(appContext)
                 }
-                notifyStatus(appContext, if (processSeparated) "Paired lifecycle complete" else "Pair complete — freshness check failed", if (processSeparated) "Both arms saved. PID and process-start time differ." else "Both arms saved, but fresh-process separation was not verified.")
-                onFinished?.invoke()
-                stopServiceAndProcess(appContext)
             } catch (error: Exception) {
                 notifyStatus(appContext, "Paired lifecycle failed", "No-reset control failed: " + error.javaClass.simpleName)
                 android.util.Log.e("FreshLifecyclePair", "No-reset arm failed", error)
@@ -222,6 +286,8 @@ object FreshProcessPairedLifecycleCoordinator {
 
     private fun writePairManifest(
         context: Context,
+        batchId: String,
+        pairIndex: Int,
         pairId: String,
         resetFile: String,
         controlFile: String,
@@ -237,8 +303,10 @@ object FreshProcessPairedLifecycleCoordinator {
         val root = JSONObject()
             .put("schemaVersion", 1)
             .put("protocol", "fresh_process_paired_runtime_lifecycle")
+            .put("batchId", batchId)
+            .put("pairIndex", pairIndex)
             .put("pairId", pairId)
-            .put("requiredPairs", 2)
+            .put("requiredPairs", REQUIRED_PAIRS)
             .put("freshProcessVerified", processSeparated)
             .put("resetArm", JSONObject()
                 .put("mode", "reset_enabled")
