@@ -23,7 +23,7 @@ class FreshProcessPairedLifecycleJobService : JobService() {
         // rely on START_REDELIVER_INTENT here: an explicit Process.killProcess()
         // is not a system service restart request, so Android is not required
         // to recreate the foreground service.
-        if (FreshProcessPairedLifecycleCoordinator.startPendingNextPair(this)) {
+        if (FreshProcessPairedLifecycleCoordinator.startPendingNextPair(this) {
             jobFinished(params, false)
             return true
         }
