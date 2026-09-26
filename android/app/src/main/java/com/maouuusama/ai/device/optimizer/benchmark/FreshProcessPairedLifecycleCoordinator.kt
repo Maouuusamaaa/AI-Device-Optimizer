@@ -51,6 +51,7 @@ object FreshProcessPairedLifecycleCoordinator {
         recoverStalePairIfNeeded(appContext, prefs)
         if (prefs.getString(KEY_PAIR_ID, null) != null) {
             notifyStatus(appContext, "Paired lifecycle already running", "An existing pair is still in progress.")
+            onContinuationReady?.invoke()
             return
         }
 
@@ -58,7 +59,7 @@ object FreshProcessPairedLifecycleCoordinator {
         val completedPairs = prefs.getInt(KEY_COMPLETED_PAIRS, 0)
         val pairIndex = completedPairs + 1
         val pairId = UUID.randomUUID().toString()
-        prefs.edit()
+        val pairStatePersisted = prefs.edit()
             .putString(KEY_BATCH_ID, batchId)
             .putInt(KEY_PAIR_INDEX, pairIndex)
             .putString(KEY_PAIR_ID, pairId)
@@ -68,7 +69,12 @@ object FreshProcessPairedLifecycleCoordinator {
             .remove(KEY_RESET_PID)
             .remove(KEY_RESET_START_TICKS)
             .remove(KEY_RESET_TIMESTAMP)
-            .apply()
+            .commit()
+        if (!pairStatePersisted) {
+            notifyStatus(appContext, "Paired lifecycle stopped", "The new pair state could not be durably saved.")
+            onContinuationReady?.invoke()
+            return
+        }
 
         notifyStatus(appContext, "Paired lifecycle started", "Phase 1/2: reset-enabled arm is running. Keep the device available.")
 
