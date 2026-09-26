@@ -225,7 +225,10 @@ class OptimizerBackgroundService : Service() {
             FreshProcessPairedLifecycleCoordinator.ACTION_CONTINUE ->
                 FreshProcessPairedLifecycleCoordinator.continueAfterFreshProcess(this)
         }
-        return START_STICKY
+        // The paired lifecycle deliberately kills the process between independent
+        // pairs. Redeliver the last explicit action so the new process can resume
+        // the persisted batch instead of losing the continuation trigger.
+        return START_REDELIVER_INTENT
     }
 
     companion object {
