@@ -24,18 +24,23 @@ object FreshProcessPairedLifecycleCoordinator {
     private const val KEY_RESET_PID = "reset_pid"
     private const val KEY_RESET_START_TICKS = "reset_start_ticks"
     private const val KEY_RESET_TIMESTAMP = "reset_timestamp"
+    private const val KEY_STARTED_TIMESTAMP = "started_timestamp"
     private const val CONTINUE_DELAY_MS = 3_000L
     private const val CONTINUE_DEADLINE_MS = 30_000L
     private const val CONTINUE_JOB_ID = 0xA1D0
+    private const val CONTINUE_FALLBACK_JOB_ID = 0xA1D1
+    private const val STALE_PAIR_TIMEOUT_MS = 30 * 60 * 1_000L
     private const val MANIFEST_PREFIX = "runtime-lifecycle-pair-"
     private const val SERVICE_CLASS =
         "com.maouuusama.ai.device.optimizer.agent.OptimizerBackgroundService"
     private const val STATUS_NOTIFICATION_ID = 1002
     private const val CHANNEL_ID = "optimizer_monitoring"
 
+    @Synchronized
     fun start(context: Context) {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+        recoverStalePairIfNeeded(appContext, prefs)
         if (prefs.getString(KEY_PAIR_ID, null) != null) {
             notifyStatus(appContext, "Paired lifecycle already running", "An existing pair is still in progress.")
             return
@@ -44,6 +49,7 @@ object FreshProcessPairedLifecycleCoordinator {
         val pairId = UUID.randomUUID().toString()
         prefs.edit()
             .putString(KEY_PAIR_ID, pairId)
+            .putLong(KEY_STARTED_TIMESTAMP, System.currentTimeMillis())
             .remove(KEY_RESET_FILE)
             .remove(KEY_RESET_PID)
             .remove(KEY_RESET_START_TICKS)
@@ -85,14 +91,21 @@ object FreshProcessPairedLifecycleCoordinator {
         }.start()
     }
 
+    @Synchronized
     fun continueAfterFreshProcess(
         context: Context,
         onFinished: (() -> Unit)? = null
     ) {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-        val pairId = prefs.getString(KEY_PAIR_ID, null) ?: return
-        val resetFile = prefs.getString(KEY_RESET_FILE, null) ?: return
+        val pairId = prefs.getString(KEY_PAIR_ID, null) ?: run {
+            onFinished?.invoke()
+            return
+        }
+        val resetFile = prefs.getString(KEY_RESET_FILE, null) ?: run {
+            onFinished?.invoke()
+            return
+        }
 
         notifyStatus(appContext, "Fresh process detected", "Phase 2/2: no-reset control arm is running.")
 
@@ -128,6 +141,10 @@ object FreshProcessPairedLifecycleCoordinator {
                     processSeparated = processSeparated
                 )
                 prefs.edit().clear().apply()
+                appContext.getSystemService(JobScheduler::class.java)?.apply {
+                    cancel(CONTINUE_JOB_ID)
+                    cancel(CONTINUE_FALLBACK_JOB_ID)
+                }
                 notifyStatus(appContext, if (processSeparated) "Paired lifecycle complete" else "Pair complete — freshness check failed", if (processSeparated) "Both arms saved. PID and process-start time differ." else "Both arms saved, but fresh-process separation was not verified.")
                 onFinished?.invoke()
                 stopServiceAndProcess(appContext)
@@ -154,14 +171,53 @@ object FreshProcessPairedLifecycleCoordinator {
 
     private fun scheduleContinuation(context: Context): Boolean {
         val scheduler = context.getSystemService(JobScheduler::class.java) ?: return false
-        val jobInfo = JobInfo.Builder(
+        scheduler.cancel(CONTINUE_JOB_ID)
+        scheduler.cancel(CONTINUE_FALLBACK_JOB_ID)
+
+        val expedited = JobInfo.Builder(
             CONTINUE_JOB_ID,
+            ComponentName(context, FreshProcessPairedLifecycleJobService::class.java)
+        )
+            .setMinimumLatency(CONTINUE_DELAY_MS)
+            .apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    setExpedited(true)
+                }
+            }
+            .build()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            scheduler.schedule(expedited) == JobScheduler.RESULT_SUCCESS
+        ) {
+            return true
+        }
+
+        val fallback = JobInfo.Builder(
+            CONTINUE_FALLBACK_JOB_ID,
             ComponentName(context, FreshProcessPairedLifecycleJobService::class.java)
         )
             .setMinimumLatency(CONTINUE_DELAY_MS)
             .setOverrideDeadline(CONTINUE_DEADLINE_MS)
             .build()
-        return scheduler.schedule(jobInfo) == JobScheduler.RESULT_SUCCESS
+        return scheduler.schedule(fallback) == JobScheduler.RESULT_SUCCESS
+    }
+
+    private fun recoverStalePairIfNeeded(context: Context, prefs: android.content.SharedPreferences) {
+        val pairId = prefs.getString(KEY_PAIR_ID, null) ?: return
+        val startedTimestamp = prefs.getLong(KEY_STARTED_TIMESTAMP, -1L)
+        val ageMs = if (startedTimestamp > 0L) System.currentTimeMillis() - startedTimestamp else Long.MAX_VALUE
+        if (ageMs <= STALE_PAIR_TIMEOUT_MS) return
+
+        context.getSystemService(JobScheduler::class.java)?.apply {
+            cancel(CONTINUE_JOB_ID)
+            cancel(CONTINUE_FALLBACK_JOB_ID)
+        }
+        prefs.edit().clear().apply()
+        notifyStatus(
+            context,
+            "Stale paired lifecycle recovered",
+            "Previous pair $pairId exceeded the ${STALE_PAIR_TIMEOUT_MS / 60_000} minute timeout and was cleared. A new run can start safely."
+        )
     }
 
     private fun writePairManifest(
