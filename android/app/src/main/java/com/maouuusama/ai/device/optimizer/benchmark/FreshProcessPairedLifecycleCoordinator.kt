@@ -184,20 +184,25 @@ object FreshProcessPairedLifecycleCoordinator {
                         cancel(CONTINUE_JOB_ID)
                         cancel(CONTINUE_FALLBACK_JOB_ID)
                     }
+                    // The optimizer foreground service remains started across this
+                    // intentional process boundary. START_REDELIVER_INTENT on that service
+                    // causes Android to recreate the service in the new process and redeliver
+                    // ACTION_START, which starts the next pair from persisted batch state.
                     if (scheduleContinuation(appContext)) {
                         notifyStatus(
                             appContext,
                             "Pair $completedPairs/$REQUIRED_PAIRS complete",
-                            "Fresh-process separation verified. The next independent pair is scheduled."
+                            "Fresh-process separation verified. The next independent pair is scheduled as a system fallback."
                         )
-                        onFinished?.invoke()
-                        stopServiceAndProcess(appContext)
                     } else {
-                        prefs.edit().clear().apply()
-                        notifyStatus(appContext, "Paired lifecycle stopped", "Pair $completedPairs completed, but the next pair could not be scheduled.")
-                        onFinished?.invoke()
-                        stopServiceAndProcess(appContext)
+                        notifyStatus(
+                            appContext,
+                            "Pair $completedPairs/$REQUIRED_PAIRS complete",
+                            "Fresh-process separation verified. Waiting for the optimizer service process restart to begin the next pair."
+                        )
                     }
+                    onFinished?.invoke()
+                    killProcessOnly()
                 } else {
                     prefs.edit().clear().apply()
                     appContext.getSystemService(JobScheduler::class.java)?.apply {
@@ -358,8 +363,12 @@ object FreshProcessPairedLifecycleCoordinator {
         context.getSystemService(NotificationManager::class.java).notify(STATUS_NOTIFICATION_ID, notification)
     }
 
+    private fun killProcessOnly() {
+        android.os.Process.killProcess(android.os.Process.myPid())
+    }
+
     private fun stopServiceAndProcess(context: Context) {
         context.stopService(Intent().setClassName(context, SERVICE_CLASS))
-        android.os.Process.killProcess(android.os.Process.myPid())
+        killProcessOnly()
     }
 }
