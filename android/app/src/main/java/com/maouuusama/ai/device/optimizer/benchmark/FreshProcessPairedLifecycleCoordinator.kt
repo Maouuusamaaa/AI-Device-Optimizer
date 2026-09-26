@@ -42,7 +42,10 @@ object FreshProcessPairedLifecycleCoordinator {
     private const val CHANNEL_ID = "optimizer_monitoring"
 
     @Synchronized
-    fun start(context: Context) {
+    fun start(
+        context: Context,
+        onContinuationReady: (() -> Unit)? = null
+    ) {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
         recoverStalePairIfNeeded(appContext, prefs)
@@ -89,6 +92,7 @@ object FreshProcessPairedLifecycleCoordinator {
                         "Reset evidence was saved, but durable continuation state could not be committed; the process was not killed."
                     )
                     android.util.Log.e("FreshLifecyclePair", "Could not durably commit reset continuation state")
+                    onContinuationReady?.invoke()
                     return@Thread
                 }
 
@@ -98,21 +102,31 @@ object FreshProcessPairedLifecycleCoordinator {
                         "FreshLifecyclePair",
                         "Continuation scheduling failed; process will not be killed"
                     )
+                    onContinuationReady?.invoke()
                     return@Thread
                 }
 
                 notifyStatus(appContext, "Fresh-process transition", "Continuation scheduled. The current process will now end and the control arm will resume in a new process.")
+                // When started from JobService, keep that job alive until the
+                // benchmark has scheduled the next process boundary. Otherwise
+                // jobFinished() can release the job while this thread is still
+                // running and the process may be reclaimed before continuation.
+                onContinuationReady?.invoke()
                 android.os.Process.killProcess(android.os.Process.myPid())
             } catch (error: Exception) {
                 prefs.edit().clear().apply()
                 notifyStatus(appContext, "Paired lifecycle failed", "Reset arm failed: " + error.javaClass.simpleName)
                 android.util.Log.e("FreshLifecyclePair", "Reset arm failed", error)
+                onContinuationReady?.invoke()
             }
         }.start()
     }
 
     @Synchronized
-    fun startPendingNextPair(context: Context): Boolean {
+    fun startPendingNextPair(
+        context: Context,
+        onContinuationReady: (() -> Unit)? = null
+    ): Boolean {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
         if (!prefs.getBoolean(KEY_NEXT_PAIR_PENDING, false)) return false
@@ -125,7 +139,7 @@ object FreshProcessPairedLifecycleCoordinator {
             return false
         }
         notifyStatus(appContext, "Fresh process detected", "Starting the next independent lifecycle pair.")
-        start(appContext)
+        start(appContext, onContinuationReady)
         return true
     }
 
