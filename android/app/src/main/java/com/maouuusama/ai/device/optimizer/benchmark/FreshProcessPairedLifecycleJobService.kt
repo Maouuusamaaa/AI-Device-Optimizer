@@ -12,10 +12,11 @@ class FreshProcessPairedLifecycleJobService : JobService() {
             "The system resumed the paired lifecycle after the original process ended."
         )
         getSystemService(JobScheduler::class.java)?.cancel(0xA1D1)
-        if (FreshProcessPairedLifecycleCoordinator.startPendingNextPair(this)) {
-            jobFinished(params, false)
-            return true
-        }
+        // The foreground optimizer service owns the active pair execution. Its
+        // START_REDELIVER_INTENT restart is the continuation mechanism after
+        // the intentional process boundary. This JobService remains only as
+        // a persisted-state fallback/observer and must not launch a second
+        // pair concurrently with the redelivered service intent.
         FreshProcessPairedLifecycleCoordinator.continueAfterFreshProcess(this) {
             jobFinished(params, false)
         }
