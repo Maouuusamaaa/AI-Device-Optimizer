@@ -166,7 +166,8 @@ class MainActivity : Activity() {
         root.addView(Button(this).apply {
             text = "Retry pending evidence uploads"
             setOnClickListener {
-                EvidenceSyncScheduler.enqueue(this@MainActivity)
+                EvidenceSyncScheduler.retryNow(this@MainActivity)
+                evidenceSyncText.text = "\nGitHub sync: manual retry queued..."
                 refreshEvidenceSyncStatus()
             }
         })
