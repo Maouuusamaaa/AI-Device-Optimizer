@@ -12,12 +12,23 @@ import java.util.concurrent.TimeUnit
 object EvidenceSyncScheduler {
     private const val UNIQUE_WORK_NAME = "github-evidence-sync"
     fun enqueue(context: Context) {
+        enqueueInternal(context, ExistingWorkPolicy.KEEP)
+    }
+
+    fun retryNow(context: Context) {
+        // Manual retry must replace a stale/pending unique work instance.
+        // KEEP can otherwise preserve an already-enqueued request indefinitely
+        // and make the UI "Retry" button a no-op.
+        enqueueInternal(context, ExistingWorkPolicy.REPLACE)
+    }
+
+    private fun enqueueInternal(context: Context, policy: ExistingWorkPolicy) {
         val request = OneTimeWorkRequestBuilder<EvidenceSyncWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
             .build()
         WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
-            UNIQUE_WORK_NAME, ExistingWorkPolicy.KEEP, request
+            UNIQUE_WORK_NAME, policy, request
         )
     }
 }
