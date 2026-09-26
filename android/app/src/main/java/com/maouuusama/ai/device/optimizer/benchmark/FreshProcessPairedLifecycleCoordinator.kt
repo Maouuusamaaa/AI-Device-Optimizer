@@ -42,12 +42,16 @@ object FreshProcessPairedLifecycleCoordinator {
     private const val CHANNEL_ID = "optimizer_monitoring"
 
     @Synchronized
-    fun start(context: Context) {
+    fun start(
+        context: Context,
+        onContinuationReady: (() -> Unit)? = null
+    ) {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
         recoverStalePairIfNeeded(appContext, prefs)
         if (prefs.getString(KEY_PAIR_ID, null) != null) {
             notifyStatus(appContext, "Paired lifecycle already running", "An existing pair is still in progress.")
+            onContinuationReady?.invoke()
             return
         }
 
@@ -55,7 +59,7 @@ object FreshProcessPairedLifecycleCoordinator {
         val completedPairs = prefs.getInt(KEY_COMPLETED_PAIRS, 0)
         val pairIndex = completedPairs + 1
         val pairId = UUID.randomUUID().toString()
-        prefs.edit()
+        val pairStatePersisted = prefs.edit()
             .putString(KEY_BATCH_ID, batchId)
             .putInt(KEY_PAIR_INDEX, pairIndex)
             .putString(KEY_PAIR_ID, pairId)
@@ -65,7 +69,12 @@ object FreshProcessPairedLifecycleCoordinator {
             .remove(KEY_RESET_PID)
             .remove(KEY_RESET_START_TICKS)
             .remove(KEY_RESET_TIMESTAMP)
-            .apply()
+            .commit()
+        if (!pairStatePersisted) {
+            notifyStatus(appContext, "Paired lifecycle stopped", "The new pair state could not be durably saved.")
+            onContinuationReady?.invoke()
+            return
+        }
 
         notifyStatus(appContext, "Paired lifecycle started", "Phase 1/2: reset-enabled arm is running. Keep the device available.")
 
@@ -89,6 +98,7 @@ object FreshProcessPairedLifecycleCoordinator {
                         "Reset evidence was saved, but durable continuation state could not be committed; the process was not killed."
                     )
                     android.util.Log.e("FreshLifecyclePair", "Could not durably commit reset continuation state")
+                    onContinuationReady?.invoke()
                     return@Thread
                 }
 
@@ -98,21 +108,31 @@ object FreshProcessPairedLifecycleCoordinator {
                         "FreshLifecyclePair",
                         "Continuation scheduling failed; process will not be killed"
                     )
+                    onContinuationReady?.invoke()
                     return@Thread
                 }
 
                 notifyStatus(appContext, "Fresh-process transition", "Continuation scheduled. The current process will now end and the control arm will resume in a new process.")
+                // When started from JobService, keep that job alive until the
+                // benchmark has scheduled the next process boundary. Otherwise
+                // jobFinished() can release the job while this thread is still
+                // running and the process may be reclaimed before continuation.
+                onContinuationReady?.invoke()
                 android.os.Process.killProcess(android.os.Process.myPid())
             } catch (error: Exception) {
                 prefs.edit().clear().apply()
                 notifyStatus(appContext, "Paired lifecycle failed", "Reset arm failed: " + error.javaClass.simpleName)
                 android.util.Log.e("FreshLifecyclePair", "Reset arm failed", error)
+                onContinuationReady?.invoke()
             }
         }.start()
     }
 
     @Synchronized
-    fun startPendingNextPair(context: Context): Boolean {
+    fun startPendingNextPair(
+        context: Context,
+        onContinuationReady: (() -> Unit)? = null
+    ): Boolean {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
         if (!prefs.getBoolean(KEY_NEXT_PAIR_PENDING, false)) return false
@@ -125,7 +145,7 @@ object FreshProcessPairedLifecycleCoordinator {
             return false
         }
         notifyStatus(appContext, "Fresh process detected", "Starting the next independent lifecycle pair.")
-        start(appContext)
+        start(appContext, onContinuationReady)
         return true
     }
 
