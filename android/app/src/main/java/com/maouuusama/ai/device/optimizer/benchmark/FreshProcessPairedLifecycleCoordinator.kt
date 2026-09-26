@@ -7,6 +7,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.app.NotificationManager
+import androidx.core.app.NotificationCompat
 import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncManager
 import org.json.JSONObject
 import java.io.File
@@ -28,11 +30,16 @@ object FreshProcessPairedLifecycleCoordinator {
     private const val MANIFEST_PREFIX = "runtime-lifecycle-pair-"
     private const val SERVICE_CLASS =
         "com.maouuusama.ai.device.optimizer.agent.OptimizerBackgroundService"
+    private const val STATUS_NOTIFICATION_ID = 1002
+    private const val CHANNEL_ID = "optimizer_monitoring"
 
     fun start(context: Context) {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-        if (prefs.getString(KEY_PAIR_ID, null) != null) return
+        if (prefs.getString(KEY_PAIR_ID, null) != null) {
+            notifyStatus(appContext, "Paired lifecycle already running", "An existing pair is still in progress.")
+            return
+        }
 
         val pairId = UUID.randomUUID().toString()
         prefs.edit()
@@ -43,11 +50,15 @@ object FreshProcessPairedLifecycleCoordinator {
             .remove(KEY_RESET_TIMESTAMP)
             .apply()
 
+        notifyStatus(appContext, "Paired lifecycle started", "Phase 1/2: reset-enabled arm is running. Keep the device available.")
+
         Thread {
             try {
+                notifyStatus(appContext, "Reset arm running", "Collecting baseline, inference, cleanup, reset, and post-reset evidence.")
                 val result = RuntimeLifecycleMemoryBenchmark(appContext)
                     .run(resetEnabled = true)
                 val file = RuntimeLifecycleMemoryBenchmarkJsonWriter.write(appContext, result)
+                notifyStatus(appContext, "Reset arm complete", "Evidence saved. Preparing a fresh-process continuation.")
                 prefs.edit()
                     .putString(KEY_RESET_FILE, file.name)
                     .putInt(KEY_RESET_PID, result.processMetadata.pid)
@@ -56,6 +67,7 @@ object FreshProcessPairedLifecycleCoordinator {
                     .apply()
 
                 if (!scheduleContinuation(appContext)) {
+                    notifyStatus(appContext, "Paired lifecycle stopped", "Continuation could not be scheduled; the process was not killed.")
                     android.util.Log.e(
                         "FreshLifecyclePair",
                         "Continuation scheduling failed; process will not be killed"
@@ -63,9 +75,11 @@ object FreshProcessPairedLifecycleCoordinator {
                     return@Thread
                 }
 
+                notifyStatus(appContext, "Fresh-process transition", "Continuation scheduled. The current process will now end and the control arm will resume in a new process.")
                 android.os.Process.killProcess(android.os.Process.myPid())
             } catch (error: Exception) {
                 prefs.edit().clear().apply()
+                notifyStatus(appContext, "Paired lifecycle failed", "Reset arm failed: " + error.javaClass.simpleName)
                 android.util.Log.e("FreshLifecyclePair", "Reset arm failed", error)
             }
         }.start()
@@ -80,8 +94,11 @@ object FreshProcessPairedLifecycleCoordinator {
         val pairId = prefs.getString(KEY_PAIR_ID, null) ?: return
         val resetFile = prefs.getString(KEY_RESET_FILE, null) ?: return
 
+        notifyStatus(appContext, "Fresh process detected", "Phase 2/2: no-reset control arm is running.")
+
         Thread {
             try {
+                notifyStatus(appContext, "No-reset control running", "Collecting the paired control evidence in the fresh process.")
                 val result = RuntimeLifecycleMemoryBenchmark(appContext)
                     .run(resetEnabled = false)
                 val controlFile = RuntimeLifecycleMemoryBenchmarkJsonWriter.write(appContext, result)
@@ -111,9 +128,11 @@ object FreshProcessPairedLifecycleCoordinator {
                     processSeparated = processSeparated
                 )
                 prefs.edit().clear().apply()
+                notifyStatus(appContext, if (processSeparated) "Paired lifecycle complete" else "Pair complete — freshness check failed", if (processSeparated) "Both arms saved. PID and process-start time differ." else "Both arms saved, but fresh-process separation was not verified.")
                 onFinished?.invoke()
                 stopServiceAndProcess(appContext)
             } catch (error: Exception) {
+                notifyStatus(appContext, "Paired lifecycle failed", "No-reset control failed: " + error.javaClass.simpleName)
                 android.util.Log.e("FreshLifecyclePair", "No-reset arm failed", error)
                 onFinished?.invoke()
                 stopServiceAndProcess(appContext)
@@ -180,6 +199,24 @@ object FreshProcessPairedLifecycleCoordinator {
             .put("interpretation", "PSS transitions are observational evidence; do not diagnose a memory leak from PSS alone.")
         file.writeText(root.toString(2))
         EvidenceSyncManager.enqueue(context, file)
+    }
+
+    fun notifyStatus(context: Context, title: String, message: String) {
+        val notification = NotificationCompat.Builder(context.applicationContext, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_menu_manage)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setOngoing(
+                title != "Paired lifecycle complete" &&
+                    title != "Pair complete — freshness check failed" &&
+                    title != "Paired lifecycle failed" &&
+                    title != "Paired lifecycle stopped"
+            )
+            .setAutoCancel(false)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+        context.getSystemService(NotificationManager::class.java).notify(STATUS_NOTIFICATION_ID, notification)
     }
 
     private fun stopServiceAndProcess(context: Context) {
