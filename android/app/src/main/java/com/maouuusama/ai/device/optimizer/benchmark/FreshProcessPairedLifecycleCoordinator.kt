@@ -1,12 +1,12 @@
 package com.maouuusama.ai.device.optimizer.benchmark
 
-import android.app.AlarmManager
 import android.app.PendingIntent
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.SystemClock
-import com.maouuusama.ai.device.optimizer.agent.OptimizerBackgroundService
 import com.maouuusama.ai.device.optimizer.sync.EvidenceSyncManager
 import org.json.JSONObject
 import java.io.File
@@ -23,7 +23,11 @@ object FreshProcessPairedLifecycleCoordinator {
     private const val KEY_RESET_START_TICKS = "reset_start_ticks"
     private const val KEY_RESET_TIMESTAMP = "reset_timestamp"
     private const val CONTINUE_DELAY_MS = 3_000L
+    private const val CONTINUE_DEADLINE_MS = 30_000L
+    private const val CONTINUE_JOB_ID = 0xA1D0
     private const val MANIFEST_PREFIX = "runtime-lifecycle-pair-"
+    private const val SERVICE_CLASS =
+        "com.maouuusama.ai.device.optimizer.agent.OptimizerBackgroundService"
 
     fun start(context: Context) {
         val appContext = context.applicationContext
@@ -51,7 +55,14 @@ object FreshProcessPairedLifecycleCoordinator {
                     .putLong(KEY_RESET_TIMESTAMP, System.currentTimeMillis())
                     .apply()
 
-                scheduleContinuation(appContext)
+                if (!scheduleContinuation(appContext)) {
+                    android.util.Log.e(
+                        "FreshLifecyclePair",
+                        "Continuation scheduling failed; process will not be killed"
+                    )
+                    return@Thread
+                }
+
                 android.os.Process.killProcess(android.os.Process.myPid())
             } catch (error: Exception) {
                 prefs.edit().clear().apply()
@@ -60,7 +71,10 @@ object FreshProcessPairedLifecycleCoordinator {
         }.start()
     }
 
-    fun continueAfterFreshProcess(context: Context) {
+    fun continueAfterFreshProcess(
+        context: Context,
+        onFinished: (() -> Unit)? = null
+    ) {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
         val pairId = prefs.getString(KEY_PAIR_ID, null) ?: return
@@ -97,16 +111,20 @@ object FreshProcessPairedLifecycleCoordinator {
                     processSeparated = processSeparated
                 )
                 prefs.edit().clear().apply()
+                onFinished?.invoke()
                 stopServiceAndProcess(appContext)
             } catch (error: Exception) {
                 android.util.Log.e("FreshLifecyclePair", "No-reset arm failed", error)
+                onFinished?.invoke()
                 stopServiceAndProcess(appContext)
             }
         }.start()
     }
 
     fun createActionPendingIntent(context: Context, action: String): PendingIntent {
-        val intent = Intent(context, OptimizerBackgroundService::class.java).setAction(action)
+        val intent = Intent()
+            .setClassName(context, SERVICE_CLASS)
+            .setAction(action)
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             PendingIntent.getForegroundService(context, action.hashCode(), intent, flags)
@@ -115,14 +133,16 @@ object FreshProcessPairedLifecycleCoordinator {
         }
     }
 
-    private fun scheduleContinuation(context: Context) {
-        val alarmManager = context.getSystemService(AlarmManager::class.java)
-        val pendingIntent = createActionPendingIntent(context, ACTION_CONTINUE)
-        alarmManager?.set(
-            AlarmManager.ELAPSED_REALTIME_WAKEUP,
-            SystemClock.elapsedRealtime() + CONTINUE_DELAY_MS,
-            pendingIntent
+    private fun scheduleContinuation(context: Context): Boolean {
+        val scheduler = context.getSystemService(JobScheduler::class.java) ?: return false
+        val jobInfo = JobInfo.Builder(
+            CONTINUE_JOB_ID,
+            ComponentName(context, FreshProcessPairedLifecycleJobService::class.java)
         )
+            .setMinimumLatency(CONTINUE_DELAY_MS)
+            .setOverrideDeadline(CONTINUE_DEADLINE_MS)
+            .build()
+        return scheduler.schedule(jobInfo) == JobScheduler.RESULT_SUCCESS
     }
 
     private fun writePairManifest(
@@ -163,7 +183,7 @@ object FreshProcessPairedLifecycleCoordinator {
     }
 
     private fun stopServiceAndProcess(context: Context) {
-        context.stopService(Intent(context, OptimizerBackgroundService::class.java))
+        context.stopService(Intent().setClassName(context, SERVICE_CLASS))
         android.os.Process.killProcess(android.os.Process.myPid())
     }
 }
