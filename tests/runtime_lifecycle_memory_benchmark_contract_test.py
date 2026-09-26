@@ -3,21 +3,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "android/app/build.gradle.kts"
-BENCH = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/benchmark/RuntimeLifecycleMemoryBenchmark.kt"
-WRITER = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/benchmark/RuntimeLifecycleMemoryBenchmarkJsonWriter.kt"
-COORDINATOR = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/benchmark/FreshProcessPairedLifecycleCoordinator.kt"
-SERVICE = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/agent/OptimizerBackgroundService.kt"
-RUNTIME = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/localai/LocalLlamaRuntime.kt"
+BENCH = ROOT / "android/app/src/main/java/com/maouuusamaaa/ai/device/optimizer/benchmark/RuntimeLifecycleMemoryBenchmark.kt"
+WRITER = ROOT / "android/app/src/main/java/com/maouuusamaaa/ai/device/optimizer/benchmark/RuntimeLifecycleMemoryBenchmarkJsonWriter.kt"
+COORDINATOR = ROOT / "android/app/src/main/java/com/maouuusamaaa/ai/device/optimizer/benchmark/FreshProcessPairedLifecycleCoordinator.kt"
+JOB_SERVICE = ROOT / "android/app/src/main/java/com/maouuusamaaa/ai/device/optimizer/benchmark/FreshProcessPairedLifecycleJobService.kt"
+SERVICE = ROOT / "android/app/src/main/java/com/maouuusamaaa/ai/device/optimizer/agent/OptimizerBackgroundService.kt"
+MANIFEST = ROOT / "android/app/src/main/AndroidManifest.xml"
+RUNTIME = ROOT / "android/app/src/main/java/com/maouuusamaaa/ai/device/optimizer/localai/LocalLlamaRuntime.kt"
 NATIVE = ROOT / "android/app/src/main/cpp/local_ai_runtime.cpp"
-QUEUE = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/sync/EvidenceQueueStore.kt"
-ACTIVITY = ROOT / "android/app/src/main/java/com/maouuusama/ai/device/optimizer/MainActivity.kt"
+QUEUE = ROOT / "android/app/src/main/java/com/maouuusamaaa/ai/device/optimizer/sync/EvidenceQueueStore.kt"
+ACTIVITY = ROOT / "android/app/src/main/java/com/maouuusamaaa/ai/device/optimizer/MainActivity.kt"
 
 def main():
     build = BUILD.read_text()
     bench = BENCH.read_text()
     writer = WRITER.read_text()
     coordinator = COORDINATOR.read_text()
+    job_service = JOB_SERVICE.read_text()
     service = SERVICE.read_text()
+    manifest = MANIFEST.read_text()
     runtime = RUNTIME.read_text()
     native = NATIVE.read_text()
     queue = QUEUE.read_text()
@@ -42,9 +46,9 @@ def main():
     assert "reset_before" in bench
     assert "reset_native_completed" in bench
     assert "post_reset_start" in bench
-    assert "post_cleanup" in bench
     assert "monotonicElapsedMs" in bench
     assert 'collect("post_reset"' in bench
+
     assert "runtime_lifecycle_memory_observation" in writer
     assert '.put("schemaVersion", 5)' in writer
     assert '"resetEnabled"' in writer
@@ -62,16 +66,27 @@ def main():
     assert "RuntimeLifecycleMemoryBenchmark(appContext)" in coordinator
     assert ".run(resetEnabled = true)" in coordinator
     assert ".run(resetEnabled = false)" in coordinator
-    assert "AlarmManager.ELAPSED_REALTIME_WAKEUP" in coordinator
-    assert "PendingIntent.getForegroundService" in coordinator
+    assert "JobScheduler" in coordinator
+    assert "JobInfo.Builder" in coordinator
+    assert "RESULT_SUCCESS" in coordinator
     assert "Process.killProcess" in coordinator
     assert "processSeparatedByPidAndStartTime" in coordinator
     assert "runtime-lifecycle-pair-" in coordinator
+    assert "onFinished" in coordinator
+    assert "Continuation scheduling failed; process will not be killed" in coordinator
+
+    assert "JobService" in job_service
+    assert "onStartJob" in job_service
+    assert "jobFinished(params, false)" in job_service
+    assert "continueAfterFreshProcess" in job_service
 
     assert "FreshProcessPairedLifecycleCoordinator.ACTION_START" in service
     assert "FreshProcessPairedLifecycleCoordinator.ACTION_CONTINUE" in service
     assert '"Run fresh-process pair"' in service
     assert ".addAction(" in service
+
+    assert "FreshProcessPairedLifecycleJobService" in manifest
+    assert 'android.permission.BIND_JOB_SERVICE' in manifest
 
     assert "nativeResetRuntime" in runtime
     assert "nativeResetRuntime(): Long" in runtime
