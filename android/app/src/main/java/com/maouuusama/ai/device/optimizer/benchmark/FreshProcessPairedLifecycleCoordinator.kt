@@ -238,32 +238,47 @@ object FreshProcessPairedLifecycleCoordinator {
         scheduler.cancel(CONTINUE_JOB_ID)
         scheduler.cancel(CONTINUE_FALLBACK_JOB_ID)
 
-        val expedited = JobInfo.Builder(
-            CONTINUE_JOB_ID,
-            ComponentName(context, FreshProcessPairedLifecycleJobService::class.java)
-        )
-            .setMinimumLatency(CONTINUE_DELAY_MS)
-            .apply {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    setExpedited(true)
-                }
-            }
-            .build()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                // Expedited jobs are intentionally not given a minimum latency.
+                // Android restricts expedited JobInfo configuration; invalid
+                // combinations can throw IllegalArgumentException during build.
+                val expedited = JobInfo.Builder(
+                    CONTINUE_JOB_ID,
+                    ComponentName(context, FreshProcessPairedLifecycleJobService::class.java)
+                )
+                    .setExpedited(true)
+                    .build()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            scheduler.schedule(expedited) == JobScheduler.RESULT_SUCCESS
-        ) {
-            return true
+                if (scheduler.schedule(expedited) == JobScheduler.RESULT_SUCCESS) {
+                    return true
+                }
+            } catch (error: IllegalArgumentException) {
+                android.util.Log.w(
+                    "FreshLifecyclePair",
+                    "Expedited continuation JobInfo was rejected; using regular fallback",
+                    error
+                )
+            }
         }
 
-        val fallback = JobInfo.Builder(
-            CONTINUE_FALLBACK_JOB_ID,
-            ComponentName(context, FreshProcessPairedLifecycleJobService::class.java)
-        )
-            .setMinimumLatency(CONTINUE_DELAY_MS)
-            .setOverrideDeadline(CONTINUE_DEADLINE_MS)
-            .build()
-        return scheduler.schedule(fallback) == JobScheduler.RESULT_SUCCESS
+        return try {
+            val fallback = JobInfo.Builder(
+                CONTINUE_FALLBACK_JOB_ID,
+                ComponentName(context, FreshProcessPairedLifecycleJobService::class.java)
+            )
+                .setMinimumLatency(CONTINUE_DELAY_MS)
+                .setOverrideDeadline(CONTINUE_DEADLINE_MS)
+                .build()
+            scheduler.schedule(fallback) == JobScheduler.RESULT_SUCCESS
+        } catch (error: IllegalArgumentException) {
+            android.util.Log.e(
+                "FreshLifecyclePair",
+                "Regular continuation JobInfo was rejected",
+                error
+            )
+            false
+        }
     }
 
     private fun recoverStalePairIfNeeded(context: Context, prefs: android.content.SharedPreferences) {
