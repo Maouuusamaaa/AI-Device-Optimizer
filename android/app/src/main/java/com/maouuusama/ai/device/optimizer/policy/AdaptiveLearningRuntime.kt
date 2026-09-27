@@ -34,11 +34,16 @@ class AdaptiveLearningRuntime(
     )
         private set
 
+    private fun publish(result: AdaptiveLearningRunResult): AdaptiveLearningRunResult {
+        lastResult = result
+        AdaptiveLearningRuntimeRegistry.lastResult = result
+        return result
+    }
+
     fun processAvailable(): AdaptiveLearningRunResult {
         val current = knowledgeStore.load()
         if (!resourceGuard.mayProcess()) {
-            return AdaptiveLearningRunResult(0, 0, current.candidates().size, true, current.stateFingerprint)
-                .also { lastResult = it }
+            return publish(AdaptiveLearningRunResult(0, 0, current.candidates().size, true, current.stateFingerprint))
         }
 
         val records = historyStore.snapshot()
@@ -47,8 +52,7 @@ class AdaptiveLearningRuntime(
             .take(maxRecordsPerPass)
 
         if (records.isEmpty()) {
-            return AdaptiveLearningRunResult(0, 0, current.candidates().size, false, current.stateFingerprint)
-                .also { lastResult = it }
+            return publish(AdaptiveLearningRunResult(0, 0, current.candidates().size, false, current.stateFingerprint))
         }
 
         val next = current.apply(records)
@@ -60,7 +64,6 @@ class AdaptiveLearningRuntime(
             deferred = false,
             stateFingerprint = next.stateFingerprint
         )
-        lastResult = result
-        return result
+        return publish(result)
     }
 }
