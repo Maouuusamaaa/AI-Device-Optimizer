@@ -66,7 +66,7 @@ The action engine must be capability-based and policy-controlled. Monitoring sho
 
 ## Development Status
 
-Current milestone: 0.1.15 — Cloud Advisor + Local Policy Simulation.
+Current milestone: 0.1.16 — Offline Evaluation + Persistent Outcome History.
 
 Completed through 0.1.14:
 
@@ -105,6 +105,19 @@ Completed in 0.1.15:
 Cloud Advisor output remains untrusted candidate data. This milestone establishes the advisory and local-simulation boundary; it does not grant cloud output execution authority.
 
 The primary mobile development path remains Termux + Shizuku/Rish on the physical Android device, with PC + ADB as an optional fallback.
+
+Completed in 0.1.16:
+
+- deterministic offline replay of paired measurement evidence using the existing evidence measurement classifier
+- versioned offline evaluation dataset contract with unique case IDs
+- deterministic dataset fingerprints and evaluation IDs
+- preservation of INVALID_EVIDENCE and INSUFFICIENT_EVIDENCE classifications
+- per-case evidence provenance in evaluation reports
+- append-only JSONL evaluation outcome history with duplicate suppression and fail-closed malformed-history handling
+- end-to-end offline evaluation fixture validation in Measurement Validation CI
+- no policy selection, action ranking, causal effectiveness claim, or device mutation introduced
+
+Offline evaluation remains descriptive. Its outcome history is prepared as a future input boundary for Adaptive Learning, not as an authorization mechanism.
 
 ## Research Direction
 
