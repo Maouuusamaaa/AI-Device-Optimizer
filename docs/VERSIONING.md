@@ -49,6 +49,8 @@ A milestone should normally have:
 
 The exact acceptance criteria may differ by milestone and must be documented in the relevant experiment or release record.
 
+For 0.1.15, the required real-device evidence is the existing P661N/API33 regression fixture; no new optimization benefit is claimed.
+
 ## Android versionCode
 
 Android `versionCode` is different from the project's milestone label. Android uses it to determine whether one APK is a newer application update than another.
@@ -66,27 +68,44 @@ An internal CI build may therefore have the same `versionName` as the active mil
 
 The repository currently declares:
 
-- `versionName = 0.1.14`
-- `versionCode = 14`
+- `versionName = 0.1.15`
+- `versionCode = 15`
 
-Milestone 0.1.14 is the Evidence/Measurement Hardening milestone. Its implementation was merged after CI validation, and the required P661N/API33 evidence was validated without enabling mutation. No Cloud AI Advisor or new optimization action is introduced by this release.
+Milestone 0.1.15 is Cloud Advisor + Local Policy Simulation.
+
+The milestone adds an advisory-only Cloud Advisor contract, local Cloud Policy Candidate validation, deterministic local Policy Simulation through the existing dry-run pipeline, provenance linkage, and fail-closed safety/contract tests.
+
+Cloud output cannot directly execute actions, bypass the Safety Gate, change the local allowlist, or enable device mutation. No new privileged capability or adaptive learning loop is introduced.
+
+## Previous State
+
+Milestone 0.1.14 was Evidence/Measurement Hardening:
+
+- deterministic evidence contract validation for schema versions 1 and 2;
+- comparable device/workload pairing with fail-closed insufficient-evidence handling;
+- deterministic NO_REGRESSION / REGRESSION / MIXED classification;
+- canonical SHA-256 provenance and append-only analysis history;
+- P661N/API33 evidence validation;
+- no optimization mutation or Cloud AI bypass.
 
 ## Example Workflow
 
 ```text
-Milestone 0.1.13
+Milestone 0.1.14
   |
-  +-- commit: diagnostic implementation
-  +-- commit: benchmark fix
-  +-- PR: lifecycle diagnostic
+  +-- evidence/measurement hardening
   +-- CI validation
-  +-- physical-device experiment
-  +-- evidence analysis
-  |
   +-- milestone accepted
           |
           v
-      define 0.1.14
+      define 0.1.15
+          |
+          +-- Cloud Advisor contract
+          +-- local candidate validation
+          +-- Policy Simulation
+          +-- Safety Gate boundary
+          +-- CI validation
+          +-- milestone accepted
 ```
 
 The repository's source of truth remains Git history, while the version label communicates the validated milestone state.
