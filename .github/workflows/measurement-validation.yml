@@ -30,6 +30,7 @@ jobs:
           python -m py_compile scripts/controlled-experiment-runner.py
           python -m py_compile scripts/evidence_measurement.py
           python -m py_compile scripts/offline_evaluation.py
+          python -m py_compile scripts/adaptive_learning.py
       - name: Run controlled observation analyzer tests
         run: python tests/controlled_observation_analyzer_test.py
       - name: Run evidence measurement tests
@@ -38,6 +39,8 @@ jobs:
         run: python tests/offline_evaluation_test.py
       - name: Run adaptive learning tests
         run: python tests/adaptive_learning_test.py
+      - name: Run adaptive learning persistence tests
+        run: python tests/adaptive_learning_persistence_test.py
       - name: Run offline evaluation fixture
         run: |
           python scripts/offline_evaluation.py \
