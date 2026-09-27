@@ -142,7 +142,24 @@ unless `gameModeProviderAvailable` is also true.
 
 Runtime validation on the itel P661N/API 33 confirmed provider availability,
 a non-null package set, matching checked-package serialization, and a null
-provider error in schema version 4. A separate UI toggle validation is required
-before treating the checked-state mapping as device-proven semantics rather than
-just a validated parser contract.
+provider error in schema version 4.
 
+A controlled UI toggle validation was then performed for Minecraft
+(package `com.mojang.minecraftpe`) using the SmartPanel Game Management UI:
+
+1. With the Minecraft toggle ON, the application snapshot contained
+   `com.mojang.minecraftpe` in `gameModeCheckedPackages`.
+2. After switching the toggle OFF and waiting for a new monitor snapshot,
+   `com.mojang.minecraftpe` remained in the provider's game list but was
+   absent from `gameModeCheckedPackages`.
+3. After switching the toggle ON again and waiting for another monitor
+   snapshot, `com.mojang.minecraftpe` was again present in
+   `gameModeCheckedPackages`.
+
+The observed ON → OFF → ON sequence provides device-level evidence that the
+provider's checked-state field, as conservatively parsed by the reader,
+tracks the SmartPanel Game Management toggle for Minecraft on this
+itel P661N/API 33 build. This is an observational correlation on one tested
+device/build; it does not establish semantics for every Transsion/itel build
+and does not authorize mutation. The reader remains read-only and the local
+Safety Gate remains authoritative.
