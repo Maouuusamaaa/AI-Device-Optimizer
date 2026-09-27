@@ -58,6 +58,16 @@ def test_valid_contract():
     assert result["errors"] == []
 
 
+def test_existing_p661n_evidence_contract():
+    path = Path(__file__).resolve().parents[1] / "benchmarks" / "results" / "baseline-monitor_foreground_idle-1790164000328.json"
+    record = json.loads(path.read_text(encoding="utf-8"))
+    result = validate_evidence(record)
+    assert result["valid"] is True
+    assert record["schemaVersion"] == 2
+    assert record["device"]["androidApi"] == 33
+    assert record["device"]["model"] == "itel P661N"
+
+
 def test_invalid_contracts_fail_closed():
     invalid = evidence()
     del invalid["schemaVersion"]
