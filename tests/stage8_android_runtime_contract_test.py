@@ -16,8 +16,8 @@ def main():
     runtime = RUNTIME.read_text(encoding="utf-8")
     model = MODEL.read_text(encoding="utf-8")
 
-    assert re.search(r'versionName = "[0-9]+\\.[0-9]+\\.[0-9]+"', build)
-    version_code = re.search(r'versionCode = (\\d+)', build)
+    assert re.search(r'versionName = "[0-9]+\.[0-9]+\.[0-9]+"', build)
+    version_code = re.search(r"versionCode = (\d+)", build)
     assert version_code and int(version_code.group(1)) >= 13
     assert 'ndkVersion = "27.2.12479018"' in build
     assert 'path = file("src/main/cpp/CMakeLists.txt")' in build
