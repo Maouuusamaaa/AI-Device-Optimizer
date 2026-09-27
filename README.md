@@ -66,7 +66,7 @@ The action engine must be capability-based and policy-controlled. Monitoring sho
 
 ## Development Status
 
-Current milestone: 0.1.13 — real-device local inference validation and controlled lifecycle diagnostics.
+Current milestone: 0.1.14 — Evidence/Measurement Hardening.
 
 Completed through the current milestone:
 
@@ -81,11 +81,21 @@ Completed through the current milestone:
 - explicit non-diagnosis of memory leak from PSS alone
 - lifecycle investigation closed without production runtime changes or a version bump
 
+Completed in 0.1.14:
+
+- deterministic evidence contract validation for schema versions 1 and 2
+- comparable device/workload pairing with fail-closed insufficient-evidence handling
+- deterministic NO_REGRESSION / REGRESSION / MIXED classification
+- canonical SHA-256 provenance and append-only analysis history
+- Measurement Validation CI coverage for the hardened evidence layer
+- validation of existing itel P661N / Android API 33 benchmark evidence
+- no new optimization mutation, privileged operation, or Cloud AI bypass
+
 The current lifecycle diagnostic remains an observational/regression tool. Its evidence does not authorize optimization mutations, and no production action is inferred from the mixed result.
 
 The primary mobile development path remains Termux + Shizuku/Rish on the physical Android device, with PC + ADB as an optional fallback.
 
-The next milestone should be defined separately from 0.1.13. No new versionName is implied until its implementation scope, automated validation, required real-device evidence, and acceptance criteria are explicitly defined.
+The next milestone should be defined separately from 0.1.14 after release validation is complete.
 
 ## Research Direction
 
