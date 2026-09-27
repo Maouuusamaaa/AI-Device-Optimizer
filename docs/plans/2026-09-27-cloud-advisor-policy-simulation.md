@@ -74,11 +74,11 @@ The validator must:
 - require supported schema;
 - require non-empty evidence/policy/action identifiers;
 - require finite numeric confidence where used;
-- reject unknown action IDs using the local allowlist;
+- validate action identifiers structurally; authoritative unknown-action rejection occurs locally in Android through the existing ActionCatalog;
 - reject authorization/bypass fields rather than treating them as authority;
 - return a normalized advisory-only report with no executable authorization.
 
-Use the repository's existing `ActionCatalog` IDs as the Android-side allowlist source; do not create a second action catalog in Python.
+Use the repository's existing `ActionCatalog` as the Android-side allowlist source. The Python contract validator must not become an authorization layer or duplicate the Android action catalog.
 
 - [ ] **Step 4: Verify the focused pass**
 
