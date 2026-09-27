@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-27  
 **Target milestone:** 0.1.17  
-**Status:** Design approved by user; implementation not yet started
+**Status:** Implemented and validated in milestone 0.1.17
 
 ## 1. Goal
 
