@@ -1,7 +1,7 @@
 # Evidence/Measurement Hardening Design
 
 **Milestone:** 0.1.14  
-**Status:** Design approved for implementation planning; release/version bump is not part of this design commit.  
+**Status:** Accepted and released after implementation and CI validation.  
 **Baseline:** 0.1.13, whose controlled lifecycle investigation is closed as MIXED and did not establish reset-specific causality.
 
 ## 1. Goal
@@ -125,6 +125,8 @@ is introduced or strengthened.
 The existing measure-before-optimize and reversible-action principles remain unchanged.
 
 ## 8. Testing strategy
+
+The implementation commit passed Measurement Validation, Android CI, AI Cloud Validation, and Local Llama Android Validation. The existing P661N/API33 benchmark evidence is validated by the contract suite without enabling production mutation.
 
 ### Contract tests
 
