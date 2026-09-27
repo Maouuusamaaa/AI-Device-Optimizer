@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-27
 **Target milestone:** 0.1.18
-**Status:** Proposed for implementation
+**Status:** Implemented and validated
 
 ## 1. Goal
 
