@@ -68,3 +68,30 @@ Baseline and workload observations should be matched by workload and device cond
 The current 2026-09-22 workload evidence is recorded in `benchmarks/results/2026-09-22-workload-benchmark-evidence.md`.
 
 No system mutation is performed by either analyzer.
+
+
+## 0.1.14 Evidence/Measurement Hardening
+
+The repository now provides `scripts/evidence_measurement.py` as a deterministic
+measurement-only contract layer.
+
+It validates benchmark evidence for schema versions 1 and 2, resolves pairs only
+when device identity, Android API level, workload, and schema compatibility are
+present, computes descriptive metric deltas, and classifies results as:
+
+- `NO_REGRESSION`
+- `REGRESSION`
+- `MIXED`
+- `INSUFFICIENT_EVIDENCE`
+- `INVALID_EVIDENCE`
+
+The current Android `BenchmarkJsonWriter` emits schema version 2. The canonical
+`benchmarks/schema.json` therefore accepts both version 1 and version 2 so
+historical evidence remains readable while current device evidence is valid.
+
+Analysis records contain canonical SHA-256 provenance for their source evidence
+and an analysis identifier. History is append-only; an existing analysis
+identifier is never overwritten.
+
+A classification is diagnostic evidence only. It does not authorize an action,
+invoke the Action Engine, or diagnose a memory leak from PSS/RSS alone.

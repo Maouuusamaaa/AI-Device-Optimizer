@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "purpose": "Deterministic measurement-only regression rules.",
+  "rules": {
+    "availableRamDecreasePct": -5.0,
+    "pssIncreasePct": 20.0
+  },
+  "notes": [
+    "Thresholds classify observed metric changes; they do not authorize optimization.",
+    "PSS/RSS changes alone are not a memory-leak diagnosis.",
+    "Conflicting evidence should be represented as MIXED when metric semantics are contradictory."
+  ]
+}
