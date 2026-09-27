@@ -15,6 +15,8 @@ class AdaptiveLearningKnowledgeStore private constructor(
     constructor(context: Context) : this(File(context.filesDir, FILE_NAME), Unit)
     constructor(file: File) : this(file, Unit)
 
+    fun exists(): Boolean = stateFile.exists()
+
     fun load(): AdaptiveLearningKnowledgeState {
         if (!stateFile.exists()) return AdaptiveLearningKnowledgeState.empty()
         try {
