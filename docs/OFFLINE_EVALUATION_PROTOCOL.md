@@ -34,4 +34,4 @@ This history stores evaluation outcomes and provenance, not fabricated action-ef
 
 Existing physical-device history and the P661N/API33 evidence remain descriptive/regression fixtures. DRY_RUN observations do not become causal action-effect evidence merely because offline replay is available.
 
-The next Adaptive Learning milestone may consume this history only after defining explicit outcome semantics, minimum sample requirements, confounder handling, validation/holdout rules, and a separate safety review.
+Milestone 0.1.17 now consumes this history through a deterministic local learning-record boundary. The learner requires explicit minimum evidence, preserves descriptive classifications, rejects invalid evidence, abstains on insufficient evidence, and preserves experiment lineage during deterministic train/validation/test splitting. Learning remains advisory-only; it does not establish causal effectiveness or authorize policy selection/execution.

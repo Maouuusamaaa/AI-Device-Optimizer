@@ -66,7 +66,7 @@ The action engine must be capability-based and policy-controlled. Monitoring sho
 
 ## Development Status
 
-Current milestone: 0.1.16 — Offline Evaluation + Persistent Outcome History.
+Current milestone: 0.1.17 — Adaptive Learning Foundation.
 
 Completed through 0.1.14:
 
@@ -128,3 +128,18 @@ Relevant areas include Android performance and health telemetry, on-device AI, c
 ## License
 
 License will be selected before the first distributable release.
+
+
+Completed in 0.1.17:
+
+- deterministic local adaptive-learning records derived only from validated evaluation outputs
+- versioned feature extraction for validated RAM/PSS/CPU evidence and device/workload identity
+- persistent, deterministic, idempotent local Knowledge State
+- minimum-evidence abstention and conservative candidate eligibility
+- provenance-bearing advisory candidate generation with no execution authorization
+- deterministic experiment-lineage-preserving train/validation/test splitting
+- atomic Knowledge State persistence and fail-closed recovery
+- resource-aware incremental processing with no network requirement
+- Measurement Validation CI coverage for adaptive learning and persistence
+- Android background monitoring remains the always-on local processing loop; learning remains advisory-only and downstream of measurement/history
+- no automatic policy selection, ActionCatalog mutation, Safety Gate bypass, permission escalation, or device mutation

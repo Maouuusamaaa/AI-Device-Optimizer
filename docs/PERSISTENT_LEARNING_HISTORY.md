@@ -35,3 +35,16 @@ The history is logically append-only. Existing records are parsed before appendi
 The evaluation history therefore records what the evaluator concluded from stored evidence, not what an optimization supposedly caused on a physical device.
 
 Before historical data can influence optimization, a later milestone must define versioned features, explicit outcome labels, minimum sample requirements, confounder handling, validation/holdout rules, and a safety review.
+
+
+## 0.1.17 Local Adaptive Learning
+
+The 0.1.17 Local Learner consumes validated evaluation-derived learning records and maintains a deterministic materialized Knowledge State.
+
+The Knowledge State is not a replacement for history. It contains processed evidence IDs, bounded feature statistics, device/workload patterns, abstention metadata, candidate eligibility, and a state fingerprint. It can be rebuilt from valid persistent history.
+
+The learner is always-on in the resource-aware sense: it can process new records automatically in bounded local batches, but it does not run continuous high-CPU retraining.
+
+Knowledge updates are idempotent. Invalid evidence is rejected, insufficient evidence abstains, and candidate output cannot authorize execution.
+
+Persistence uses atomic replacement so a failed update does not intentionally replace the last valid state.
