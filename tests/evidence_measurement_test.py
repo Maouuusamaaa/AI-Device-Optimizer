@@ -17,6 +17,7 @@ from evidence_measurement import (  # noqa: E402
     create_provenance_record,
     resolve_pair,
     validate_evidence,
+    append_history_record,
 )
 
 
@@ -112,6 +113,8 @@ def test_classifier_fail_closed_and_deterministic():
 
     assert classify_comparison({"comparable": False}, {})["classification"] == "INSUFFICIENT_EVIDENCE"
     assert classify_comparison({"comparable": True, "metrics": {"availableRamMbPct": -1}}, {"version": 1, "rules": {}})["classification"] == "NO_REGRESSION"
+    assert classify_comparison({"comparable": True, "metrics": {"availableRamMbPct": -6, "pssKbPct": 25}}, {"version": 1, "rules": {}})["classification"] == "REGRESSION"
+    assert classify_comparison({"comparable": True, "metrics": {"availableRamMbPct": -6, "pssKbPct": -25}}, {"version": 1, "rules": {}})["classification"] == "MIXED"
 
 
 def test_provenance_is_audit_record_only():
@@ -123,12 +126,23 @@ def test_provenance_is_audit_record_only():
     record = create_provenance_record(base, variant, comparison, classification, rules_version=1)
 
     assert record["recordType"] == "evidence-analysis"
+    assert record["analysisId"]
     assert record["classification"] == classification["classification"]
     assert record["sourceEvidence"]["baselineSha256"]
     assert record["sourceEvidence"]["variantSha256"]
     assert "action" not in record
     assert "command" not in record
     assert "authorization" not in record
+
+    history_path = Path(__file__).resolve().parent / "_tmp_evidence_history.jsonl"
+    try:
+        first = append_history_record(str(history_path), record)
+        second = append_history_record(str(history_path), record)
+        assert first["appended"] is True
+        assert second["duplicate"] is True
+        assert len(history_path.read_text(encoding="utf-8").splitlines()) == 1
+    finally:
+        history_path.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
