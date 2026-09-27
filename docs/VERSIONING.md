@@ -53,6 +53,12 @@ For 0.1.15, the required real-device evidence is the existing P661N/API33 regres
 
 For 0.1.16, the required validation is deterministic offline replay plus the existing Android/P661N regression fixture. No new physical-device optimization benefit or causal action effect is claimed.
 
+For 0.1.17, the required validation is deterministic adaptive-learning contract coverage, persistent Knowledge State recovery, lineage-safe splitting, and resource-aware processing. The learner remains advisory-only.
+
+For 0.1.18, the required validation is Android-native runtime integration, bounded background processing, and diagnostic validation for missing, valid, and corrupt Knowledge State. The runtime remains advisory-only.
+
+For 0.1.19, the required validation is read-only SmartPanel Game Mode provider access, evidence-contract coverage, release/native CI validation, and controlled ON → OFF → ON UI correlation on the itel P661N/API33 test device. The result is observational and does not authorize Game Mode mutation.
+
 ## Android versionCode
 
 Android `versionCode` is different from the project's milestone label. Android uses it to determine whether one APK is a newer application update than another.
@@ -70,12 +76,28 @@ An internal CI build may therefore have the same `versionName` as the active mil
 
 The repository currently declares:
 
-- `versionName = 0.1.17`
-- `versionCode = 17`
+- `versionName = 0.1.19`
+- `versionCode = 19`
 
-Milestone 0.1.17 is Adaptive Learning Foundation.
+Milestone 0.1.19 is SmartPanel Game Mode Read-Only Evidence.
 
-The milestone adds deterministic local learning records, persistent idempotent Knowledge State, minimum-evidence abstention, lineage-preserving deterministic splits, atomic state persistence, and resource-aware always-on processing. It does not enable automatic policy selection, action ranking, device mutation, or causal effectiveness claims.
+The milestone adds read-only SmartPanel Game Mode evidence on supported Transsion/itel builds, separates provider availability from configured and checked package sets, validates conservative checked-state parsing, and records the evidence in the existing snapshot contract.
+
+A controlled ON → OFF → ON UI validation was completed for Minecraft on the itel P661N / Android 13 API 33 test device. The observed provider state tracked the SmartPanel Game Management toggle across all three states. This is an observational device/build result, not a universal SmartPanel semantic guarantee.
+
+The milestone does not add Game Mode mutation, privileged write permissions, Action Engine integration, Safety Gate bypass, or SmartPanel APK modification.
+
+Milestone 0.1.18 preceded 0.1.19 and integrated the Android-native adaptive-learning runtime with bounded processing and Knowledge State diagnostics. It remained advisory-only.
+
+Milestone 0.1.17 was Adaptive Learning Foundation:
+
+- deterministic local learning records;
+- persistent idempotent Knowledge State;
+- minimum-evidence abstention;
+- lineage-preserving deterministic splits;
+- atomic state persistence;
+- resource-aware always-on processing;
+- no automatic policy selection, action ranking, device mutation, or causal effectiveness claims.
 
 Milestone 0.1.15 remains Cloud Advisor + Local Policy Simulation and established the advisory-only cloud boundary.
 
@@ -85,13 +107,13 @@ Cloud output cannot directly execute actions, bypass the Safety Gate, change the
 
 ## Previous State
 
-Milestone 0.1.15 was Cloud Advisor + Local Policy Simulation:
+Milestone 0.1.16 was Offline Evaluation + Persistent Outcome History:
 
-- advisory-only Cloud Advisor response contract;
-- local Cloud Policy Candidate validation;
-- deterministic local Policy Simulation through the existing dry-run pipeline;
-- provenance linkage through evidenceId, advisorVersion, and policyId;
-- no Cloud-to-Action bypass or new privileged capability.
+- deterministic offline evidence replay;
+- evaluation fingerprints and provenance;
+- persistent evaluation outcome history;
+- CI fixture validation;
+- no policy selection, action ranking, causal action-effect claim, or device mutation.
 
 Milestone 0.1.14 was Evidence/Measurement Hardening:
 
@@ -137,8 +159,27 @@ Milestone 0.1.14
           +-- persistent Knowledge State
           +-- abstention and minimum evidence
           +-- lineage-preserving deterministic splits
-          +-- resource-aware always-on processing
+          +-- resource-aware processing
           +-- CI validation
+          +-- milestone accepted
+          |
+          v
+      0.1.18
+          |
+          +-- Android adaptive-learning runtime
+          +-- bounded background processing
+          +-- Knowledge State diagnostics
+          +-- Android/CI validation
+          +-- milestone accepted
+          |
+          v
+      0.1.19
+          |
+          +-- SmartPanel Game Mode read-only evidence
+          +-- evidence contract tests
+          +-- real-device ON/OFF/ON validation
+          +-- CI/native validation
+          +-- milestone accepted
 ```
 
 The repository's source of truth remains Git history, while the version label communicates the validated milestone state.
