@@ -314,7 +314,7 @@ def split_learning_records(
             bucket = "validation"
         else:
             bucket = "test"
-        buckets[bucket].extend(groups[lineage])
+        buckets[bucket].extend(sorted(groups[lineage], key=lambda item: item["evidenceId"]))
 
     return buckets
 
