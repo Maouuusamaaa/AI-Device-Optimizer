@@ -7,7 +7,7 @@ diagnostic evidence without authorizing device mutation.
 
 ## Pipeline
 
-`Raw Evidence → Contract Validation → Comparable Pair → Descriptive Comparison → Regression Classification → Provenance/History → Safety Gate Input`
+`Raw Evidence → Contract Validation → Comparable Pair → Descriptive Comparison → Regression Classification → Provenance/History → Cloud Advisor Context → Local Policy Simulation → Safety Gate Input`
 
 ## Supported evidence
 
@@ -78,6 +78,27 @@ Every analysis record contains:
 
 History is append-only. Duplicate analysis IDs are rejected without replacing
 the original record.
+
+## Cloud Advisor boundary
+
+The 0.1.15 Cloud Advisor layer uses validated evidence context for advisory
+reasoning only. Cloud output is untrusted candidate data and must pass local
+contract validation and Policy Simulation before the Safety Gate can evaluate it.
+
+The linkage is:
+
+`evidenceId → advisorVersion → policyId → simulation result → local safety decision`
+
+Cloud output cannot:
+
+- authorize a candidate action;
+- alter the local ActionCatalog;
+- change local safety constraints;
+- enable device mutation;
+- replace local measurement evidence.
+
+If the cloud is unavailable, the local measurement and dry-run policy path remains
+usable.
 
 ## Safety boundary
 
