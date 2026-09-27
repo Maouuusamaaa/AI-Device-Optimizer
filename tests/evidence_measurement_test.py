@@ -21,9 +21,9 @@ from evidence_measurement import (  # noqa: E402
 )
 
 
-def evidence(workload="idle", model="P661N", api=33, pss=10000, timestamp=1000):
+def evidence(workload="idle", model="P661N", api=33, pss=10000, timestamp=1000, schema_version=1):
     return {
-        "schemaVersion": 1,
+        "schemaVersion": schema_version,
         "timestampMs": timestamp,
         "workload": workload,
         "device": {"androidApi": api, "manufacturer": "itel", "model": model},
@@ -50,6 +50,10 @@ def evidence(workload="idle", model="P661N", api=33, pss=10000, timestamp=1000):
 
 def test_valid_contract():
     result = validate_evidence(evidence())
+    assert result["valid"] is True
+    assert result["errors"] == []
+
+    result = validate_evidence(evidence(schema_version=2))
     assert result["valid"] is True
     assert result["errors"] == []
 
@@ -126,6 +130,7 @@ def test_provenance_is_audit_record_only():
     record = create_provenance_record(base, variant, comparison, classification, rules_version=1)
 
     assert record["recordType"] == "evidence-analysis"
+    assert record["schemaVersion"] == 1
     assert record["analysisId"]
     assert record["classification"] == classification["classification"]
     assert record["sourceEvidence"]["baselineSha256"]
