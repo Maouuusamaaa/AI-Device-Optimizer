@@ -11,7 +11,13 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+from pathlib import Path
+import sys
 from typing import Any
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 EVALUATION_SCHEMA_VERSION = 1
 EVALUATOR_VERSION = 1
@@ -227,6 +233,15 @@ def evaluate_holdout(
     from adaptive_learning import generate_candidates
 
     candidates = generate_candidates(train_state)
+    candidate_patterns = [
+        pattern for pattern in train_state.get("patterns", [])
+        if pattern.get("eligible")
+    ]
+    candidate_pattern_by_evidence = {
+        evidence_id: pattern
+        for pattern in candidate_patterns
+        for evidence_id in pattern.get("supportingEvidenceIds", [])
+    }
     grouped: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
     for record in holdout_records:
         normalized = copy.deepcopy(record)
@@ -235,12 +250,12 @@ def evaluate_holdout(
     results: list[dict[str, Any]] = []
     for candidate in candidates:
         policy_id = candidate.get("policyId")
-        matching = [
-            record
-            for key, records in grouped.items()
-            if key[-1] == policy_id
-            for record in records
-        ]
+        anchor_evidence_id = candidate["supportingEvidenceIds"][0]
+        pattern = candidate_pattern_by_evidence.get(anchor_evidence_id)
+        if pattern is None:
+            raise EvaluationHardeningError("candidate provenance does not map to a train pattern")
+        candidate_key = _pattern_key(pattern)
+        matching = list(grouped.get(candidate_key, []))
         outcomes = [
             create_descriptive_outcome(
                 record,
