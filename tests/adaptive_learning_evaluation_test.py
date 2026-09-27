@@ -141,6 +141,31 @@ class AdaptiveLearningEvaluationTest(unittest.TestCase):
             "CONTEXT_INCOMPLETE",
         )
 
+
+    def test_holdout_matching_requires_full_pattern_identity(self):
+        train_records = [
+            adaptive.create_learning_record(record(f"train-{i}"))
+            for i in range(3)
+        ]
+        train_state = adaptive.update_knowledge_state(
+            adaptive.empty_knowledge_state(),
+            train_records,
+        )
+        different_workload = record("holdout-1")
+        different_workload["workload"] = "idle"
+        different_workload["variantContext"]["gameModeChecked"] = False
+        different_workload_2 = record("holdout-2")
+        different_workload_2["workload"] = "idle"
+        different_workload_2["variantContext"]["gameModeChecked"] = False
+        report = evaluation.evaluate_holdout(
+            train_state,
+            [different_workload, different_workload_2],
+        )
+        self.assertEqual(
+            report["results"][0]["holdoutStatus"],
+            "INSUFFICIENT_HOLDOUT",
+        )
+
     def test_holdout_minimum_is_enforced(self):
         train_records = [
             adaptive.create_learning_record(record(f"train-{i}"))
