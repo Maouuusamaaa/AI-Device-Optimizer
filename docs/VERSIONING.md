@@ -70,12 +70,12 @@ An internal CI build may therefore have the same `versionName` as the active mil
 
 The repository currently declares:
 
-- `versionName = 0.1.16`
-- `versionCode = 16`
+- `versionName = 0.1.17`
+- `versionCode = 17`
 
-Milestone 0.1.16 is Offline Evaluation + Persistent Outcome History.
+Milestone 0.1.17 is Adaptive Learning Foundation.
 
-The milestone adds deterministic evidence replay, evaluation fingerprints, provenance-preserving outcome reports, and append-only evaluation history. It does not enable policy selection, action ranking, device mutation, or causal effectiveness claims.
+The milestone adds deterministic local learning records, persistent idempotent Knowledge State, minimum-evidence abstention, lineage-preserving deterministic splits, atomic state persistence, and resource-aware always-on processing. It does not enable automatic policy selection, action ranking, device mutation, or causal effectiveness claims.
 
 Milestone 0.1.15 remains Cloud Advisor + Local Policy Simulation and established the advisory-only cloud boundary.
 
@@ -129,6 +129,16 @@ Milestone 0.1.14
           +-- persistent evaluation outcome history
           +-- CI fixture validation
           +-- milestone accepted
+          |
+          v
+      0.1.17
+          |
+          +-- local adaptive learning records
+          +-- persistent Knowledge State
+          +-- abstention and minimum evidence
+          +-- lineage-preserving deterministic splits
+          +-- resource-aware always-on processing
+          +-- CI validation
 ```
 
 The repository's source of truth remains Git history, while the version label communicates the validated milestone state.
