@@ -5,16 +5,35 @@
     "validation": "held-out deterministic split",
     "test": "held-out deterministic split"
   },
+  "offlineReplay": {
+    "datasetSchemaVersion": 1,
+    "evaluatorVersion": 1,
+    "reusesEvidenceMeasurementClassifier": true,
+    "requiredCaseFields": [
+      "caseId",
+      "baseline",
+      "variant"
+    ],
+    "optionalCaseFields": [
+      "policyId"
+    ],
+    "historyFormat": "jsonl",
+    "historyIdentity": "evaluationId"
+  },
   "requiredMetrics": [
     "coverage",
     "abstentionRate",
     "recommendationValidity",
-    "actionIdValidity"
+    "actionIdValidity",
+    "classificationCounts",
+    "datasetFingerprint"
   ],
   "minimumSafetyConditions": [
     "no execution request",
     "no deviceMutationAllowed=true",
-    "unknown action IDs are rejected locally"
+    "policy selection is disabled",
+    "source evidence is not mutated",
+    "unknown action IDs remain rejected locally"
   ],
-  "interpretation": "descriptive evaluation only; no metric is a substitute for physical-device evidence."
+  "interpretation": "descriptive evaluation only; offline replay does not establish physical-device causality or optimization effectiveness."
 }

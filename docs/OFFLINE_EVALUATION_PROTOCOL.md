@@ -1,25 +1,37 @@
 # Offline Evaluation Protocol
 
-This milestone defines the boundary between a structurally valid dataset and any future effectiveness analysis.
+Milestone 0.1.16 defines a deterministic replay boundary for stored measurement evidence.
 
-The protocol checks:
-- chronological deterministic partitioning;
-- train/holdout integrity;
-- duplicate/leakage signals from the reproducible evaluator;
-- metadata completeness;
-- condition coverage;
-- action coverage;
-- outcome-label counts separately for training and holdout.
+The offline evaluator:
+- accepts a versioned dataset of baseline/variant evidence pairs;
+- validates unique case identifiers and evidence contracts;
+- reuses the established evidence measurement validator, pair resolver, comparison logic, and regression classifier;
+- preserves `INVALID_EVIDENCE` and `INSUFFICIENT_EVIDENCE` rather than guessing;
+- emits deterministic dataset and evaluation fingerprints;
+- records source evidence provenance for every case;
+- never mutates source evidence.
 
-A dataset can become READY_FOR_DESCRIPTIVE_REVIEW only when it has no detected leakage, complete evaluation metadata, and both training and holdout observations.
-
-That readiness does not mean that an optimization is effective. It only means the dataset is structurally suitable for descriptive review.
+Evaluation outputs are descriptive only. They do not establish physical-device causality or optimization effectiveness.
 
 The protocol explicitly keeps:
 - policy selection disabled;
 - execution disabled;
 - causal inference disabled;
-- effectiveness estimation disabled;
-- action ranking disabled.
+- action ranking disabled;
+- device mutation disabled.
 
-The current physical-device history is still descriptive-only. Existing DRY_RUN observations do not become action-effect evidence merely because this protocol exists.
+## Persistent evaluation outcome history
+
+Evaluation reports may be appended to a JSONL history. The history is logically append-only and uses the deterministic `evaluationId` as its identity.
+
+History handling is fail-closed:
+- malformed existing history is rejected;
+- records without an `evaluationId` are rejected;
+- duplicate `evaluationId` records are not appended again;
+- existing records are never replaced by a later evaluation.
+
+This history stores evaluation outcomes and provenance, not fabricated action-effect claims.
+
+Existing physical-device history and the P661N/API33 evidence remain descriptive/regression fixtures. DRY_RUN observations do not become causal action-effect evidence merely because offline replay is available.
+
+The next Adaptive Learning milestone may consume this history only after defining explicit outcome semantics, minimum sample requirements, confounder handling, validation/holdout rules, and a separate safety review.

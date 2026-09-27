@@ -29,10 +29,21 @@ jobs:
           python -m py_compile scripts/experiment-protocol.py
           python -m py_compile scripts/controlled-experiment-runner.py
           python -m py_compile scripts/evidence_measurement.py
+          python -m py_compile scripts/offline_evaluation.py
       - name: Run controlled observation analyzer tests
         run: python tests/controlled_observation_analyzer_test.py
       - name: Run evidence measurement tests
         run: python tests/evidence_measurement_test.py
+      - name: Run offline evaluation tests
+        run: python tests/offline_evaluation_test.py
+      - name: Run offline evaluation fixture
+        run: |
+          python scripts/offline_evaluation.py \
+            cloud/evaluation/example-offline-evaluation-dataset.json \
+            --rules benchmarks/evidence_rules.json \
+            --out /tmp/offline-evaluation.json \
+            --history /tmp/offline-evaluation-history.jsonl
+          python -c "import json; d=json.load(open('/tmp/offline-evaluation.json')); assert d['caseCount']==2; assert d['classificationCounts']['NO_REGRESSION']==1; assert d['classificationCounts']['INSUFFICIENT_EVIDENCE']==1; assert d['executionAllowed'] is False; assert d['policySelectionAllowed'] is False"
       - name: Run benchmark analyzer tests
         run: |
           if [ -f tests/benchmark_analyzer_test.py ]; then
