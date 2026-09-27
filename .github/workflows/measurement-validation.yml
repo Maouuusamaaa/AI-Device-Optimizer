@@ -29,10 +29,13 @@ jobs:
           python -m py_compile scripts/experiment-protocol.py
           python -m py_compile scripts/controlled-experiment-runner.py
           python -m py_compile scripts/evidence_measurement.py
+          python -m py_compile scripts/offline_evaluation.py
       - name: Run controlled observation analyzer tests
         run: python tests/controlled_observation_analyzer_test.py
       - name: Run evidence measurement tests
         run: python tests/evidence_measurement_test.py
+      - name: Run offline evaluation tests
+        run: python tests/offline_evaluation_test.py
       - name: Run benchmark analyzer tests
         run: |
           if [ -f tests/benchmark_analyzer_test.py ]; then
