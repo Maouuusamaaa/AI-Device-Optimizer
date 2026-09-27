@@ -79,6 +79,17 @@ class AdaptiveLearningTest(unittest.TestCase):
         self.assertNotIn("bypassSafetyGate", candidates[0])
         self.assertTrue(candidates[0]["provenance"])
 
+    def test_lineage_split_is_deterministic_and_keeps_groups_together(self):
+        first = module.create_learning_record(learning_record("e-1"))
+        second = module.create_learning_record(learning_record("e-2"))
+        first["provenance"]["analysisId"] = "same-lineage"
+        second["provenance"]["analysisId"] = "same-lineage"
+        split1 = module.split_learning_records([first, second])
+        split2 = module.split_learning_records([second, first])
+        self.assertEqual(split1, split2)
+        locations = [name for name, items in split1.items() if items]
+        self.assertEqual(locations, [locations[0]])
+
     def test_state_is_deterministic(self):
         records = [
             module.create_learning_record(learning_record("e-1")),
