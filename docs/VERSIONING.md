@@ -51,6 +51,8 @@ The exact acceptance criteria may differ by milestone and must be documented in 
 
 For 0.1.15, the required real-device evidence is the existing P661N/API33 regression fixture; no new optimization benefit is claimed.
 
+For 0.1.16, the required validation is deterministic offline replay plus the existing Android/P661N regression fixture. No new physical-device optimization benefit or causal action effect is claimed.
+
 ## Android versionCode
 
 Android `versionCode` is different from the project's milestone label. Android uses it to determine whether one APK is a newer application update than another.
@@ -68,16 +70,28 @@ An internal CI build may therefore have the same `versionName` as the active mil
 
 The repository currently declares:
 
-- `versionName = 0.1.15`
-- `versionCode = 15`
+- `versionName = 0.1.16`
+- `versionCode = 16`
 
-Milestone 0.1.15 is Cloud Advisor + Local Policy Simulation.
+Milestone 0.1.16 is Offline Evaluation + Persistent Outcome History.
+
+The milestone adds deterministic evidence replay, evaluation fingerprints, provenance-preserving outcome reports, and append-only evaluation history. It does not enable policy selection, action ranking, device mutation, or causal effectiveness claims.
+
+Milestone 0.1.15 remains Cloud Advisor + Local Policy Simulation and established the advisory-only cloud boundary.
 
 The milestone adds an advisory-only Cloud Advisor contract, local Cloud Policy Candidate validation, deterministic local Policy Simulation through the existing dry-run pipeline, provenance linkage, and fail-closed safety/contract tests.
 
 Cloud output cannot directly execute actions, bypass the Safety Gate, change the local allowlist, or enable device mutation. No new privileged capability or adaptive learning loop is introduced.
 
 ## Previous State
+
+Milestone 0.1.15 was Cloud Advisor + Local Policy Simulation:
+
+- advisory-only Cloud Advisor response contract;
+- local Cloud Policy Candidate validation;
+- deterministic local Policy Simulation through the existing dry-run pipeline;
+- provenance linkage through evidenceId, advisorVersion, and policyId;
+- no Cloud-to-Action bypass or new privileged capability.
 
 Milestone 0.1.14 was Evidence/Measurement Hardening:
 
@@ -98,13 +112,22 @@ Milestone 0.1.14
   +-- milestone accepted
           |
           v
-      define 0.1.15
+      0.1.15
           |
           +-- Cloud Advisor contract
           +-- local candidate validation
           +-- Policy Simulation
           +-- Safety Gate boundary
           +-- CI validation
+          +-- milestone accepted
+          |
+          v
+      0.1.16
+          |
+          +-- deterministic offline evidence replay
+          +-- evaluation fingerprints/provenance
+          +-- persistent evaluation outcome history
+          +-- CI fixture validation
           +-- milestone accepted
 ```
 
