@@ -22,7 +22,7 @@ The repository already has:
 - `docs/VERSIONING.md` defining milestone/version boundaries.
 - Existing lifecycle evidence under `benchmarks/` and documented lifecycle closure in the 0.1.13 milestone.
 
-The new implementation must extend these conventions rather than replace the existing benchmark format or reinterpret historical evidence.
+The new implementation must extend these conventions rather than replace the existing benchmark format or reinterpret historical evidence. The Android benchmark writer currently emits schema version 2 while the historical contract used version 1, so the hardened validator and canonical schema remain compatible with both versions until a deliberate schema migration is completed.
 
 ## 3. Architecture
 
@@ -66,7 +66,7 @@ The analyzer output may become diagnostic input to the local Safety Gate. It is 
 
 ## 4. Comparison contract
 
-Evidence may be paired only when the comparison identity required by the workload is compatible. At minimum, the implementation must preserve and compare the dimensions already represented by the repository's benchmark contracts, including device identity, Android/API level, application/runtime version, workload identity, and relevant experiment metadata.
+Evidence may be paired only when the comparison identity required by the workload is compatible. At minimum, the implementation must preserve and compare the dimensions already represented by the repository's benchmark contracts, including device identity, Android/API level, application/runtime version, workload identity, and relevant experiment metadata. Supported benchmark schema versions are 1 and 2 for backward-compatible evidence ingestion.
 
 A pair must not be created merely because two JSON records contain overlapping metric names.
 
@@ -84,7 +84,7 @@ The classifier is fail-closed:
 | Pair metadata incompatible | `INSUFFICIENT_EVIDENCE` |
 | Comparable metrics indicate no configured regression | `NO_REGRESSION` |
 | Comparable metrics cross the configured regression rule | `REGRESSION` |
-| Valid metrics provide materially conflicting regression signals | `MIXED` |
+| Valid metrics provide materially conflicting positive and negative measurement signals | `MIXED` |
 
 The classifier must never infer causality from PSS/RSS changes alone. In particular, the existing 0.1.13 lifecycle result remains `MIXED`; this milestone must not rewrite it as a memory leak.
 
