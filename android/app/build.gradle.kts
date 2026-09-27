@@ -33,8 +33,8 @@ android {
         applicationId = "com.maouuusama.ai.device.optimizer"
         minSdk = 29
         targetSdk = 36
-        versionCode = 17
-        versionName = "0.1.17"
+        versionCode = 18
+        versionName = "0.1.18"
 
         externalNativeBuild {
             cmake {
