@@ -286,6 +286,38 @@ def generate_candidates(state: dict[str, Any]) -> list[dict[str, Any]]:
     return candidates
 
 
+
+def split_learning_records(
+    records: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Deterministically split records by provenance lineage.
+
+    All records sharing the same provenance analysisId remain in one split.
+    The split assignment is based only on the canonical lineage key.
+    """
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for record in records:
+        provenance = record.get("provenance")
+        if not isinstance(provenance, dict):
+            raise LearningError("learning record provenance must be an object")
+        lineage = provenance.get("analysisId")
+        if not isinstance(lineage, str) or not lineage.strip():
+            raise LearningError("learning record provenance requires analysisId")
+        groups.setdefault(lineage, []).append(deepcopy(record))
+
+    buckets = {"train": [], "validation": [], "test": []}
+    for lineage in sorted(groups):
+        digest = int(hashlib.sha256(lineage.encode("utf-8")).hexdigest()[:8], 16) % 100
+        if digest < 80:
+            bucket = "train"
+        elif digest < 90:
+            bucket = "validation"
+        else:
+            bucket = "test"
+        buckets[bucket].extend(groups[lineage])
+
+    return buckets
+
 def validate_knowledge_state(state: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(state, dict):
         raise LearningError("knowledge state must be an object")
