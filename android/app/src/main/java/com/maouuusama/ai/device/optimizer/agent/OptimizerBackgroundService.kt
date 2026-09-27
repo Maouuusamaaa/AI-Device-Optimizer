@@ -16,6 +16,9 @@ import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshot
 import com.maouuusama.ai.device.optimizer.monitor.DeviceSnapshotJsonWriter
 import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningReport
 import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningReportWriter
+import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningKnowledgeStore
+import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningResourceGuard
+import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningRuntime
 import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningSummarizer
 import com.maouuusama.ai.device.optimizer.policy.DecisionHistoryRecorder
 import com.maouuusama.ai.device.optimizer.policy.DeviceState
@@ -38,6 +41,7 @@ class OptimizerBackgroundService : Service() {
     private lateinit var historyStore: PersistentDecisionHistoryStore
     private lateinit var historyRecorder: DecisionHistoryRecorder
     private lateinit var learningReportWriter: AdaptiveLearningReportWriter
+    private lateinit var adaptiveLearningRuntime: AdaptiveLearningRuntime
     private val learningSummarizer = AdaptiveLearningSummarizer()
     private val simulationEvaluator = PolicySimulationEvaluator()
     private val actionEngine = DryRunActionEngine()
@@ -49,6 +53,14 @@ class OptimizerBackgroundService : Service() {
         historyStore = PersistentDecisionHistoryStore(this)
         historyRecorder = DecisionHistoryRecorder(historyStore)
         learningReportWriter = AdaptiveLearningReportWriter(this)
+        adaptiveLearningRuntime = AdaptiveLearningRuntime(
+            historyStore = historyStore,
+            knowledgeStore = AdaptiveLearningKnowledgeStore(this),
+            resourceGuard = AdaptiveLearningResourceGuard.forContext(this),
+            manufacturer = Build.MANUFACTURER,
+            model = Build.MODEL,
+            androidApi = Build.VERSION.SDK_INT
+        )
         createNotificationChannel()
         startAsForeground()
         scheduleMonitoring()
@@ -84,7 +96,14 @@ class OptimizerBackgroundService : Service() {
 
             DeviceSnapshotJsonWriter.writeLatest(this, snapshot)
             saveLatest(snapshot, proposal, safetyGateResult)
-            recordHistory(snapshot, plan, simulations)
+            val historyPersisted = recordHistory(snapshot, plan, simulations)
+            if (historyPersisted) {
+                try {
+                    adaptiveLearningRuntime.processAvailable()
+                } catch (learningError: Exception) {
+                    Log.e(TAG, "Adaptive learning runtime failed; monitoring remains active", learningError)
+                }
+            }
             updateLearningReport(snapshot.timestampMs)
 
             decisionLogger.append(
