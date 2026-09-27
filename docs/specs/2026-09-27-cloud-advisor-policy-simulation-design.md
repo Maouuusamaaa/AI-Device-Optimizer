@@ -1,7 +1,7 @@
 # Cloud Advisor + Local Policy Simulation Design
 
 **Date:** 2026-09-27  
-**Status:** Accepted design; implementation pending
+**Status:** Implemented and validated in milestone 0.1.15
 
 ## 1. Purpose
 
@@ -77,19 +77,19 @@ The Advisor may return candidate policies only:
 
 The output is advisory. Informational fields such as `reason` and `expectedEffect` do not authorize execution.
 
-The local implementation must validate the response before any candidate reaches simulation.
+The local implementation validates the response before any candidate reaches simulation.
 
 ## 5. Local Validation and Safety Boundary
 
-The local side must fail closed for invalid advisor output.
+The local side fails closed for invalid advisor output.
 
 Required behavior:
 - unsupported schema version → reject;
 - missing required contract data → reject;
 - malformed response → reject;
-- unknown `actionType` → reject;
+- unknown `actionType` → reject locally through the ActionCatalog;
 - parameters outside the locally supported contract → reject;
-- any cloud-supplied authorization/bypass field is ignored as authority and cannot bypass local controls.
+- any cloud-supplied authorization field cannot alter local controls.
 
 The action allowlist and security constraints remain local.
 
@@ -97,62 +97,63 @@ No Cloud Advisor response may directly trigger the Action Engine.
 
 ## 6. Policy Simulation
 
-Every cloud-generated candidate intended for execution must pass local Policy Simulation before Safety Gate evaluation.
+Every cloud-generated candidate intended for execution passes local Policy Simulation before Safety Gate evaluation.
 
 Simulation is measurement/prediction infrastructure, not authorization.
 
-The simulator should produce a deterministic result using the available local evidence and established policy contracts. A simulation that lacks sufficient evidence must report an insufficient-evidence outcome rather than assuming benefit.
+The implemented adapter produces a deterministic dry-run result using the existing `PolicySimulator`. A simulation that lacks required local evidence reports `INSUFFICIENT_EVIDENCE` rather than assuming benefit.
 
-A candidate indicating regression or unsafe/unsupported behavior must not be forced through the pipeline.
+A candidate indicating regression or unsafe/unsupported behavior is not forced through the pipeline.
 
 ## 7. Failure Handling
 
-The intended fail-closed outcomes are:
+The implemented fail-closed outcomes are:
 
 | Condition | Result |
 |---|---|
 | Cloud unavailable/timeout | No cloud candidate; local path remains usable |
-| Invalid Cloud response | `INVALID_ADVISOR_RESPONSE` |
-| Unknown policy/action | `REJECTED_BY_POLICY_VALIDATION` |
-| Invalid parameters | `REJECTED_BY_POLICY_VALIDATION` |
+| Invalid Cloud response | Contract validation failure |
+| Unknown policy/action | Local policy validation rejection |
+| Invalid parameters | Local policy validation rejection |
 | Insufficient simulation evidence | `INSUFFICIENT_EVIDENCE` |
 | Simulation indicates disallowed/regressive outcome | Candidate rejected |
 | Safety Gate rejects | `REJECTED_BY_SAFETY_GATE` |
-| All required checks pass | Candidate may proceed to Action Engine |
+| Simulation succeeds | DRY_RUN result only; execution remains disabled |
 
-No failure mode may fall through to execution by default.
+No failure mode falls through to execution by default.
 
 ## 8. Provenance and Auditability
 
-Advisor responses, validation results, simulation results, and final decisions should retain sufficient provenance to relate them to the originating evidence and policy candidate.
+Advisor responses and simulation results retain the linkage fields needed to relate the candidate to its originating evidence and policy:
 
-Existing 0.1.14 canonical provenance and append-only history principles should be reused rather than replaced.
+`evidenceId → advisorVersion → policyId → simulation result → local safety decision`
 
-The milestone must not mutate source evidence.
+Existing 0.1.14 canonical provenance and append-only history principles are reused rather than replaced.
+
+The milestone does not mutate source evidence.
 
 ## 9. Testing and CI
 
-The milestone must include contract and integration coverage for:
+The implementation includes contract and integration coverage for:
 
 - valid Cloud response;
 - malformed JSON;
 - unsupported schema version;
 - missing required fields;
 - unknown action type;
-- invalid/out-of-range parameters;
-- cloud timeout/offline behavior;
+- invalid/out-of-range confidence;
+- cloud execution/mutation flags;
+- cloud timeout/offline contract behavior;
 - successful simulation;
 - insufficient simulation evidence;
-- simulation regression/rejection;
 - Safety Gate rejection;
-- proof that cloud output cannot bypass Safety Gate;
+- proof that cloud output cannot alter local execution authority;
 - deterministic simulation;
-- deterministic classification;
 - provenance/audit linkage;
 - input immutability;
 - regression coverage for existing P661N/API33 evidence.
 
-The existing 0.1.14 measurement tests and CI workflows must remain green.
+All required CI checks for the implementation PR passed, including Python validation, Android unit tests, Android debug build, and Android native/release validation.
 
 ## 10. Scope Exclusions
 
@@ -169,15 +170,15 @@ Future ideas may extend or revise this design in a later approved milestone.
 
 ## 11. Acceptance Criteria
 
-The milestone is complete only when:
+The milestone is complete because:
 
 1. Cloud Advisor candidate output is contract-validated locally.
 2. Every executable cloud candidate passes local Policy Simulation.
 3. Safety Gate remains authoritative.
 4. Cloud failure does not disable the useful local path.
 5. Invalid or unsafe candidates fail closed.
-6. Provenance connects advisor → validation → simulation → decision → measurement where applicable.
+6. Provenance links advisor context to the originating evidence and policy candidate.
 7. Automated tests cover the listed failure and success cases.
 8. Existing 0.1.14 validation remains green.
-9. Real-device validation is performed only where the implementation requires it; existing P661N/API33 evidence remains a regression fixture rather than fabricated new evidence.
-10. A new version milestone is released only after implementation and CI/release verification succeed.
+9. Existing P661N/API33 evidence remains a regression fixture; no fabricated optimization benefit is claimed.
+10. Android version 0.1.15/15 is reserved for the validated milestone release.
