@@ -20,8 +20,10 @@ data class AdaptiveLearningRuntimeDiagnosticSnapshot(
 )
 
 object AdaptiveLearningRuntimeDiagnostic {
-    fun read(context: Context): AdaptiveLearningRuntimeDiagnosticSnapshot {
-        val store = AdaptiveLearningKnowledgeStore(context)
+    fun read(context: Context): AdaptiveLearningRuntimeDiagnosticSnapshot =
+        read(AdaptiveLearningKnowledgeStore(context))
+
+    fun read(store: AdaptiveLearningKnowledgeStore): AdaptiveLearningRuntimeDiagnosticSnapshot {
         if (!store.exists()) {
             return AdaptiveLearningRuntimeDiagnosticSnapshot(
                 knowledgeStateStatus = AdaptiveLearningKnowledgeStateStatus.NOT_INITIALIZED,
