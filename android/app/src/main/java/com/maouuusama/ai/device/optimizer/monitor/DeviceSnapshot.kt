@@ -18,5 +18,9 @@ data class DeviceSnapshot(
     val isInteractive: Boolean? = null,
     val uptimeMs: Long? = null,
     val processes: List<ProcessSnapshot> = emptyList(),
-    val systemTelemetry: SystemTelemetrySnapshot? = null
+    val systemTelemetry: SystemTelemetrySnapshot? = null,
+    val gameModeProviderAvailable: Boolean = false,
+    val gameModePackages: List<String> = emptyList(),
+    val gameModeCheckedPackages: List<String> = emptyList(),
+    val gameModeProviderError: String? = null
 )
