@@ -62,8 +62,8 @@ class AdaptiveLearningTest(unittest.TestCase):
             module.create_learning_record(learning_record("e-2")),
         ]
         state = module.update_knowledge_state(module.empty_knowledge_state(), records)
-        self.assertEqual(state["patterns"], [])
-        self.assertGreaterEqual(state["abstentionCount"], 1)
+        self.assertEqual(state["patterns"][0]["eligible"], False)
+        self.assertEqual(module.generate_candidates(state), [])
 
     def test_sufficient_consistent_records_create_pattern(self):
         records = [
