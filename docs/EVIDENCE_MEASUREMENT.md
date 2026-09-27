@@ -120,3 +120,29 @@ can enter the hardened contract without introducing mutation.
 
 The validation does not claim a new optimization benefit and does not reinterpret
 the closed 0.1.13 lifecycle investigation.
+## SmartPanel Game Mode evidence
+
+On supported Transsion/itel builds, the Android monitor may read the SmartPanel
+Game Mode read-only AppListProvider using the normal
+`com.transsion.gamemode.permission.READ_APP_LIST` permission.
+
+The snapshot records four fields:
+
+- `gameModeProviderAvailable`: whether the provider returned a readable cursor;
+- `gameModePackages`: package names returned by the provider;
+- `gameModeCheckedPackages`: package names whose provider `ischeck` value parses
+  conservatively as checked (`1` or case-insensitive `true`);
+- `gameModeProviderError`: a diagnostic error string when the provider cannot
+  be read.
+
+These fields are observational evidence only. They do not authorize Game Mode
+changes, Action Engine operations, privileged permissions, or system APK
+modification. An empty checked set is not evidence that no games are configured
+unless `gameModeProviderAvailable` is also true.
+
+Runtime validation on the itel P661N/API 33 confirmed provider availability,
+a non-null package set, matching checked-package serialization, and a null
+provider error in schema version 4. A separate UI toggle validation is required
+before treating the checked-state mapping as device-proven semantics rather than
+just a validated parser contract.
+
