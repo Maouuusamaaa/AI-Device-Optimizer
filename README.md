@@ -66,33 +66,26 @@ The action engine must be capability-based and policy-controlled. Monitoring sho
 
 ## Development Status
 
-Current milestone: normalized read-only device health snapshot → local policy → dry-run proposal pipeline.
+Current milestone: 0.1.13 — real-device local inference validation and controlled lifecycle diagnostics.
 
-Completed:
+Completed through the current milestone:
 
-- read-only Android Monitor layer
-- repeatable monitor benchmark foundation
-- read-only physical baseline runner
-- Local Policy Engine
-- immutable DRY_RUN-only policy proposal model
-- connected DeviceSnapshot → DeviceState → LocalPolicyEngine → DryRunPolicyProposal pipeline
-- normalized device health snapshot fields for battery temperature, thermal status, storage, network, interactivity, and uptime
-- schemaVersion 3 JSON snapshot persistence for the expanded health state
-- background agent persistence of policy/proposal metadata without executing actions
-- Android unit tests for the monitor, policy foundation, and connected dry-run flow
-- GitHub Actions build/test workflow configuration
-- successful post-fix GitHub Actions build/test verification
-- controlled-observation analyzer validates reported statistics against raw sample arrays
-- measurement-validation GitHub Actions workflow for the Python measurement layer
-- debug APK installed and running on a physical Android API 33 device
+- Stage 1–8 local AI/runtime foundation, including Qwen3 0.6B GGUF Q4_0 and Android JNI integration
+- Stage 9 real-device local inference benchmark
+- Stage 9.1 methodology hardening, including profileable release benchmarking and controlled thread scheduling
+- persistent benchmark/evidence synchronization to GitHub with integrity checks and retry handling
+- controlled runtime lifecycle memory diagnostic separating post-cleanup observation from the explicit native reset boundary
+- no-reset control arm and fresh-process paired lifecycle protocol
+- two independent fresh-process reset/no-reset pairs on the itel P661N / Android API 33
+- final lifecycle classification: MIXED; lifecycle-dependent PSS transitions are reproducible, but reset-specific causality is not established
+- explicit non-diagnosis of memory leak from PSS alone
+- lifecycle investigation closed without production runtime changes or a version bump
 
-The Action Engine remains future work. This milestone intentionally stops at a DRY_RUN proposal boundary: proposals can describe observation candidates, but no proposal can authorize execution.
+The current lifecycle diagnostic remains an observational/regression tool. Its evidence does not authorize optimization mutations, and no production action is inferred from the mixed result.
 
-The external Rish baseline produces raw TXT, structured JSON, and flattened CSV artifacts. Repeated startup measurements are aggregated descriptively; the current physical baseline contains three observations for the same itel P661N/API 33 workload.
+The primary mobile development path remains Termux + Shizuku/Rish on the physical Android device, with PC + ADB as an optional fallback.
 
-Primary mobile development path: Termux + Shizuku/Rish for independent device measurements. PC + ADB remains an optional fallback.
-
-Next experiment: collect repeated health snapshots under controlled idle and user-workload conditions, then quantify normal variation before enabling any mutation-capable action experiments. Candidate measurements must preserve the Rish workload, five-sample startup structure, memory capture, device identity, and comparable power/thermal conditions. No privileged mutation is enabled by this benchmark tooling.
+The next milestone should be defined separately from 0.1.13. No new versionName is implied until its implementation scope, automated validation, required real-device evidence, and acceptance criteria are explicitly defined.
 
 ## Research Direction
 
