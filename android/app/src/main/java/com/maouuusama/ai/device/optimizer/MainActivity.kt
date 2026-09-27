@@ -34,6 +34,7 @@ import com.maouuusama.ai.device.optimizer.monitor.ShizukuShell
 import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetrySnapshot
 import com.maouuusama.ai.device.optimizer.monitor.SystemTelemetryStatus
 import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningSummarizer
+import com.maouuusama.ai.device.optimizer.policy.AdaptiveLearningRuntimeDiagnostic
 import com.maouuusama.ai.device.optimizer.policy.PersistentDecisionHistoryStore
 import com.maouuusama.ai.device.optimizer.localai.LocalLlamaRuntime
 import com.maouuusama.ai.device.optimizer.localai.QwenLocalModel
@@ -51,6 +52,7 @@ class MainActivity : Activity() {
     private lateinit var processText: TextView
     private lateinit var systemText: TextView
     private lateinit var learningText: TextView
+    private lateinit var learningRuntimeText: TextView
     private lateinit var localAiText: TextView
     private lateinit var localAiDownloadButton: Button
     private lateinit var localAiRunButton: Button
@@ -127,6 +129,20 @@ class MainActivity : Activity() {
             text = "\nAdaptive learning: not summarized yet"
         }
         root.addView(learningText)
+
+        root.addView(TextView(this).apply {
+            textSize = 18f
+            text = "\nAdaptive learning runtime diagnostic"
+        })
+        root.addView(Button(this).apply {
+            text = "Refresh adaptive learning runtime diagnostic"
+            setOnClickListener { refreshLearningRuntimeDiagnostic() }
+        })
+        learningRuntimeText = TextView(this).apply {
+            textSize = 14f
+            text = "\nAdaptive learning runtime: not checked yet"
+        }
+        root.addView(learningRuntimeText)
 
         root.addView(TextView(this).apply {
             textSize = 18f
@@ -369,6 +385,15 @@ class MainActivity : Activity() {
                         (error.message ?: error.javaClass.simpleName)
                 }
             }
+        }.start()
+    }
+
+    private fun refreshLearningRuntimeDiagnostic() {
+        learningRuntimeText.text = "\nAdaptive learning runtime: validating persistent Knowledge State..."
+        Thread {
+            val snapshot = AdaptiveLearningRuntimeDiagnostic.read(this)
+            val text = AdaptiveLearningRuntimeDiagnostic.render(snapshot)
+            runOnUiThread { learningRuntimeText.text = text }
         }.start()
     }
 
