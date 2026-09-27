@@ -9,7 +9,7 @@ class SmartPanelGameModeReaderTest {
     fun contractMatchesDiscoveredSmartPanelProvider() {
         assertEquals(
             "content://com.transsion.gamemode.provider/listapp",
-            SmartPanelGameModeReader.CONTENT_URI.toString()
+            SmartPanelGameModeReader.CONTENT_URI_STRING
         )
         assertEquals(
             "com.transsion.gamemode.permission.READ_APP_LIST",
@@ -22,10 +22,12 @@ class SmartPanelGameModeReaderTest {
     }
 
     @Test
-    fun checkedValueContractIsConservative() {
-        assertEquals(true, "1" == "1")
-        assertEquals(true, "true".equals("true", ignoreCase = true))
-        assertEquals(false, "0" == "1")
-        assertEquals(false, "unexpected".equals("true", ignoreCase = true))
+    fun checkedValueParsingIsConservative() {
+        assertEquals(true, SmartPanelGameModeReader.parseCheckedFlag("1"))
+        assertEquals(true, SmartPanelGameModeReader.parseCheckedFlag("true"))
+        assertEquals(true, SmartPanelGameModeReader.parseCheckedFlag(" TRUE "))
+        assertEquals(false, SmartPanelGameModeReader.parseCheckedFlag("0"))
+        assertEquals(false, SmartPanelGameModeReader.parseCheckedFlag("unexpected"))
+        assertEquals(false, SmartPanelGameModeReader.parseCheckedFlag(null))
     }
 }
