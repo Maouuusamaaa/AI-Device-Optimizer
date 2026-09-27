@@ -66,10 +66,10 @@ An internal CI build may therefore have the same `versionName` as the active mil
 
 The repository currently declares:
 
-- `versionName = 0.1.13`
-- `versionCode = 13`
+- `versionName = 0.1.14`
+- `versionCode = 14`
 
-These values are not changed merely because additional investigation occurs. The next version milestone is created only after the current milestone's acceptance criteria are satisfied.
+Milestone 0.1.14 is the Evidence/Measurement Hardening milestone. Its implementation was merged after CI validation, and the required P661N/API33 evidence was validated without enabling mutation. No Cloud AI Advisor or new optimization action is introduced by this release.
 
 ## Example Workflow
 
