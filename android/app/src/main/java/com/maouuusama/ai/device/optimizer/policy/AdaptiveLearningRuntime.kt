@@ -25,10 +25,13 @@ class AdaptiveLearningRuntime(
         require(maxRecordsPerPass in 1..8)
     }
 
-    var lastResult: AdaptiveLearningRunResult = run {
-        val state = knowledgeStore.load()
-        AdaptiveLearningRunResult(0, 0, state.candidates().size, false, state.stateFingerprint)
-    }
+    var lastResult: AdaptiveLearningRunResult = AdaptiveLearningRunResult(
+        processedCount = 0,
+        abstentionCount = 0,
+        candidateCount = 0,
+        deferred = false,
+        stateFingerprint = AdaptiveLearningKnowledgeState.empty().stateFingerprint
+    )
         private set
 
     fun processAvailable(): AdaptiveLearningRunResult {
