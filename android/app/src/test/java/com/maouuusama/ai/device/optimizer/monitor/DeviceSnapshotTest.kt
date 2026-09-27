@@ -37,6 +37,47 @@ class DeviceSnapshotTest {
     }
 
     @Test
+    fun gameModeEvidenceSeparatesAvailablePackagesFromCheckedPackages() {
+        val snapshot = DeviceSnapshot(
+            timestampMs = 0L,
+            androidApi = 33,
+            manufacturer = "test",
+            model = "test",
+            totalRamMb = 4096L,
+            availableRamMb = 2048L,
+            batteryPercent = 80,
+            isCharging = false,
+            gameModeProviderAvailable = true,
+            gameModePackages = listOf("com.example.game", "com.example.other"),
+            gameModeCheckedPackages = listOf("com.example.game"),
+            gameModeProviderError = null
+        )
+
+        assertTrue(snapshot.gameModeProviderAvailable)
+        assertEquals(listOf("com.example.game", "com.example.other"), snapshot.gameModePackages)
+        assertEquals(listOf("com.example.game"), snapshot.gameModeCheckedPackages)
+        assertEquals(null, snapshot.gameModeProviderError)
+    }
+
+    @Test
+    fun gameModeEvidenceDefaultsToUnavailableWithoutProviderData() {
+        val snapshot = DeviceSnapshot(
+            timestampMs = 0L,
+            androidApi = 33,
+            manufacturer = "test",
+            model = "test",
+            totalRamMb = 4096L,
+            availableRamMb = 2048L,
+            batteryPercent = null,
+            isCharging = false
+        )
+
+        assertTrue(!snapshot.gameModeProviderAvailable)
+        assertEquals(emptyList<String>(), snapshot.gameModePackages)
+        assertEquals(emptyList<String>(), snapshot.gameModeCheckedPackages)
+    }
+
+    @Test
     fun healthFieldsRemainOptionalWhenUnavailable() {
         val snapshot = DeviceSnapshot(
             timestampMs = 0L,
