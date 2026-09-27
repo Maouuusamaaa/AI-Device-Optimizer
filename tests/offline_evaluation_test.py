@@ -47,7 +47,7 @@ class OfflineEvaluationTest(unittest.TestCase):
             "caseId": case_id,
             "policyId": "policy-observe-memory-pressure-001",
             "baseline": evidence("baseline-" + case_id, [1800, 1790], [50000, 51000]),
-            "variant": evidence("variant-" + case_id, [1700, 1690], [50000, 51000]),
+            "variant": evidence("variant-" + case_id, [1780, 1770], [50000, 51000]),
         }
 
     def test_replay_is_deterministic_and_non_authorizing(self):
