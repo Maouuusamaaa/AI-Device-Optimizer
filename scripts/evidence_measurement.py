@@ -279,22 +279,29 @@ def classify_comparison(
     pss_threshold = float(configured.get("pssIncreasePct", 20.0))
 
     metrics = comparison.get("metrics", {})
-    signals: list[str] = []
+    bad_signals: list[str] = []
+    good_signals: list[str] = []
     reasons: list[str] = []
 
     ram = metrics.get("availableRamMbPct")
-    if _is_number(ram) and ram <= ram_threshold:
-        signals.append("available_ram_regression")
-        reasons.append(f"availableRamMbPct={ram:.4f} <= {ram_threshold:.4f}")
+    if _is_number(ram):
+        if ram <= ram_threshold:
+            bad_signals.append("available_ram_regression")
+            reasons.append(f"availableRamMbPct={ram:.4f} <= {ram_threshold:.4f}")
+        elif ram >= abs(ram_threshold):
+            good_signals.append("available_ram_improvement")
 
     pss = metrics.get("pssKbPct")
-    if _is_number(pss) and pss >= pss_threshold:
-        signals.append("pss_regression")
-        reasons.append(f"pssKbPct={pss:.4f} >= {pss_threshold:.4f}")
+    if _is_number(pss):
+        if pss >= pss_threshold:
+            bad_signals.append("pss_regression")
+            reasons.append(f"pssKbPct={pss:.4f} >= {pss_threshold:.4f}")
+        elif pss <= -pss_threshold:
+            good_signals.append("pss_improvement")
 
-    if len(signals) >= 2:
-        classification = "REGRESSION"
-    elif len(signals) == 1:
+    if bad_signals and good_signals:
+        classification = "MIXED"
+    elif bad_signals:
         classification = "REGRESSION"
     else:
         classification = "NO_REGRESSION"
@@ -303,7 +310,9 @@ def classify_comparison(
         "classification": classification,
         "ruleVersion": rules.get("version"),
         "reasons": reasons or ["no configured regression threshold crossed"],
-        "signals": signals,
+        "signals": bad_signals + good_signals,
+        "badSignals": bad_signals,
+        "goodSignals": good_signals,
     }
 
 
@@ -320,8 +329,17 @@ def create_provenance_record(
     *,
     rules_version: int,
 ) -> dict[str, Any]:
+    baseline_sha = _canonical_sha256(baseline)
+    variant_sha = _canonical_sha256(variant)
+    analysis_id = _canonical_sha256({
+        "baselineSha256": baseline_sha,
+        "variantSha256": variant_sha,
+        "rulesVersion": rules_version,
+        "classification": classification["classification"],
+    })
     return {
         "recordType": "evidence-analysis",
+        "analysisId": analysis_id,
         "analyzerVersion": ANALYZER_VERSION,
         "schemaVersion": SUPPORTED_SCHEMA_VERSION,
         "rulesVersion": rules_version,
@@ -333,3 +351,29 @@ def create_provenance_record(
         },
         "comparison": deepcopy(comparison),
     }
+
+    
+def append_history_record(path: str, record: dict[str, Any]) -> dict[str, Any]:
+    """Append an analysis record without overwriting an existing analysisId."""
+    from pathlib import Path
+
+    target = Path(path)
+    existing_ids: set[str] = set()
+    if target.exists():
+        for line in target.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            existing = json.loads(line)
+            if existing.get("analysisId"):
+                existing_ids.add(existing["analysisId"])
+
+    analysis_id = record.get("analysisId")
+    if not isinstance(analysis_id, str) or not analysis_id:
+        raise ValueError("history record requires analysisId")
+    if analysis_id in existing_ids:
+        return {"appended": False, "duplicate": True, "analysisId": analysis_id}
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, sort_keys=True, ensure_ascii=False) + "\n")
+    return {"appended": True, "duplicate": False, "analysisId": analysis_id}
