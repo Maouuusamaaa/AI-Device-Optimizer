@@ -17,6 +17,7 @@ class DeviceMonitor(private val context: Context) {
 
     private val processMonitor = ProcessMonitor(context)
     private val systemTelemetryMonitor = SystemTelemetryMonitor()
+    private val gameModeReader = SmartPanelGameModeReader(context.contentResolver)
 
     fun collectSnapshot(includeSystemTelemetry: Boolean = true): DeviceSnapshot {
         val activityManager =
@@ -60,6 +61,7 @@ class DeviceMonitor(private val context: Context) {
             else -> null
         }
         val networkValidated = capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        val gameMode = gameModeReader.read()
 
         return DeviceSnapshot(
             timestampMs = System.currentTimeMillis(),
@@ -80,7 +82,11 @@ class DeviceMonitor(private val context: Context) {
             isInteractive = powerManager.isInteractive,
             uptimeMs = SystemClock.elapsedRealtime(),
             processes = processMonitor.collectProcesses(),
-            systemTelemetry = if (includeSystemTelemetry) systemTelemetryMonitor.collectSnapshot() else null
+            systemTelemetry = if (includeSystemTelemetry) systemTelemetryMonitor.collectSnapshot() else null,
+            gameModeProviderAvailable = gameMode.available,
+            gameModePackages = gameMode.packages.map { it.packageName }.distinct(),
+            gameModeCheckedPackages = gameMode.packages.filter { it.checked }.map { it.packageName }.distinct(),
+            gameModeProviderError = gameMode.error
         )
     }
 }
