@@ -49,9 +49,7 @@ class SmartPanelGameModeReader(
                                 className = if (classIndex >= 0) {
                                     cursor.getString(classIndex)?.trim()?.takeIf { it.isNotEmpty() }
                                 } else null,
-                                checked = cursor.getString(checkedIndex)?.trim()?.let {
-                                    it == "1" || it.equals("true", ignoreCase = true)
-                                } == true
+                                checked = parseCheckedFlag(cursor.getString(checkedIndex))
                             )
                         )
                     }
@@ -81,7 +79,13 @@ class SmartPanelGameModeReader(
         const val AUTHORITY = "com.transsion.gamemode.provider"
         const val PATH = "listapp"
         const val READ_PERMISSION = "com.transsion.gamemode.permission.READ_APP_LIST"
-        val CONTENT_URI: Uri = Uri.parse("content://$AUTHORITY/$PATH")
+        const val CONTENT_URI_STRING = "content://$AUTHORITY/$PATH"
+        val CONTENT_URI: Uri
+            get() = Uri.parse(CONTENT_URI_STRING)
+
+        internal fun parseCheckedFlag(value: String?): Boolean = value?.trim()?.let {
+            it == "1" || it.equals("true", ignoreCase = true)
+        } == true
         const val COLUMN_ID = "_id"
         const val COLUMN_PACKAGE_NAME = "packagename"
         const val COLUMN_CLASS_NAME = "classname"
