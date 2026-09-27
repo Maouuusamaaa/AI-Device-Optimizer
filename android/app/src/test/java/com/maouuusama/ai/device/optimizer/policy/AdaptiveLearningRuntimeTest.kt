@@ -17,7 +17,7 @@ class AdaptiveLearningRuntimeTest {
         history.append(DecisionHistoryEntry(1L, emptyList(), emptyList(), emptyList(), emptyList(), listOf(report)))
         val runtime = AdaptiveLearningRuntime(
             history, AdaptiveLearningKnowledgeStore(File(dir, "state.bin")),
-            AdaptiveLearningResourceGuard { AdaptiveLearningResourceSnapshot(false, 256L * 1024L * 1024L, 0) },
+            AdaptiveLearningResourceGuard(AdaptiveLearningResourceProvider { AdaptiveLearningResourceSnapshot(false, 256L * 1024L * 1024L, 0) }),
             "Test", "Device", 33
         )
         val first = runtime.processAvailable()
@@ -34,7 +34,7 @@ class AdaptiveLearningRuntimeTest {
         val history = PersistentDecisionHistoryStore(File(dir, "history.bin"), 100)
         val runtime = AdaptiveLearningRuntime(
             history, AdaptiveLearningKnowledgeStore(File(dir, "state.bin")),
-            AdaptiveLearningResourceGuard { AdaptiveLearningResourceSnapshot(true, 256L * 1024L * 1024L, 0) },
+            AdaptiveLearningResourceGuard(AdaptiveLearningResourceProvider { AdaptiveLearningResourceSnapshot(true, 256L * 1024L * 1024L, 0) }),
             "Test", "Device", 33
         )
         val result = runtime.processAvailable()
