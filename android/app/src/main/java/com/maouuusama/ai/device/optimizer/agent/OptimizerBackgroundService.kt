@@ -133,11 +133,13 @@ class OptimizerBackgroundService : Service() {
         snapshot: DeviceSnapshot,
         plan: SimulatedOptimizationPlan,
         simulations: List<com.maouuusama.ai.device.optimizer.policy.ActionSimulation>
-    ) {
-        try {
+    ): Boolean {
+        return try {
             historyRecorder.record(snapshot, plan, simulations)
+            true
         } catch (error: Exception) {
             Log.e(TAG, "Decision history persistence failed", error)
+            false
         }
     }
 
