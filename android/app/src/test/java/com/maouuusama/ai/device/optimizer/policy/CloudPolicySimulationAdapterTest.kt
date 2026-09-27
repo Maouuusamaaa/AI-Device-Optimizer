@@ -68,7 +68,17 @@ class CloudPolicySimulationAdapterTest {
             )
         }
         assertTrue(error.message!!.contains("execution"))
-        assertFalse(error.message!!.contains("allowed"))
+    }
+
+    @Test
+    fun cloudMutationFlagCannotEnableExecution() {
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            CloudPolicySimulationAdapter().simulate(
+                candidate(deviceMutationAllowed = true),
+                setOf("evidence-001")
+            )
+        }
+        assertTrue(error.message!!.contains("device mutation"))
     }
 
     @Test
@@ -101,5 +111,26 @@ class CloudPolicySimulationAdapterTest {
         val original = refs.toList()
         CloudPolicySimulationAdapter().simulate(candidate, setOf("evidence-001"))
         assertEquals(original, refs)
+    }
+
+    @Test
+    fun safetyGateRemainsAuthoritativeAfterSimulation() {
+        val result = CloudPolicySimulationAdapter().simulate(candidate(), setOf("evidence-001"))
+        val simulation = result.simulation!!
+        val state = DeviceState(
+            availableRamMb = 1800,
+            totalRamMb = 8000,
+            batteryPercent = 50,
+            isCharging = false,
+            isGaming = false
+        )
+        val proposal = DryRunPolicyProposal(
+            state = state,
+            decisions = simulation.decisions,
+            actionExecutionAllowed = simulation.executionAllowed
+        )
+        val gate = DryRunSafetyGate().evaluate(proposal)
+        assertFalse(gate.allowed)
+        assertTrue(gate.blockReasons.contains(SafetyBlockReason.EXECUTION_DISABLED))
     }
 }
