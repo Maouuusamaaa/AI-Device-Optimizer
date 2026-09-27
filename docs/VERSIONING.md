@@ -59,6 +59,8 @@ For 0.1.18, the required validation is Android-native runtime integration, bound
 
 For 0.1.19, the required validation is read-only SmartPanel Game Mode provider access, evidence-contract coverage, release/native CI validation, and controlled ON → OFF → ON UI correlation on the itel P661N/API33 test device. The result is observational and does not authorize Game Mode mutation.
 
+For 0.1.20, the required validation is deterministic descriptive outcome mapping, fail-closed context/confounder handling, train-derived candidate evaluation against a disjoint matching holdout, minimum holdout enforcement, and green AI Cloud, Measurement, Android, and Local Llama CI. No new physical-device optimization benefit or causal-effect claim is introduced.
+
 ## Android versionCode
 
 Android `versionCode` is different from the project's milestone label. Android uses it to determine whether one APK is a newer application update than another.
@@ -76,10 +78,10 @@ An internal CI build may therefore have the same `versionName` as the active mil
 
 The repository currently declares:
 
-- `versionName = 0.1.19`
-- `versionCode = 19`
+- `versionName = 0.1.20`
+- `versionCode = 20`
 
-Milestone 0.1.19 is SmartPanel Game Mode Read-Only Evidence.
+Milestone 0.1.20 is Adaptive Learning Evaluation Hardening.
 
 The milestone adds read-only SmartPanel Game Mode evidence on supported Transsion/itel builds, separates provider availability from configured and checked package sets, validates conservative checked-state parsing, and records the evidence in the existing snapshot contract.
 
@@ -183,3 +185,19 @@ Milestone 0.1.14
 ```
 
 The repository's source of truth remains Git history, while the version label communicates the validated milestone state.
+
+
+## Milestone 0.1.20
+
+Adaptive Learning Evaluation Hardening adds a strict descriptive evaluation boundary above the existing learner:
+
+- existing measurement classifications map to explicit non-causal outcome labels;
+- runtime context/confounder fields are declared and compared explicitly;
+- incomplete or mismatched context cannot be treated as matched evidence;
+- train-derived advisory candidates are checked only against matching holdout patterns;
+- holdout evidence has a minimum count of two;
+- evaluation reports permanently keep causal inference, policy selection, and execution disabled.
+
+The milestone is evaluation-only. It does not add device mutation, privileged permissions, Action Engine authority, Safety Gate changes, or SmartPanel mutation. The existing P661N/API33 evidence remains descriptive/regression evidence.
+
+The implementation is documented in docs/ADAPTIVE_LEARNING_EVALUATION.md.

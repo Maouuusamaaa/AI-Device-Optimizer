@@ -66,7 +66,7 @@ The action engine must be capability-based and policy-controlled. Monitoring sho
 
 ## Development Status
 
-Current milestone: **0.1.19 — SmartPanel Game Mode Read-Only Evidence**.
+Current milestone: **0.1.20 — Adaptive Learning Evaluation Hardening**.
 
 Completed through 0.1.14:
 
@@ -161,3 +161,18 @@ Relevant areas include Android performance and health telemetry, on-device AI, c
 ## License
 
 License will be selected before the first distributable release.
+
+
+## Completed in 0.1.20
+
+- explicit non-causal descriptive outcome labels derived from the existing measurement classifications
+- declared runtime context/confounder comparison with explicit MATCHED, MISMATCHED, and INCOMPLETE states
+- fail-closed rejection of undeclared context fields
+- train-derived advisory candidates evaluated only against matching device/workload/policy holdout patterns
+- minimum holdout evidence requirement
+- explicit holdout statuses without causal-effect interpretation
+- Measurement Validation CI coverage for the new evaluation layer
+- full AI Cloud, Measurement, Android, and Local Llama validation on the merged implementation
+- no Action Engine path, Safety Gate change, permission escalation, SmartPanel mutation, or device mutation
+
+The 0.1.20 evaluation layer remains descriptive. A holdout-supported candidate is not treated as proof of causal effectiveness and cannot authorize policy selection or execution.
