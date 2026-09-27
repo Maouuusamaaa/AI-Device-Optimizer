@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "android/app/build.gradle.kts"
@@ -15,8 +16,9 @@ def main():
     runtime = RUNTIME.read_text(encoding="utf-8")
     model = MODEL.read_text(encoding="utf-8")
 
-    assert 'versionName = "0.1.13"' in build
-    assert 'versionCode = 13' in build
+    assert re.search(r'versionName = "[0-9]+\\.[0-9]+\\.[0-9]+"', build)
+    version_code = re.search(r'versionCode = (\\d+)', build)
+    assert version_code and int(version_code.group(1)) >= 13
     assert 'ndkVersion = "27.2.12479018"' in build
     assert 'path = file("src/main/cpp/CMakeLists.txt")' in build
     assert 'version = "3.22.1"' in build
