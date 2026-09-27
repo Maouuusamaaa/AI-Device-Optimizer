@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "advisorVersion": "cloud-advisor-v1",
+  "evidenceId": "evidence-example-001",
+  "recommendations": [
+    {
+      "policyId": "policy-observe-memory-pressure-001",
+      "actionType": "observe.memory_pressure",
+      "parameters": {},
+      "reason": "Observed memory pressure should be monitored before any mutation is considered.",
+      "expectedEffect": "No device-state change; produce additional measurement evidence.",
+      "confidence": 0.5
+    }
+  ]
+}
