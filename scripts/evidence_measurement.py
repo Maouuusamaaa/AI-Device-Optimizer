@@ -14,7 +14,7 @@ from typing import Any
 
 
 ANALYZER_VERSION = 1
-SUPPORTED_SCHEMA_VERSION = 1
+SUPPORTED_SCHEMA_VERSIONS = (1, 2)
 CLASSIFICATIONS = (
     "NO_REGRESSION",
     "REGRESSION",
@@ -50,7 +50,7 @@ def validate_evidence(record: Any) -> dict[str, Any]:
     if "schemaVersion" in record:
         if not isinstance(record["schemaVersion"], int) or isinstance(record["schemaVersion"], bool):
             errors.append("schemaVersion must be an integer")
-        elif record["schemaVersion"] != SUPPORTED_SCHEMA_VERSION:
+        elif record["schemaVersion"] not in SUPPORTED_SCHEMA_VERSIONS:
             errors.append(f"unsupported schemaVersion: {record['schemaVersion']}")
 
     if "timestampMs" in record and (
@@ -341,7 +341,7 @@ def create_provenance_record(
         "recordType": "evidence-analysis",
         "analysisId": analysis_id,
         "analyzerVersion": ANALYZER_VERSION,
-        "schemaVersion": SUPPORTED_SCHEMA_VERSION,
+        "schemaVersion": baseline.get("schemaVersion"),
         "rulesVersion": rules_version,
         "classification": classification["classification"],
         "reasons": list(classification.get("reasons", [])),
