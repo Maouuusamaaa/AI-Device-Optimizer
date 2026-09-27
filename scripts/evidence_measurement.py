@@ -140,12 +140,12 @@ def resolve_pair(baseline: dict[str, Any], variant: dict[str, Any]) -> dict[str,
     base_validation = validate_evidence(baseline)
     variant_validation = validate_evidence(variant)
     if not base_validation["valid"] or not variant_validation["valid"]:
-        # A structurally valid record can still be unusable for pairing when
-        # comparison identity is incomplete. Treat that boundary as
-        # insufficient evidence rather than as malformed evidence.
-        base_identity = _identity(baseline)
-        variant_identity = _identity(variant)
-        if (base_identity is None and base_validation["valid"]) or (variant_identity is None and variant_validation["valid"]):
+        # Missing comparison identity is an evidence-availability problem, not
+        # malformed measurement data. Other contract violations remain invalid.
+        identity_missing_errors = lambda errors: bool(errors) and all(
+            error.startswith("device missing required field: ") for error in errors
+        )
+        if identity_missing_errors(base_validation["errors"]) or identity_missing_errors(variant_validation["errors"]):
             return {
                 "comparable": False,
                 "reason": "INSUFFICIENT_EVIDENCE",
