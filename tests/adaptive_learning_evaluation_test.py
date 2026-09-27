@@ -63,8 +63,8 @@ class AdaptiveLearningEvaluationTest(unittest.TestCase):
             self.assertFalse(outcome["policySelectionAllowed"])
 
     def test_context_mismatch_is_explicit(self):
-        baseline = {"interactive": True, "charging": False, "thermalStatus": 0}
-        variant = {"interactive": True, "charging": False, "thermalStatus": 2}
+        baseline = {"interactive": True, "charging": False, "thermalStatus": 0, "networkTransport": "WIFI", "gameModeChecked": True}
+        variant = {"interactive": True, "charging": False, "thermalStatus": 2, "networkTransport": "WIFI", "gameModeChecked": True}
         comparison = evaluation.compare_context(baseline, variant)
         self.assertEqual(comparison["status"], "MISMATCHED")
         self.assertEqual(comparison["mismatchedKeys"], ["thermalStatus"])
