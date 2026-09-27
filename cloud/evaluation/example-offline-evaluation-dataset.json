@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "caseId": "example-no-regression",
+      "policyId": "policy-observe-memory-pressure-001",
+      "baseline": {
+        "schemaVersion": 2,
+        "timestampMs": 1000,
+        "workload": "idle",
+        "device": {
+          "androidApi": 33,
+          "manufacturer": "itel",
+          "model": "P661N"
+        },
+        "evidenceId": "example-baseline-001",
+        "samples": [
+          {
+            "timestampMs": 1000,
+            "availableRamMb": 1800,
+            "batteryPercent": 50,
+            "collectionDurationMs": 100,
+            "pssKb": 50000
+          },
+          {
+            "timestampMs": 1100,
+            "availableRamMb": 1790,
+            "batteryPercent": 50,
+            "collectionDurationMs": 100,
+            "pssKb": 51000
+          }
+        ]
+      },
+      "variant": {
+        "schemaVersion": 2,
+        "timestampMs": 2000,
+        "workload": "idle",
+        "device": {
+          "androidApi": 33,
+          "manufacturer": "itel",
+          "model": "P661N"
+        },
+        "evidenceId": "example-variant-001",
+        "samples": [
+          {
+            "timestampMs": 2000,
+            "availableRamMb": 1780,
+            "batteryPercent": 50,
+            "collectionDurationMs": 100,
+            "pssKb": 50000
+          },
+          {
+            "timestampMs": 2100,
+            "availableRamMb": 1770,
+            "batteryPercent": 50,
+            "collectionDurationMs": 100,
+            "pssKb": 51000
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "example-insufficient-001",
+      "policyId": "policy-observe-memory-pressure-001",
+      "baseline": {
+        "schemaVersion": 2,
+        "timestampMs": 3000,
+        "workload": "idle",
+        "device": {
+          "androidApi": 33,
+          "manufacturer": "itel",
+          "model": "P661N"
+        },
+        "evidenceId": "example-baseline-002",
+        "samples": [
+          {
+            "timestampMs": 3000,
+            "availableRamMb": 1800,
+            "batteryPercent": 50,
+            "collectionDurationMs": 100
+          }
+        ]
+      },
+      "variant": {
+        "schemaVersion": 2,
+        "timestampMs": 4000,
+        "workload": "idle",
+        "device": {
+          "androidApi": 33,
+          "manufacturer": "itel"
+        },
+        "evidenceId": "example-variant-002",
+        "samples": [
+          {
+            "timestampMs": 4000,
+            "availableRamMb": 1800,
+            "batteryPercent": 50,
+            "collectionDurationMs": 100
+          }
+        ]
+      }
+    }
+  ]
+}
