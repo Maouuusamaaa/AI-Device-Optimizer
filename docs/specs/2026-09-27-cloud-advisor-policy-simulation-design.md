@@ -37,10 +37,10 @@ The initial contract is conceptually:
 ```json
 {
   "schemaVersion": 1,
-  "evidenceId": "...",
+  "evidenceId": "example-evidence-id",
   "device": {
-    "manufacturer": "...",
-    "model": "...",
+    "manufacturer": "example-manufacturer",
+    "model": "example-model",
     "apiLevel": 33
   },
   "diagnosis": {
@@ -65,11 +65,11 @@ The Advisor may return candidate policies only:
   "advisorVersion": 1,
   "recommendations": [
     {
-      "policyId": "...",
-      "actionType": "...",
+      "policyId": "example-policy-id",
+      "actionType": "example-allowlisted-action",
       "parameters": {},
-      "reason": "...",
-      "expectedEffect": "..."
+      "reason": "example-reason",
+      "expectedEffect": "example-effect"
     }
   ]
 }
