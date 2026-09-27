@@ -9,7 +9,7 @@ object DeviceSnapshotJsonWriter {
 
     fun writeLatest(context: Context, snapshot: DeviceSnapshot): File {
         val root = JSONObject()
-            .put("schemaVersion", 3)
+            .put("schemaVersion", 4)
             .put("timestampMs", snapshot.timestampMs)
             .put("androidApi", snapshot.androidApi)
             .put("manufacturer", snapshot.manufacturer)
@@ -26,6 +26,10 @@ object DeviceSnapshotJsonWriter {
             .put("networkValidated", snapshot.networkValidated ?: JSONObject.NULL)
             .put("isInteractive", snapshot.isInteractive ?: JSONObject.NULL)
             .put("uptimeMs", snapshot.uptimeMs ?: JSONObject.NULL)
+            .put("gameModeProviderAvailable", snapshot.gameModeProviderAvailable)
+            .put("gameModePackages", JSONArray(snapshot.gameModePackages))
+            .put("gameModeCheckedPackages", JSONArray(snapshot.gameModeCheckedPackages))
+            .put("gameModeProviderError", snapshot.gameModeProviderError ?: JSONObject.NULL)
 
         val processes = JSONArray()
         snapshot.processes.forEach { process ->
