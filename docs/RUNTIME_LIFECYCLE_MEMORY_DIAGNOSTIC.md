@@ -93,14 +93,13 @@ The runner performs the following sequence automatically:
 
 1. Generate a new `pairId`.
 2. Run the reset-enabled arm in the current application process.
-3. Persist the reset arm filename, PID, and Linux process start-time ticks.
-4. Schedule the continuation through Android `AlarmManager`.
-5. Terminate the current application process.
-6. Android starts the foreground service for the continuation action in a new application process.
-7. Run the no-reset control arm in that new process.
-8. Write a pair manifest linking both JSON files and recording both process identities.
-9. Set `freshProcessVerified=true` only when both PID and process-start ticks differ.
-10. Queue the manifest through the existing evidence synchronization mechanism.
+3. Persist the reset arm filename, PID, and Linux process start-time ticks using synchronous durable state.
+4. Schedule the continuation through Android JobScheduler, using the expedited path when supported and a regular fallback otherwise.
+5. Terminate the current application process only after continuation state and the job handoff are durably committed.
+6. The new application process resumes the pending continuation and runs the no-reset control arm.
+7. Write a pair manifest linking both JSON files and recording both process identities.
+8. Set `freshProcessVerified=true` only when both PID and process-start ticks differ.
+9. Queue the manifest through the existing evidence synchronization mechanism.
 
 The pair manifest is named `runtime-lifecycle-pair-<pairId>.json` and uses protocol `fresh_process_paired_runtime_lifecycle`.
 
@@ -109,3 +108,39 @@ This deliberately uses an explicit Android system `PendingIntent`/alarm boundary
 At least two comparable reset/control pairs are required before treating the experiment as reproducibly informative. PSS transitions remain observational evidence and must be interpreted together with RSS, Swap PSS, available RAM, temperature, process lifetime, and the raw time series. A memory leak is not diagnosed from PSS alone.
 
 VersionName remains 0.1.13 while this investigation is open.
+
+## Final paired evidence — 2026-09-27
+
+Four schema-v5 real-device evidence files now provide two fresh-process reset/no-reset pairs on the itel P661N / Android API 33. The four processes have distinct PID and Linux process-start tick values:
+
+- `benchmarks/results/runtime-lifecycle-memory-1790466960859.json` — reset-enabled, PID 16128, start ticks 1877438.
+- `benchmarks/results/runtime-lifecycle-memory-1790467459890.json` — no-reset control, PID 18822, start ticks 1929948.
+- `benchmarks/results/runtime-lifecycle-memory-1790468135617.json` — reset-enabled, PID 20987, start ticks 1997518.
+- `benchmarks/results/runtime-lifecycle-memory-1790468785315.json` — no-reset control, PID 24878, start ticks 2062486.
+
+The chronological pairings are the first two files and the second two files. This pairing is based on the runner's sequential execution order and evidence timestamps; the four uploaded JSON files do not include a separately uploaded pair-manifest file.
+
+Observed PSS transitions:
+
+| Arm | Baseline PSS | Main transition | Final-phase transition |
+| --- | ---: | ---: | ---: |
+| Pair 1 reset | 11,957 KiB | post-reset: +63,478 KiB (+61.99 MiB) | — |
+| Pair 1 no-reset | 13,027 KiB | post-cleanup: +31,624 KiB (+30.88 MiB) | post-no-reset: +157 KiB |
+| Pair 2 reset | 13,170 KiB | post-cleanup: +24,540 KiB (+23.96 MiB) | post-reset: +158 KiB |
+| Pair 2 no-reset | 12,883 KiB | post-cleanup: +24,005 KiB (+23.44 MiB) | post-no-reset: +556 KiB |
+
+Pair 1 reset reproduces a large delayed PSS transition during post-reset: 11,957 → 75,435 KiB, about 150 seconds after `post_reset_start`. Pair 2 does not reproduce a reset-phase elevation: after reset its PSS changes only 37,710 → 37,868 KiB, while its major +24,540 KiB transition occurs during post-cleanup before reset. Both no-reset controls also show substantial post-cleanup transitions followed by only small final-phase changes.
+
+### Final classification
+
+**MIXED — lifecycle-dependent PSS transitions are reproducible, but reset-specific causality is not established.**
+
+The fresh-process controls show that substantial PSS transitions can occur during the shared post-cleanup lifecycle, including in no-reset controls. Therefore the data do not establish the explicit reset boundary as the unique cause, and they do not establish a memory leak.
+
+RSS, Swap PSS, available RAM, temperature, and the complete sample series remain supporting observations; PSS elevation alone is not a leak diagnosis.
+
+### Investigation disposition
+
+The reproduction objective is complete: the original observation was reproduced under fresh-process conditions and compared against two no-reset controls. No production behavior change is justified by this evidence. The lifecycle diagnostic remains useful as a regression/observability experiment, while this investigation is closed as **mixed / inconclusive for reset-specific causality**.
+
+VersionName remains 0.1.13. No version bump is required because this investigation did not establish a new validated production milestone.
