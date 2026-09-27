@@ -66,9 +66,9 @@ The action engine must be capability-based and policy-controlled. Monitoring sho
 
 ## Development Status
 
-Current milestone: 0.1.14 — Evidence/Measurement Hardening.
+Current milestone: 0.1.15 — Cloud Advisor + Local Policy Simulation.
 
-Completed through the current milestone:
+Completed through 0.1.14:
 
 - Stage 1–8 local AI/runtime foundation, including Qwen3 0.6B GGUF Q4_0 and Android JNI integration
 - Stage 9 real-device local inference benchmark
@@ -80,22 +80,31 @@ Completed through the current milestone:
 - final lifecycle classification: MIXED; lifecycle-dependent PSS transitions are reproducible, but reset-specific causality is not established
 - explicit non-diagnosis of memory leak from PSS alone
 - lifecycle investigation closed without production runtime changes or a version bump
-
-Completed in 0.1.14:
-
 - deterministic evidence contract validation for schema versions 1 and 2
 - comparable device/workload pairing with fail-closed insufficient-evidence handling
 - deterministic NO_REGRESSION / REGRESSION / MIXED classification
 - canonical SHA-256 provenance and append-only analysis history
 - Measurement Validation CI coverage for the hardened evidence layer
 - validation of existing itel P661N / Android API 33 benchmark evidence
-- no new optimization mutation, privileged operation, or Cloud AI bypass
 
-The current lifecycle diagnostic remains an observational/regression tool. Its evidence does not authorize optimization mutations, and no production action is inferred from the mixed result.
+Completed in 0.1.15:
+
+- Cloud Advisor v1 advisory-only response contract
+- structural validation that rejects malformed, unsupported, and authorization-bearing cloud output
+- local immutable Cloud Policy Candidate validation
+- integration with the existing ActionCatalog rather than introducing a second action authority
+- deterministic adaptation of validated cloud candidates into the existing PolicySimulator
+- explicit DRY_RUN-only simulation with execution permanently disabled
+- fail-closed insufficient-evidence behavior when referenced evidence is unavailable locally
+- preservation of the existing DryRunSafetyGate as the local authority
+- provenance linkage through evidenceId, advisorVersion, and policyId
+- Cloud Advisor safety/contract CI coverage
+- Android unit-test coverage and release/native APK validation
+- no new privileged operation, new mutation capability, adaptive learning, or Cloud-to-Action bypass
+
+Cloud Advisor output remains untrusted candidate data. This milestone establishes the advisory and local-simulation boundary; it does not grant cloud output execution authority.
 
 The primary mobile development path remains Termux + Shizuku/Rish on the physical Android device, with PC + ADB as an optional fallback.
-
-The next milestone should be defined separately from 0.1.14 after release validation is complete.
 
 ## Research Direction
 
