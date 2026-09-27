@@ -66,7 +66,7 @@ The action engine must be capability-based and policy-controlled. Monitoring sho
 
 ## Development Status
 
-Current milestone: 0.1.17 — Adaptive Learning Foundation.
+Current milestone: **0.1.19 — SmartPanel Game Mode Read-Only Evidence**.
 
 Completed through 0.1.14:
 
@@ -104,8 +104,6 @@ Completed in 0.1.15:
 
 Cloud Advisor output remains untrusted candidate data. This milestone establishes the advisory and local-simulation boundary; it does not grant cloud output execution authority.
 
-The primary mobile development path remains Termux + Shizuku/Rish on the physical Android device, with PC + ADB as an optional fallback.
-
 Completed in 0.1.16:
 
 - deterministic offline replay of paired measurement evidence using the existing evidence measurement classifier
@@ -118,17 +116,6 @@ Completed in 0.1.16:
 - no policy selection, action ranking, causal effectiveness claim, or device mutation introduced
 
 Offline evaluation remains descriptive. Its outcome history is prepared as a future input boundary for Adaptive Learning, not as an authorization mechanism.
-
-## Research Direction
-
-The project will use Android platform documentation, real-device measurements, and relevant open-source implementations as references. Existing projects are treated as research references rather than code to copy blindly.
-
-Relevant areas include Android performance and health telemetry, on-device AI, controlled Android automation, and local/cloud hybrid inference.
-
-## License
-
-License will be selected before the first distributable release.
-
 
 Completed in 0.1.17:
 
@@ -143,3 +130,34 @@ Completed in 0.1.17:
 - Measurement Validation CI coverage for adaptive learning and persistence
 - Android background monitoring remains the always-on local processing loop; learning remains advisory-only and downstream of measurement/history
 - no automatic policy selection, ActionCatalog mutation, Safety Gate bypass, permission escalation, or device mutation
+
+Completed in 0.1.18:
+
+- Android-native integration of the local adaptive-learning runtime
+- bounded resource-aware background processing
+- persistent Knowledge State loading/saving in the Android application
+- runtime diagnostics for missing, valid, and corrupt Knowledge State
+- validation that the adaptive-learning runtime remains advisory-only and cannot authorize execution
+
+Completed in 0.1.19:
+
+- read-only SmartPanel Game Mode evidence collection on supported Transsion/itel builds
+- explicit separation of provider availability, configured game packages, and checked game packages
+- normal `com.transsion.gamemode.permission.READ_APP_LIST` permission only; no privileged write permission
+- schema-versioned snapshot serialization for Game Mode evidence
+- JVM contract coverage for checked-state parsing and unavailable-provider behavior
+- real-device validation on itel P661N / Android 13 API 33
+- controlled Minecraft Game Management UI ON → OFF → ON validation showing the provider checked-state tracks the UI toggle on this tested build
+- no Game Mode mutation, Action Engine integration, privileged permission escalation, or SmartPanel APK modification
+
+The 0.1.19 SmartPanel evidence remains observational. The validated ON/OFF/ON correlation is specific to the tested itel P661N/API33 build and is not generalized to every Transsion/itel release.
+
+## Research Direction
+
+The project will use Android platform documentation, real-device measurements, and relevant open-source implementations as references. Existing projects are treated as research references rather than code to copy blindly.
+
+Relevant areas include Android performance and health telemetry, on-device AI, controlled Android automation, and local/cloud hybrid inference.
+
+## License
+
+License will be selected before the first distributable release.
