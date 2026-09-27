@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["schemaVersion", "timestampMs", "workload", "samples"],
   "properties": {
-    "schemaVersion": { "type": "integer", "const": 1 },
+    "schemaVersion": { "type": "integer", "enum": [1, 2] },
     "timestampMs": { "type": "integer" },
     "workload": { "type": "string" },
     "device": {
