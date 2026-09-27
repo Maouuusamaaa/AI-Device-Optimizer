@@ -33,6 +33,7 @@ jobs:
             cloud/evaluation/evaluate-baseline.py \
             cloud/models/model-interface.py \
             tests/ai_cloud_contract_test.py \
+            tests/cloud_policy_simulation_contract_test.py \
             tests/stage4_ai_baseline_test.py \
             tests/training_readiness_test.py
 
@@ -55,8 +56,11 @@ jobs:
           python3 -c "import json; d=json.load(open('/tmp/training-readiness.json')); assert d['status']=='TRAINING_BLOCKED_INSUFFICIENT_LABEL_DIVERSITY'; assert d['uniqueLabelCount']==1; assert d['policy']['deviceMutationAllowed'] is False"
           test "$code" -eq 2
 
-      - name: Validate contract
+      - name: Validate foundation contract
         run: python3 scripts/validate-ai-cloud-contract.py cloud/contracts/example-ai-cloud-response.json
+
+      - name: Validate Cloud Advisor contract
+        run: python3 scripts/validate-ai-cloud-contract.py cloud/contracts/example-cloud-advisor-response.json
 
       - name: Run baseline
         run: python3 cloud/models/baseline-advisor.py cloud/dataset/example-training-dataset.json --out /tmp/baseline.json
