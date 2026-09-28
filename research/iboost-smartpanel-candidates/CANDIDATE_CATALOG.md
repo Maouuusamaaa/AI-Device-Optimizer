@@ -2,10 +2,6 @@
 
 This directory is intentionally separate from the AI Device Optimizer build/runtime implementation.
 
-## Purpose
-
-Track public Smart Panel candidate releases for later compatibility and integration research on the itel P661N. This catalog records metadata and provenance only. OEM APK binaries are not committed here.
-
 ## Device baseline
 
 - Package: `com.transsion.smartpanel`
@@ -16,70 +12,62 @@ Track public Smart Panel candidate releases for later compatibility and integrat
 - Current APK path: `/system_ext/app/SmartPanel/SmartPanel.apk`
 - Baseline SHA-256: `986709e8e131cf7a1a619e5e82e865e87affd330db02020662cce483579002ec`
 - Baseline size: 56,452,303 bytes
-- Baseline is OEM/system_ext and must not be replaced until signature, package identity, dependencies, and device compatibility are verified.
 
-## Candidate policy
+The OEM/system_ext APK must not be replaced until package identity, signing identity, dependencies, and device compatibility are verified.
 
-For each source, retain up to the three newest releases exposed by that source. The same release appearing on multiple sources is one candidate with multiple provenance records.
+## Queue policy
 
-A candidate is not considered installable merely because an archive marks it safe. Installation requires local APK signature/certificate, manifest, package identity, versionCode, ABI, permissions, components, dependencies, and device-specific compatibility checks.
+Each source has its own folder. The source folder contains URLs/metadata only; APK binaries are temporary research inputs and are not committed.
 
-## Candidate set collected 2026-09-28
+Up to three newest distinct releases exposed by each source are queued. The same release across multiple sources is one logical candidate in `cross-source/`.
 
-| Candidate | VersionCode | Android | ABI | Size | Date | Sources |
-|---|---:|---|---|---:|---|---|
-| 15.2.1.052 | 150201052 | 12+ | arm64-v8a | ~86 MB | Jul/Aug 2025 | APKPure, APKCombo, APKMirror |
-| 15.2.0.117 | 150200117 | 12+ | arm64-v8a | 85.98 MB | Aug 8 2025 | APKMirror, APKCombo |
-| 3.8.2.077 | 30802077 | 12+ | arm64-v8a + armeabi-v7a | 95.14 MB | May 28 2025 | APKMirror, APKCombo |
+A newer release replaces an older release only after the newer release passes the required verification gates. A failed newer release does not invalidate an older release that has already passed.
 
-### Source observations
+## Current logical candidates
 
-#### APKMirror
+| Candidate | VersionCode | Android | ABI | Sources | Queue status |
+|---|---:|---|---|---|---|
+| 15.2.1.052 | 150201052 | 12+ | arm64-v8a | APKMirror, APKPure, APKCombo | acquisition/verification pending |
+| 15.2.0.117 | 150200117 | 12+ | arm64-v8a | APKMirror, APKCombo | acquisition/verification pending |
+| 3.8.2.077 | 30802077 | 12+ | arm64-v8a + armeabi-v7a | APKMirror, APKCombo | acquisition/verification pending |
 
-Current Smart Panel archive exposes:
+## Source queue
 
-1. 15.2.0.117 — versionCode 150200117, arm64-v8a, Android 12+, 85.98 MB.
-2. 15.2.1.052 — versionCode 150201052, arm64-v8a, Android 12+, 86.03 MB.
-3. 3.8.2.077 — versionCode 30802077, arm64-v8a + armeabi-v7a, Android 12+, 95.14 MB.
+### APKMirror
 
-APKMirror also reports multiple valid signatures for 15.2.0.117 (known signatures aec8 and bfd5). This is an important compatibility checkpoint; do not infer compatibility from version alone.
+The current archive evidence exposes these three newest relevant releases:
 
-#### APKPure
+1. 15.2.0.117 — uploaded 2025-08-08.
+2. 15.2.1.052 — uploaded 2025-07-29.
+3. 3.8.2.077 — uploaded 2025-05-28.
 
-The currently indexed Smart Panel page exposes 15.2.1.052 as its latest version:
+APKMirror reports multiple valid signature variants for some releases, so the exact downloaded binary must be verified rather than inferred from the release page.
 
-- versionCode 150201052
-- Android 12+
-- arm64-v8a
-- 86.0 MB
-- certificate fingerprint shown by the page: aec83f63bfa3a6ad9422086688639fea7684ef00
+### APKPure
 
-Its version-history page currently exposes only 15.2.1.052 in the indexed results, so fewer than three distinct candidates can be attributed to APKPure from the evidence collected here.
+The currently indexed evidence exposes 15.2.1.052 as the latest distinct Smart Panel release. Fewer than three candidates are therefore queued from this source until additional distinct releases can be verified from its indexed history.
 
-#### APKCombo
+### APKCombo
 
-The current Smart Panel page exposes:
+The current evidence exposes:
 
-1. 15.2.1.052 — versionCode 150201052, Android 12+, arm64-v8a.
-2. 15.2.0.117 — Android 12+.
-3. 3.8.2.077 — Android 12+.
+1. 15.2.1.052
+2. 15.2.0.117
+3. 3.8.2.077
 
-APKCombo identifies the package as `com.transsion.smartpanel`.
+## Verification gates
 
-## Important provenance distinction
+For each candidate:
 
-The public archives contain releases attributed to different Transsion-related publishers/labels across generations (for example Transsion Holdings and Shalltry Group). This must be treated as evidence to investigate, not as proof that the APK can update the OEM Smart Panel on the P661N.
-
-## Next verification stage
-
-Before any installation attempt:
-
-1. Obtain the exact APK bytes for each selected candidate.
-2. Verify APK v2/v3 signing and full certificate fingerprints.
-3. Compare signing identity with the installed OEM Smart Panel.
-4. Inspect manifest, exported components, permissions, shared UID/signature permissions, providers, services, receivers, and native libraries.
-5. Compare resources/components related to Game Mode.
-6. Check versionCode/update compatibility.
-7. Only then classify candidates as compatible, incompatible, or requiring deeper analysis.
+1. Acquire the exact APK bytes from its recorded source URL.
+2. Compute the binary SHA-256.
+3. Verify APK signing scheme and certificate fingerprints.
+4. Compare signing identity with the installed OEM Smart Panel.
+5. Verify package name and versionCode.
+6. Verify ABI/native libraries.
+7. Inspect manifest, exported components, permissions, providers, services, and receivers.
+8. Inspect Game Mode/i-Boost-related components and resources.
+9. Assess device-specific compatibility on the P661N.
+10. Only then classify as valid, rejected, or requiring deeper analysis.
 
 No candidate is approved for installation by this catalog.
