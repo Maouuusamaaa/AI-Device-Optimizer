@@ -38,7 +38,15 @@ The baseline APK SHA-256 is recorded as:
 
 986709e8e131cf7a1a619e5e82e865e87affd330db02020662cce483579002ec
 
-The baseline signing certificate fingerprint is not yet recorded in this research branch. Therefore 15.2.1.052 cannot be classified as install-compatible yet, even though its own signing certificate is verified.
+The baseline signing certificate has now been measured directly from the device with Android's apksigner tooling:
+
+- certificate SHA-256: 7e09506b9037d7267574c2bd4cc7102722e4306d682e6f1634483b8311d0c2bb
+- certificate SHA-1: be8cb9f95bcb5bfb04045034e5182634a2fca1fa
+- certificate MD5: 3d2cbb77572e5a14f98b575bb759498b
+
+The baseline certificate subject is EMAILADDRESS=yong.chen@itel-mobile.com, CN=RoyChen, OU=Itel, O=TRANSSION, L=Shenzhen, ST=Guangdong, C=CN.
+
+This establishes that 15.2.1.052 is NOT signature-compatible with the installed P661N SmartPanel baseline: its certificate SHA-256 is 40e4400c5c90f79d8f390584eebad893ac9bdba0ff1507b126d4c9db547929da. Therefore it cannot be treated as a normal in-place package update candidate for this device.
 
 No package-update or signature bypass was attempted.
 
@@ -60,7 +68,7 @@ The CI runner could not resolve an APKMirror direct-download URL for this candid
 
 15.2.1.052 / versionCode 150201052
 
-This is the only candidate in the current queue that has passed:
+This candidate passed the binary research gates:
 1. exact binary acquisition,
 2. ZIP/APK integrity,
 3. SHA-256 equality to the recorded source hash,
@@ -71,7 +79,23 @@ This is the only candidate in the current queue that has passed:
 8. native-library inventory,
 9. Game Mode-related resource/string inspection.
 
-It is not yet install-approved because the P661N baseline signing certificate and device-specific replacement compatibility have not been directly verified.
+It is now classified as **signature-incompatible with the installed P661N baseline**. Its binary is internally valid, but its signing certificate differs from the device's installed SmartPanel certificate. It is therefore not eligible for a normal in-place update path.
+
+### Device-side signature gate result
+
+Installed P661N SmartPanel:
+- versionName: 3.0.0.216
+- versionCode: 5233
+- package: com.transsion.smartpanel
+- baseline certificate SHA-256: 7e09506b9037d7267574c2bd4cc7102722e4306d682e6f1634483b8311d0c2bb
+- baseline certificate SHA-1: be8cb9f95bcb5bfb04045034e5182634a2fca1fa
+- subject: EMAILADDRESS=yong.chen@itel-mobile.com, CN=RoyChen, OU=Itel, O=TRANSSION, L=Shenzhen, ST=Guangdong, C=CN
+
+15.2.1.052:
+- certificate SHA-256: 40e4400c5c90f79d8f390584eebad893ac9bdba0ff1507b126d4c9db547929da
+- result: **FAIL — certificate mismatch**
+
+The comparison is decisive for the normal Android package-update path; no signing bypass is appropriate.
 
 ### Candidates not yet classified as failed
 
