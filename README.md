@@ -66,7 +66,7 @@ The action engine must be capability-based and policy-controlled. Monitoring sho
 
 ## Development Status
 
-Current milestone: **0.1.20 — Adaptive Learning Evaluation Hardening**.
+Current milestone: **0.1.21 — Adaptive Optimizer Execution-Readiness Hardening**.
 
 Completed through 0.1.14:
 
@@ -176,3 +176,16 @@ License will be selected before the first distributable release.
 - no Action Engine path, Safety Gate change, permission escalation, SmartPanel mutation, or device mutation
 
 The 0.1.20 evaluation layer remains descriptive. A holdout-supported candidate is not treated as proof of causal effectiveness and cannot authorize policy selection or execution.
+
+
+## Completed in 0.1.21
+
+- explicit Adaptive Optimizer execution-readiness contract;
+- structural validation of allowlist membership, LOW risk, permission requirements, reversibility, measurement, rollback, verification, and kill-switch metadata;
+- explicit READY_FOR_REVIEW versus BLOCKED states;
+- permanent executionAllowed=false boundary;
+- candidate executionEnabled=true fail-closed validation;
+- Android unit-test coverage for the readiness boundary;
+- no action execution, policy selection, permission escalation, SmartPanel mutation, or device mutation.
+
+The 0.1.21 readiness layer prepares a separately reviewed future execution milestone. READY_FOR_REVIEW is not execution authorization.
