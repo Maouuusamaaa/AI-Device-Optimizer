@@ -1,0 +1,111 @@
+name: i-Boost Candidate Binary Audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "research/iboost-smartpanel-candidates/**"
+      - ".github/workflows/iboost-candidate-binary-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+
+      - name: Install inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y aapt apksigner unzip file jq curl
+
+      - name: Audit candidate binaries from recorded public endpoints
+        shell: bash
+        run: |
+          set -u
+          mkdir -p audit-results downloads
+
+          audit_one() {
+            local id="$1"
+            local url="$2"
+            local expected_sha="$3"
+            local out="downloads/${id}.apk"
+            local report="audit-results/${id}.json"
+
+            echo "=== ${id} ==="
+            rm -f "$out"
+
+            http_code=$(curl -L --silent --show-error --location               --retry 4 --retry-delay 3 --max-time 240               -A "Mozilla/5.0" -o "$out" -w "%{http_code}" "$url" 2>"${out}.err" || true)
+
+            if [ ! -s "$out" ]; then
+              jq -n --arg id "$id" --arg url "$url" --arg code "$http_code"                 '{candidate:$id,url:$url,status:"DOWNLOAD_BLOCKED",http_code:$code,reason:"No binary bytes were retrieved"}' > "$report"
+              rm -f "$out" "${out}.err"
+              return 0
+            fi
+
+            mime=$(file -b --mime-type "$out" || true)
+            size=$(stat -c '%s' "$out")
+            sha=$(sha256sum "$out" | awk '{print $1}')
+
+            if ! unzip -t "$out" >/dev/null 2>&1; then
+              jq -n --arg id "$id" --arg url "$url" --arg mime "$mime" --arg size "$size" --arg sha "$sha"                 '{candidate:$id,url:$url,status:"REJECTED",reason:"Downloaded object is not a valid ZIP/APK",mime:$mime,size_bytes:($size|tonumber),sha256:$sha}' > "$report"
+              rm -f "$out" "${out}.err"
+              return 0
+            fi
+
+            pkg=$(aapt dump badging "$out" 2>/dev/null | sed -n "s/.*package: name='\\([^']*\\)'.*/\\1/p" | head -1 || true)
+            ver=$(aapt dump badging "$out" 2>/dev/null | sed -n "s/.*versionCode='\\([^']*\\)'.*/\\1/p" | head -1 || true)
+            certs=$(apksigner verify --print-certs "$out" 2>/dev/null | tr '\\n' ' ' || true)
+            native_libs=$(unzip -Z1 "$out" | grep -E '^lib/(arm64-v8a|armeabi-v7a)/.+\\.so$' | tr '\\n' ',' | sed 's/,$//' || true)
+            components=$(aapt dump xmltree "$out" AndroidManifest.xml 2>/dev/null | grep -E 'E: (activity|service|receiver|provider)' | sed 's/^ *//' | tr '\\n' ';' || true)
+            game_hits=$(unzip -p "$out" 'resources.arsc' 2>/dev/null | strings | grep -Ei 'game.?mode|game.?accelerat|smart.?panel|i.?boost' | head -100 | tr '\\n' ';' || true)
+            permissions=$(aapt dump permissions "$out" 2>/dev/null | tr '\\n' ';' || true)
+
+            sha_match=false
+            [ "$sha" = "$expected_sha" ] && sha_match=true
+
+            jq -n               --arg id "$id" --arg url "$url" --arg mime "$mime" --arg size "$size"               --arg sha "$sha" --arg expected "$expected_sha" --arg pkg "$pkg" --arg ver "$ver"               --arg certs "$certs" --arg libs "$native_libs" --arg components "$components"               --arg game_hits "$game_hits" --arg permissions "$permissions" --argjson sha_match "$sha_match"               '{candidate:$id,url:$url,status:(if $sha_match then "BINARY_VERIFIED" else "REJECTED_HASH_MISMATCH" end),mime:$mime,size_bytes:($size|tonumber),sha256:$sha,expected_sha256:$expected,sha256_match:$sha_match,package:$pkg,versionCode:$ver,signing:$certs,native_libraries:$libs,manifest_components:$components,game_mode_resource_hits:$game_hits,permissions:$permissions}' > "$report"
+
+            rm -f "$out" "${out}.err"
+          }
+
+          resolve_apkmirror() {
+            local page="$1"
+            curl -L --silent --show-error --max-time 120 -A "Mozilla/5.0" "$page"               | grep -oE 'https://www\\.apkmirror\\.com/[^"]+/download/\\?key=[^"]+'               | head -1 || true
+          }
+
+          url_150201052=$(resolve_apkmirror "https://www.apkmirror.com/apk/transsion-holdings/smart-panel/smart-panel-15-2-1-052-release/smart-panel-15-2-1-052-android-apk-download/")
+          if [ -n "$url_150201052" ]; then
+            audit_one "15.2.1.052" "$url_150201052" "4abd7143d0e60df6fc5fa5de0a4549670fa52c37c7402bb858971b67d0773997"
+          else
+            audit_one "15.2.1.052" "https://d.apkpure.net/b/APK/com.transsion.smartpanel?version=latest" "4abd7143d0e60df6fc5fa5de0a4549670fa52c37c7402bb858971b67d0773997"
+          fi
+
+          url_150200117=$(resolve_apkmirror "https://www.apkmirror.com/apk/transsion-holdings/smart-panel/smart-panel-15-2-0-117-release/smart-panel-15-2-0-117-android-apk-download/")
+          if [ -n "$url_150200117" ]; then
+            audit_one "15.2.0.117" "$url_150200117" "0bae2238489b0f514af6ec10f55406dfe44c91acc31228cf15ed5f0a610eddbc"
+          else
+            jq -n '{candidate:"15.2.0.117",status:"DOWNLOAD_BLOCKED",reason:"APKMirror binary link could not be resolved"}' > audit-results/15.2.0.117.json
+          fi
+
+          url_30802077=$(resolve_apkmirror "https://www.apkmirror.com/apk/shalltry-group/smart-panel-2/smart-panel-3-8-2-077-release/smart-panel-3-8-2-077-android-apk-download/")
+          if [ -n "$url_30802077" ]; then
+            audit_one "3.8.2.077" "$url_30802077" "df884f9cb1499c5c7ccfaca835ce8d3fbd65d0fbe9cf0160822ed77fffbf4ed9"
+          else
+            jq -n '{candidate:"3.8.2.077",status:"DOWNLOAD_BLOCKED",reason:"APKMirror binary link could not be resolved"}' > audit-results/3.8.2.077.json
+          fi
+
+          cat audit-results/*.json
+
+      - name: Upload audit reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: iboost-candidate-binary-audit
+          path: audit-results/
+          if-no-files-found: error
+          retention-days: 7
