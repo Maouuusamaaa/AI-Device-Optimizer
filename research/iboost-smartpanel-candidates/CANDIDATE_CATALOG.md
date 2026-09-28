@@ -87,3 +87,19 @@ For each candidate:
 10. Only then classify as valid, rejected, or requiring deeper analysis.
 
 No candidate is approved for installation by this catalog.
+
+## P661N OTA lineage lead — 250723V660
+
+A P661N-specific OTA from build 250514V641 to 250723V660 was identified. The tracker records:
+
+- OTA title: `P661N-H334IJKLN-T-GL-250514V641-250723V660_20250723184746`
+- update version: `P661N-H334IJKLN-T-GL-250723V660`
+- size: 99.9 MB
+- fingerprint: `Itel/P661N-GL/itel-P661N:13/TP1A.220624.014/250723V660:user/release-keys`
+- OTA payload URL resolved to the Google OTA host: `https://android.googleapis.com/packages/ota-api/package/4ce43b9f817a9755533a0a137693f3371958f81f.zip`
+
+The tracker is explicitly not affiliated with Transsion/itel, so its metadata is treated as a discovery/provenance lead rather than authoritative OEM evidence. The direct payload could not be downloaded in the current research environment, so no APK contents or SmartPanel certificate can yet be claimed from this OTA.
+
+The next safe binary gate is to obtain the OTA payload bytes, inspect the ZIP without flashing it, identify whether it contains `com.transsion.smartpanel` / `SmartPanel.apk`, and compare that APK's signing certificate with the device baseline `7e09506b9037d7267574c2bd4cc7102722e4306d682e6f1634483b8311d0c2bb`. No installation or firmware flashing is part of this step.
+
+
