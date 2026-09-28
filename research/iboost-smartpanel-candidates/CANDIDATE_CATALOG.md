@@ -27,9 +27,9 @@ A newer release replaces an older release only after the newer release passes th
 
 | Candidate | VersionCode | Android | ABI | Sources | Queue status |
 |---|---:|---|---|---|---|
-| 15.2.1.052 | 150201052 | 12+ | arm64-v8a | APKMirror, APKPure, APKCombo | acquisition/verification pending |
-| 15.2.0.117 | 150200117 | 12+ | arm64-v8a | APKMirror, APKCombo | acquisition/verification pending |
-| 3.8.2.077 | 30802077 | 12+ | arm64-v8a + armeabi-v7a | APKMirror, APKCombo | acquisition/verification pending |
+| 15.2.1.052 | 150201052 | 12+ | arm64-v8a | APKMirror, APKPure, APKCombo | **REJECTED — certificate mismatch** |
+| 15.2.0.117 | 150200117 | 12+ | arm64-v8a | APKMirror, APKCombo | **REJECTED — published certificate mismatch** |
+| 3.8.2.077 | 30802077 | 12+ | arm64-v8a + armeabi-v7a | APKMirror, APKCombo | **REJECTED — published certificate mismatch** |
 
 ## Source queue
 
@@ -54,6 +54,22 @@ The current evidence exposes:
 1. 15.2.1.052
 2. 15.2.0.117
 3. 3.8.2.077
+
+## Device signature gate result
+
+The installed P661N SmartPanel baseline was measured directly with apksigner:
+
+- certificate SHA-256: 7e09506b9037d7267574c2bd4cc7102722e4306d682e6f1634483b8311d0c2bb
+- certificate SHA-1: be8cb9f95bcb5bfb04045034e5182634a2fca1fa
+- subject: EMAILADDRESS=yong.chen@itel-mobile.com, CN=RoyChen, OU=Itel, O=TRANSSION, L=Shenzhen, ST=Guangdong, C=CN
+
+The inspected 15.2.1.052 binary uses SHA-256 40e4400c5c90f79d8f390584eebad893ac9bdba0ff1507b126d4c9db547929da, so it fails the normal Android update-signature gate.
+
+Public APKMirror metadata also reports the same 40e440... certificate for 15.2.0.117, while 3.8.2.077 reports a different a2f153... certificate. Neither matches the P661N baseline. These source-level certificate mismatches are sufficient to reject those candidates for a normal in-place package update, even though their binaries were not locally acquired in the CI audit. citeturn2search2turn2search5
+
+## Firmware-lineage research
+
+Public firmware indexes expose P661N-specific builds including P661N-H334IJKLN-T-GL-241113V437, 250106V612, 250514V641, and 250723V660. These are provenance leads for locating a P661N-signed SmartPanel binary, but the indexed pages do not expose the SmartPanel APK or its certificate fingerprint. Therefore no firmware package is treated as verified or installable from this catalog. citeturn0search1turn0search3turn0search5
 
 ## Verification gates
 
