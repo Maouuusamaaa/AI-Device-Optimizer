@@ -72,7 +72,7 @@ jobs:
 
           resolve_apkcombo() {
             local page="$1"
-            curl -L --silent --show-error --max-time 120 -A "Mozilla/5.0" "$page"               | grep -oE 'https://apkcombo\.com/r2\?u=[^"]+'               | head -1               | sed 's/&amp;/\&/g'
+            curl -L --silent --show-error --max-time 120 -A "Mozilla/5.0" "$page"               | grep -oE 'https://apkcombo\.com/r2\?u=[^"]+'               | head -1               | sed 's/&amp;/\&/g' || true
           }
 
           url_150201052=$(resolve_apkcombo "https://apkcombo.com/smart-panel/com.transsion.smartpanel/download/apk")
