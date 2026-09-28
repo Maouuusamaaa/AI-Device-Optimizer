@@ -40,13 +40,10 @@ jobs:
             echo "=== ${id} ==="
             rm -f "$out"
 
-            http_code=$(curl -L --silent --show-error --location \
-              --retry 4 --retry-delay 3 --max-time 240 \
-              -A "Mozilla/5.0" -o "$out" -w "%{http_code}" "$url" 2>"${out}.err" || true)
+            http_code=$(curl -L --silent --show-error --location               --retry 4 --retry-delay 3 --max-time 240               -A "Mozilla/5.0" -o "$out" -w "%{http_code}" "$url" 2>"${out}.err" || true)
 
             if [ ! -s "$out" ]; then
-              jq -n --arg id "$id" --arg url "$url" --arg code "$http_code" \
-                '{candidate:$id,url:$url,status:"DOWNLOAD_BLOCKED",http_code:$code,reason:"No binary bytes were retrieved"}' > "$report"
+              jq -n --arg id "$id" --arg url "$url" --arg code "$http_code"                 '{candidate:$id,url:$url,status:"DOWNLOAD_BLOCKED",http_code:$code,reason:"No binary bytes were retrieved"}' > "$report"
               rm -f "$out" "${out}.err"
               return 0
             fi
@@ -56,26 +53,26 @@ jobs:
             sha=$(sha256sum "$out" | awk '{print $1}')
 
             if ! unzip -t "$out" >/dev/null 2>&1; then
-              jq -n --arg id "$id" --arg url "$url" --arg mime "$mime" --arg size "$size" --arg sha "$sha" \
-                '{candidate:$id,url:$url,status:"REJECTED",reason:"Downloaded object is not a valid ZIP/APK",mime:$mime,size_bytes:($size|tonumber),sha256:$sha}' > "$report"
+              jq -n --arg id "$id" --arg url "$url" --arg mime "$mime" --arg size "$size" --arg sha "$sha"                 '{candidate:$id,url:$url,status:"REJECTED",reason:"Downloaded object is not a valid ZIP/APK",mime:$mime,size_bytes:($size|tonumber),sha256:$sha}' > "$report"
               rm -f "$out" "${out}.err"
               return 0
             fi
 
-            pkg=$(aapt dump badging "$out" | sed -n "s/.*package: name='\\([^']*\\)'.*/\\1/p" | head -1 || true)
-            ver=$(aapt dump badging "$out" | sed -n "s/.*versionCode='\\([^']*\\)'.*/\\1/p" | head -1 || true)
+            pkg=$(aapt dump badging "$out" 2>/dev/null | sed -n "s/.*package: name='\\([^']*\\)'.*/\\1/p" | head -1 || true)
+            ver=$(aapt dump badging "$out" 2>/dev/null | sed -n "s/.*versionCode='\\([^']*\\)'.*/\\1/p" | head -1 || true)
             certs=$(apksigner verify --print-certs "$out" 2>/dev/null | tr '\\n' ' ' || true)
 
             sha_match=false
             [ "$sha" = "$expected_sha" ] && sha_match=true
 
-            jq -n \
-              --arg id "$id" --arg url "$url" --arg mime "$mime" --arg size "$size" \
-              --arg sha "$sha" --arg expected "$expected_sha" --arg pkg "$pkg" --arg ver "$ver" \
-              --arg certs "$certs" --argjson sha_match "$sha_match" \
-              '{candidate:$id,url:$url,status:(if $sha_match then "BINARY_VERIFIED" else "REJECTED_HASH_MISMATCH" end),mime:$mime,size_bytes:($size|tonumber),sha256:$sha,expected_sha256:$expected,sha256_match:$sha_match,package:$pkg,versionCode:$ver,signing:$certs}' > "$report"
+            jq -n               --arg id "$id" --arg url "$url" --arg mime "$mime" --arg size "$size"               --arg sha "$sha" --arg expected "$expected_sha" --arg pkg "$pkg" --arg ver "$ver"               --arg certs "$certs" --argjson sha_match "$sha_match"               '{candidate:$id,url:$url,status:(if $sha_match then "BINARY_VERIFIED" else "REJECTED_HASH_MISMATCH" end),mime:$mime,size_bytes:($size|tonumber),sha256:$sha,expected_sha256:$expected,sha256_match:$sha_match,package:$pkg,versionCode:$ver,signing:$certs}' > "$report"
 
             rm -f "$out" "${out}.err"
+          }
+
+          resolve_apkcombo() {
+            local page="$1"
+            curl -L --silent --show-error --max-time 120 -A "Mozilla/5.0" "$page"               | grep -oE 'https://apkcombo\.com/r2\?u=[^"]+'               | head -1               | sed 's/&amp;/\&/g'
           }
 
           url_150201052=$(resolve_apkcombo "https://apkcombo.com/smart-panel/com.transsion.smartpanel/download/apk")
@@ -84,20 +81,15 @@ jobs:
           else
             jq -n '{candidate:"15.2.1.052",status:"DOWNLOAD_BLOCKED",reason:"APKCombo binary link could not be resolved"}' > audit-results/15.2.1.052.json
           fi
-          resolve_apkcombo() {
-            local page="$1"
-            curl -L --fail --silent --show-error --max-time 120 -A "Mozilla/5.0" "$page"               | grep -oE 'https://apkcombo\.com/r2\?u=[^"&]+&fp=[^"&]+&ip=[^"&]+&package_name=[^"&]+&lang=[^"&]+'               | head -1
-          }
 
           url_150200117=$(resolve_apkcombo "https://apkcombo.com/smart-panel/com.transsion.smartpanel/download/phone-15.2.0.117-apk")
-          url_30802077=$(resolve_apkcombo "https://apkcombo.com/smart-panel/com.transsion.smartpanel/download/phone-3.8.2.077-apk")
-
           if [ -n "$url_150200117" ]; then
             audit_one "15.2.0.117" "$url_150200117" "0bae2238489b0f514af6ec10f55406dfe44c91acc31228cf15ed5f0a610eddbc"
           else
             jq -n '{candidate:"15.2.0.117",status:"DOWNLOAD_BLOCKED",reason:"APKCombo binary link could not be resolved"}' > audit-results/15.2.0.117.json
           fi
 
+          url_30802077=$(resolve_apkcombo "https://apkcombo.com/smart-panel/com.transsion.smartpanel/download/phone-3.8.2.077-apk")
           if [ -n "$url_30802077" ]; then
             audit_one "3.8.2.077" "$url_30802077" "df884f9cb1499c5c7ccfaca835ce8d3fbd65d0fbe9cf0160822ed77fffbf4ed9"
           else
