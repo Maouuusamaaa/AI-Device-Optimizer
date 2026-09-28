@@ -181,6 +181,36 @@ class AdaptiveLearningEvaluationTest(unittest.TestCase):
             "INSUFFICIENT_HOLDOUT",
         )
 
+    def test_train_holdout_overlap_is_rejected(self):
+        train_records = [
+            adaptive.create_learning_record(record(f"train-{i}"))
+            for i in range(3)
+        ]
+        train_state = adaptive.update_knowledge_state(
+            adaptive.empty_knowledge_state(),
+            train_records,
+        )
+        with self.assertRaises(evaluation.EvaluationHardeningError):
+            evaluation.evaluate_holdout(
+                train_state,
+                [record("train-0"), record("holdout-2")],
+            )
+
+    def test_duplicate_holdout_evidence_is_rejected(self):
+        train_records = [
+            adaptive.create_learning_record(record(f"train-{i}"))
+            for i in range(3)
+        ]
+        train_state = adaptive.update_knowledge_state(
+            adaptive.empty_knowledge_state(),
+            train_records,
+        )
+        with self.assertRaises(evaluation.EvaluationHardeningError):
+            evaluation.evaluate_holdout(
+                train_state,
+                [record("holdout-1"), record("holdout-1")],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
