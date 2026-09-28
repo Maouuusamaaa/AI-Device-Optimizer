@@ -70,30 +70,32 @@ jobs:
             rm -f "$out" "${out}.err"
           }
 
-          resolve_apkcombo() {
+          resolve_apkmirror() {
             local page="$1"
-            curl -L --silent --show-error --max-time 120 -A "Mozilla/5.0" "$page"               | grep -oE 'https://apkcombo\.com/r2\?u=[^"]+'               | head -1               | sed 's/&amp;/\&/g' || true
+            curl -L --silent --show-error --max-time 120 -A "Mozilla/5.0" "$page" \
+              | grep -oE 'https://www\.apkmirror\.com/[^"]+/download/\?key=[^"]+' \
+              | head -1 || true
           }
 
-          url_150201052=$(resolve_apkcombo "https://apkcombo.com/smart-panel/com.transsion.smartpanel/download/apk")
+          url_150201052=$(resolve_apkmirror "https://www.apkmirror.com/apk/transsion-holdings/smart-panel/smart-panel-15-2-1-052-release/smart-panel-15-2-1-052-android-apk-download/")
           if [ -n "$url_150201052" ]; then
             audit_one "15.2.1.052" "$url_150201052" "4abd7143d0e60df6fc5fa5de0a4549670fa52c37c7402bb858971b67d0773997"
           else
-            jq -n '{candidate:"15.2.1.052",status:"DOWNLOAD_BLOCKED",reason:"APKCombo binary link could not be resolved"}' > audit-results/15.2.1.052.json
+            jq -n '{candidate:"15.2.1.052",status:"DOWNLOAD_BLOCKED",reason:"APKMirror binary link could not be resolved"}' > audit-results/15.2.1.052.json
           fi
 
-          url_150200117=$(resolve_apkcombo "https://apkcombo.com/smart-panel/com.transsion.smartpanel/download/phone-15.2.0.117-apk")
+          url_150200117=$(resolve_apkmirror "https://www.apkmirror.com/apk/transsion-holdings/smart-panel/smart-panel-15-2-0-117-release/smart-panel-15-2-0-117-android-apk-download/")
           if [ -n "$url_150200117" ]; then
             audit_one "15.2.0.117" "$url_150200117" "0bae2238489b0f514af6ec10f55406dfe44c91acc31228cf15ed5f0a610eddbc"
           else
-            jq -n '{candidate:"15.2.0.117",status:"DOWNLOAD_BLOCKED",reason:"APKCombo binary link could not be resolved"}' > audit-results/15.2.0.117.json
+            jq -n '{candidate:"15.2.0.117",status:"DOWNLOAD_BLOCKED",reason:"APKMirror binary link could not be resolved"}' > audit-results/15.2.0.117.json
           fi
 
-          url_30802077=$(resolve_apkcombo "https://apkcombo.com/smart-panel/com.transsion.smartpanel/download/phone-3.8.2.077-apk")
+          url_30802077=$(resolve_apkmirror "https://www.apkmirror.com/apk/shalltry-group/smart-panel-2/smart-panel-3-8-2-077-release/smart-panel-3-8-2-077-android-apk-download/")
           if [ -n "$url_30802077" ]; then
             audit_one "3.8.2.077" "$url_30802077" "df884f9cb1499c5c7ccfaca835ce8d3fbd65d0fbe9cf0160822ed77fffbf4ed9"
           else
-            jq -n '{candidate:"3.8.2.077",status:"DOWNLOAD_BLOCKED",reason:"APKCombo binary link could not be resolved"}' > audit-results/3.8.2.077.json
+            jq -n '{candidate:"3.8.2.077",status:"DOWNLOAD_BLOCKED",reason:"APKMirror binary link could not be resolved"}' > audit-results/3.8.2.077.json
           fi
 
           cat audit-results/*.json
