@@ -30,7 +30,7 @@ data class AdaptiveOptimizerReadiness(
  * This evaluator never selects, enables, ranks, or executes an action.
  */
 class AdaptiveOptimizerReadinessEvaluator(
-    private val catalog: ActionCatalogProvider = ActionCatalogProvider()
+    private val catalog: ActionCatalogProvider = ActionCatalogProvider.Default()
 ) {
     fun evaluate(spec: CandidateActionSpec): AdaptiveOptimizerReadiness {
         val action = catalog.find(spec.actionId)
