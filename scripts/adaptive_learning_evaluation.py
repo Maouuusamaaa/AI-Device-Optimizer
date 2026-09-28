@@ -233,6 +233,34 @@ def evaluate_holdout(
     from adaptive_learning import generate_candidates
 
     candidates = generate_candidates(train_state)
+    training_evidence_ids = {
+        evidence_id
+        for pattern in train_state.get("patterns", [])
+        for evidence_id in pattern.get("supportingEvidenceIds", [])
+    }
+
+    holdout_evidence_ids = []
+    for record in holdout_records:
+        evidence_id = _require_string(record.get("evidenceId"), "holdout.evidenceId")
+        holdout_evidence_ids.append(evidence_id)
+
+    duplicate_holdout_ids = sorted(
+        evidence_id
+        for evidence_id in set(holdout_evidence_ids)
+        if holdout_evidence_ids.count(evidence_id) > 1
+    )
+    if duplicate_holdout_ids:
+        raise EvaluationHardeningError(
+            "holdout contains duplicate evidenceIds: "
+            + ", ".join(duplicate_holdout_ids)
+        )
+
+    overlap = sorted(training_evidence_ids.intersection(holdout_evidence_ids))
+    if overlap:
+        raise EvaluationHardeningError(
+            "holdout overlaps training evidenceIds: " + ", ".join(overlap)
+        )
+
     candidate_patterns = [
         pattern for pattern in train_state.get("patterns", [])
         if pattern.get("eligible")
