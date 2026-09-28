@@ -78,8 +78,8 @@ An internal CI build may therefore have the same `versionName` as the active mil
 
 The repository currently declares:
 
-- `versionName = 0.1.20`
-- `versionCode = 20`
+- `versionName = 0.1.21`
+- `versionCode = 21`
 
 Milestone 0.1.20 is Adaptive Learning Evaluation Hardening.
 
@@ -201,3 +201,17 @@ Adaptive Learning Evaluation Hardening adds a strict descriptive evaluation boun
 The milestone is evaluation-only. It does not add device mutation, privileged permissions, Action Engine authority, Safety Gate changes, or SmartPanel mutation. The existing P661N/API33 evidence remains descriptive/regression evidence.
 
 The implementation is documented in docs/ADAPTIVE_LEARNING_EVALUATION.md.
+
+
+## Milestone 0.1.21
+
+Adaptive Optimizer Execution-Readiness Hardening establishes a non-executing structural readiness boundary for future candidate actions:
+
+- allowlist membership is checked;
+- only LOW-risk, permission-free, reversible actions can reach READY_FOR_REVIEW;
+- measurement, rollback, verification, and kill-switch metadata are required;
+- execution remains permanently disabled;
+- candidate executionEnabled=true fails closed;
+- Android unit tests cover the boundary.
+
+0.1.21 does not introduce a real device action, policy-selection authority, permission escalation, SmartPanel/Game Mode mutation, or Action Engine execution capability.
