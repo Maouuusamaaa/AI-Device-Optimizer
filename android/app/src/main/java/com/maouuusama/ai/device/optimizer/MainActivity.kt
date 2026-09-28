@@ -61,6 +61,7 @@ class MainActivity : Activity() {
     private lateinit var evidenceSyncRepository: EditText
     private lateinit var evidenceSyncBranch: EditText
     private lateinit var evidenceSyncToken: EditText
+    private lateinit var agentControlButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,9 +97,14 @@ class MainActivity : Activity() {
 
         agentStatusText = TextView(this).apply {
             textSize = 16f
-            text = "\nBackground agent: starting...\nRead-only telemetry + local dry-run policy."
+            text = "\nBackground agent: checking state...\nRead-only telemetry + local dry-run policy."
         }
         root.addView(agentStatusText)
+        agentControlButton = Button(this).apply {
+            setOnClickListener { toggleBackgroundAgent() }
+        }
+        root.addView(agentControlButton)
+        refreshAgentControlState()
 
         root.addView(Button(this).apply {
             text = "Refresh detailed process telemetry"
@@ -270,7 +276,9 @@ class MainActivity : Activity() {
         }
         setContentView(scrollView)
         EvidenceSyncScheduler.enqueue(this)
-        startBackgroundAgent()
+        val agentEnabled = getSharedPreferences(AGENT_PREFERENCES, MODE_PRIVATE)
+            .getBoolean(AGENT_ENABLED_KEY, true)
+        if (agentEnabled) startBackgroundAgent() else refreshAgentControlState()
     }
 
     private fun formatStorage(bytes: Long?): String {
@@ -280,12 +288,14 @@ class MainActivity : Activity() {
 
     private fun startBackgroundAgent() {
         val start = {
+            getSharedPreferences(AGENT_PREFERENCES, MODE_PRIVATE).edit()
+                .putBoolean(AGENT_ENABLED_KEY, true)
+                .apply()
             ContextCompat.startForegroundService(
                 this,
                 Intent(this, OptimizerBackgroundService::class.java)
             )
-            agentStatusText.text =
-                "\nBackground agent: running\nSampling every 10 seconds.\nNo system mutations; policy mode is DRY_RUN."
+            refreshAgentControlState()
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
@@ -294,6 +304,34 @@ class MainActivity : Activity() {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATION_PERMISSION)
         }
         start()
+    }
+
+    private fun stopBackgroundAgent() {
+        getSharedPreferences(AGENT_PREFERENCES, MODE_PRIVATE).edit()
+            .putBoolean(AGENT_ENABLED_KEY, false)
+            .apply()
+        stopService(Intent(this, OptimizerBackgroundService::class.java))
+        refreshAgentControlState()
+    }
+
+    private fun toggleBackgroundAgent() {
+        val enabled = getSharedPreferences(AGENT_PREFERENCES, MODE_PRIVATE)
+            .getBoolean(AGENT_ENABLED_KEY, true)
+        if (enabled) stopBackgroundAgent() else startBackgroundAgent()
+    }
+
+    private fun refreshAgentControlState() {
+        val enabled = getSharedPreferences(AGENT_PREFERENCES, MODE_PRIVATE)
+            .getBoolean(AGENT_ENABLED_KEY, true)
+        if (enabled) {
+            agentStatusText.text =
+                "\nBackground agent: enabled\nSampling every 10 seconds.\nNo system mutations; policy mode is DRY_RUN."
+            agentControlButton.text = "Stop background agent"
+        } else {
+            agentStatusText.text =
+                "\nBackground agent: stopped by user.\nMonitoring is disabled until you start it again."
+            agentControlButton.text = "Start background agent"
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -1047,5 +1085,7 @@ class MainActivity : Activity() {
     companion object {
         private const val REQUEST_NOTIFICATION_PERMISSION = 100
         private const val REQUEST_SHIZUKU_PERMISSION = 101
+        private const val AGENT_PREFERENCES = "agent_control"
+        private const val AGENT_ENABLED_KEY = "enabled"
     }
 }
