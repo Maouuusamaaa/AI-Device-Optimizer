@@ -28,7 +28,7 @@ else:
     if state.get("governance_version") != "1.0":
         errors.append("unexpected governance_version")
 rules = (ROOT/"PROJECT_RULES.md").read_text(encoding="utf-8") if (ROOT/"PROJECT_RULES.md").is_file() else ""
-for phrase in ["canonical source of truth","AI output is untrusted","local Safety Gate","Change classification","Negative, failed, inconclusive","No fabricated results"]:
+for phrase in ["canonical record","AI output is untrusted","local Safety Gate","Change classification","Negative, failed, inconclusive","No fabricated results"]:
     if phrase not in rules:
         errors.append(f"PROJECT_RULES.md missing control: {phrase}")
 if errors:
