@@ -1,0 +1,35 @@
+name: Governance
+
+on:
+  pull_request:
+    paths:
+      - "PROJECT_RULES.md"
+      - "AGENTS.md"
+      - "CONTRIBUTING.md"
+      - "PROJECT_STATE.json"
+      - "SECURITY.md"
+      - "PRIVACY.md"
+      - "docs/**"
+      - "findings/**"
+      - "experiments/**"
+      - "risks/**"
+      - "handoffs/**"
+      - ".github/**"
+      - "scripts/validate_governance.py"
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  governance-validation:
+    name: Validate governance baseline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+      - name: Validate governance files and state
+        run: python3 scripts/validate_governance.py
+      - name: Validate JSON state
+        run: python3 -m json.tool PROJECT_STATE.json >/dev/null
