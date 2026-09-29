@@ -1,0 +1,91 @@
+name: Import SmartPanel V1644 provenance artifact
+
+on:
+  push:
+    paths:
+      - ".github/workflows/import-smartpanel-v1644.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Download exact GitLab SmartPanel APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p research/external/firmware/itel-P661N/P661N-H334IJKLN-T-BASE-250723V1644/system_ext/app/SmartPanel
+          curl -L --fail --retry 3 --retry-delay 2 \
+            'https://gitlab.com/rdndds-firmware-dump/itel/itel-P661N/-/raw/P661N-H334IJKLN-T-BASE-250723V1644/system_ext/app/SmartPanel/SmartPanel.apk?ref_type=heads' \
+            -o research/external/firmware/itel-P661N/P661N-H334IJKLN-T-BASE-250723V1644/system_ext/app/SmartPanel/SmartPanel.apk
+
+      - name: Verify APK hash and signing certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='research/external/firmware/itel-P661N/P661N-H334IJKLN-T-BASE-250723V1644/system_ext/app/SmartPanel/SmartPanel.apk'
+          EXPECTED_APK_SHA256='34965f3e4d5154cd5b1dcfdcc5a9b92b1343ac501de8acbe33655243d3cf47dd'
+          EXPECTED_CERT_SHA256='7e09506b9037d7267574c2bd4cc7102722e4306d682e6f1634483b8311d0c2bb'
+          EXPECTED_CERT_SHA1='be8cb9f95bcb5bfb04045034e5182634a2fca1fa'
+
+          ACTUAL_APK_SHA256=$(sha256sum "$APK" | awk '{print $1}')
+          echo "APK SHA-256: $ACTUAL_APK_SHA256"
+          test "$ACTUAL_APK_SHA256" = "$EXPECTED_APK_SHA256"
+
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          test -n "$APKSIGNER"
+          CERTS="$("$APKSIGNER" verify --print-certs "$APK")"
+          printf '%s\n' "$CERTS"
+
+          printf '%s\n' "$CERTS" | grep -qi "$EXPECTED_CERT_SHA256"
+          printf '%s\n' "$CERTS" | grep -qi "$EXPECTED_CERT_SHA1"
+
+      - name: Record provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='research/external/firmware/itel-P661N/P661N-H334IJKLN-T-BASE-250723V1644/system_ext/app/SmartPanel/SmartPanel.apk'
+          SHA256=$(sha256sum "$APK" | awk '{print $1}')
+          SIZE=$(stat -c '%s' "$APK")
+          cat > research/external/firmware/itel-P661N/P661N-H334IJKLN-T-BASE-250723V1644/SmartPanel-V1644-PROVENANCE.md <<EOF
+          # SmartPanel V1644 provenance
+
+          - Package: com.transsion.smartpanel
+          - Expected version: 3.0.0.224
+          - Expected versionCode: 5241
+          - Source repository: https://gitlab.com/rdndds-firmware-dump/itel/itel-P661N
+          - Source branch: P661N-H334IJKLN-T-BASE-250723V1644
+          - Source path: system_ext/app/SmartPanel/SmartPanel.apk
+          - Source commit observed: 760dbff0b3d662ba2b049841c0f82421aa4ff139
+          - GitLab file size shown: 53.76 MiB
+          - Downloaded byte size: $SIZE
+          - APK SHA-256: $SHA256
+          - Expected APK SHA-256: 34965f3e4d5154cd5b1dcfdcc5a9b92b1343ac501de8acbe33655243d3cf47dd
+          - Expected certificate SHA-256: 7e09506b9037d7267574c2bd4cc7102722e4306d682e6f1634483b8311d0c2bb
+          - Expected certificate SHA-1: be8cb9f95bcb5bfb04045034e5182634a2fca1fa
+
+          The workflow commits the APK only after the downloaded bytes and signing certificate match the expected target fingerprints.
+          EOF
+
+      - name: Commit verified artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/external/firmware/itel-P661N/P661N-H334IJKLN-T-BASE-250723V1644
+          if git diff --cached --quiet; then
+            echo 'No new artifact to commit.'
+            exit 0
+          fi
+          git commit -m 'research: preserve verified SmartPanel V1644 artifact [skip ci]'
+          git push
