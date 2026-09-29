@@ -89,3 +89,5 @@ jobs:
           fi
           git commit -m 'research: preserve verified SmartPanel V1644 artifact [skip ci]'
           git push
+
+# Trigger verification on workflow changes.
