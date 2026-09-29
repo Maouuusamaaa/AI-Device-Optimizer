@@ -1,12 +1,36 @@
 {
   "schema_version": "1.0",
-  "state_version": 3,
-  "status": "governance-v1-ready-for-review",
+  "state_version": 4,
+  "status": "gameboost-v1-blocked",
   "current_milestone": "0.1.21",
   "default_branch": "main",
-  "active_branch": "governance-v1",
+  "active_branch": "gameboost-research-v1",
   "governance_version": "1.0",
   "active_work": [
+    {
+      "id": "GB-0001",
+      "title": "Rootless Game Boost v1 capability layer",
+      "status": "blocked",
+      "class": "C2",
+      "scope": "Game Boost capability detection, telemetry, profiles, session measurement, benchmark integration",
+      "non_goals": [
+        "thermal override",
+        "GPU-frequency forcing",
+        "OEM-private command replication",
+        "security bypass"
+      ],
+      "completed": [
+        "capability research baseline",
+        "existing architecture audit",
+        "TDD test scaffold",
+        "handoff record"
+      ],
+      "blockers": [
+        "GitHub PR creation requires account email verification",
+        "CI cannot be triggered for this branch until a PR targets main",
+        "local environment cannot resolve github.com"
+      ]
+    },
     {
       "id": "GOV-0001",
       "title": "Governance v1 implementation",
@@ -36,7 +60,7 @@
   "last_known_green_main": null,
   "last_known_green_governance_commit": "943ce10d85a2b58f0ba8d876ee23312213d3d649",
   "last_known_green_ci_run": "36574382559",
-  "latest_head_commit": "eac8d0c6a06fe1bad01f88c167e16d61104c111d",
+  "latest_head_commit": "963b5d04966b30a6ebee0444538f15bf1337ed6d",
   "latest_ci_observation": {
     "run_id": "36576650108",
     "workflow_id": "370175086",
