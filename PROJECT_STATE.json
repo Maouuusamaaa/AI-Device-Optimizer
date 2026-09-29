@@ -36,15 +36,15 @@
   "last_known_green_main": null,
   "last_known_green_governance_commit": "943ce10d85a2b58f0ba8d876ee23312213d3d649",
   "last_known_green_ci_run": "36574382559",
-  "latest_head_commit": "263e834137b8e22f733bd9a1e6623bf343f94e62",
+  "latest_head_commit": "eac8d0c6a06fe1bad01f88c167e16d61104c111d",
   "latest_ci_observation": {
-    "run_id": "36575279902",
+    "run_id": "36576650108",
     "workflow_id": "370175086",
     "status": "completed",
     "conclusion": "startup_failure",
     "jobs_observed": 0,
     "event": "pull_request",
-    "note": "GitHub reported an unknown event and startup failure before any job was created; rerun was unavailable through the connected GitHub API."
+    "note": "GitHub produced another orphan workflow record with startup_failure and zero jobs; the workflow ID is not present as a current workflow file, and rerun is unavailable through the connected API. The last known green substantive governance commit remains 943ce10d85a2b58f0ba8d876ee23312213d3d649."
   },
   "last_governance_validation": "2026-09-29",
   "required_reading": [
