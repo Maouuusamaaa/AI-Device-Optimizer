@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "state_version": 2,
+  "state_version": 3,
   "status": "governance-v1-ready-for-review",
   "current_milestone": "0.1.21",
   "default_branch": "main",
@@ -34,8 +34,19 @@
   "active_risks": [],
   "active_experiments": [],
   "last_known_green_main": null,
+  "last_known_green_governance_commit": "943ce10d85a2b58f0ba8d876ee23312213d3d649",
+  "last_known_green_ci_run": "36574382559",
+  "latest_head_commit": "263e834137b8e22f733bd9a1e6623bf343f94e62",
+  "latest_ci_observation": {
+    "run_id": "36575279902",
+    "workflow_id": "370175086",
+    "status": "completed",
+    "conclusion": "startup_failure",
+    "jobs_observed": 0,
+    "event": "pull_request",
+    "note": "GitHub reported an unknown event and startup failure before any job was created; rerun was unavailable through the connected GitHub API."
+  },
   "last_governance_validation": "2026-09-29",
-  "last_ci_run": "36574382559",
   "required_reading": [
     "PROJECT_RULES.md",
     "AGENTS.md",
