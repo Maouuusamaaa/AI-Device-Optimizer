@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "state_version": 3,
+  "status": "governance-v1-ready-for-review",
+  "current_milestone": "0.1.21",
+  "default_branch": "main",
+  "active_branch": "governance-v1",
+  "governance_version": "1.0",
+  "active_work": [
+    {
+      "id": "GOV-0001",
+      "title": "Governance v1 implementation",
+      "status": "in_review",
+      "class": "C3",
+      "scope": "repository governance, research integrity, AI-agent protocol, CI enforcement",
+      "non_goals": [
+        "application behavior changes",
+        "automatic release",
+        "changing optimizer Safety Gate implementation"
+      ],
+      "completed": [
+        "governance rules and authority precedence",
+        "AI-agent operating protocol",
+        "machine-readable project state",
+        "risk-tiered change classes",
+        "research, experiment, and handoff protocols",
+        "stable-ID traceability model",
+        "security/privacy baseline",
+        "CODEOWNERS and PR template",
+        "governance CI validation"
+      ]
+    }
+  ],
+  "active_risks": [],
+  "active_experiments": [],
+  "last_known_green_main": null,
+  "last_known_green_governance_commit": "943ce10d85a2b58f0ba8d876ee23312213d3d649",
+  "last_known_green_ci_run": "36574382559",
+  "latest_head_commit": "eac8d0c6a06fe1bad01f88c167e16d61104c111d",
+  "latest_ci_observation": {
+    "run_id": "36576650108",
+    "workflow_id": "370175086",
+    "status": "completed",
+    "conclusion": "startup_failure",
+    "jobs_observed": 0,
+    "event": "pull_request",
+    "note": "GitHub produced another orphan workflow record with startup_failure and zero jobs; the workflow ID is not present as a current workflow file, and rerun is unavailable through the connected API. The last known green substantive governance commit remains 943ce10d85a2b58f0ba8d876ee23312213d3d649."
+  },
+  "last_governance_validation": "2026-09-29",
+  "required_reading": [
+    "PROJECT_RULES.md",
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    "docs/protocols/RESEARCH_PROTOCOL.md",
+    "docs/protocols/EXPERIMENT_PROTOCOL.md",
+    "docs/protocols/HANDOFF_PROTOCOL.md"
+  ]
+}
